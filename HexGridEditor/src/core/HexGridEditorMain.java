@@ -1,6 +1,5 @@
 package core;
 
-import com.jme3.app.Application;
 import hexmapeditor.gui.database.JDataBaseMenu;
 import hexmapeditor.gui.hexmap.JHexEditorMenu;
 import com.jme3.input.MouseInput;
@@ -57,7 +56,7 @@ public class HexGridEditorMain extends HexGridDefaultApp {
 
         rootWindow = new JFrame(windowName);
         rootWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        rootWindow.addWindowListener(new WindowAdapter(){
+        rootWindow.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent e) {
                 stop();
