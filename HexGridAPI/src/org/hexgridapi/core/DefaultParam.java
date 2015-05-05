@@ -5,7 +5,6 @@ import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
-import com.jme3.post.ssao.SSAOFilter;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import org.hexgridapi.utility.ArrowDebugShape;
 
@@ -15,19 +14,17 @@ import org.hexgridapi.utility.ArrowDebugShape;
  */
 public class DefaultParam {
     private RTSCamera rtsCam;
-    private SimpleApplication app;
 
     public DefaultParam(SimpleApplication app, boolean debug) {
-        this.app = app;
         app.setPauseOnLostFocus(false);
-        lightSettup();
-        cameraSettup();
+        lightSettup(app);
+        cameraSettup(app);
         if(debug){
-            initDebug();
+            initDebug(app);
         }
     }
 
-    private void lightSettup() {
+    private void lightSettup(SimpleApplication app) {
         /**
          * A white, directional light source.
          */
@@ -37,7 +34,7 @@ public class DefaultParam {
         app.getRootNode().addLight(sun);
 
         /* this shadow needs a directional light */
-//        FilterPostProcessor fpp = new FilterPostProcessor(app.getAssetManager());
+        FilterPostProcessor fpp = new FilterPostProcessor(app.getAssetManager());
 //        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), 1024, 1);
 //        dlsf.setLight(sun);
 //        fpp.addFilter(dlsf);
@@ -49,12 +46,12 @@ public class DefaultParam {
 //        app.getViewPort().addProcessor(fpp);
          
         /* DropShadow */
-        final int SHADOWMAP_SIZE=2048;
-        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), SHADOWMAP_SIZE, 3);
+        final int SHADOWMAP_SIZE=1024;
+        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), SHADOWMAP_SIZE, 1);
         dlsr.setLight(sun);
         app.getViewPort().addProcessor(dlsr);
- 
-//        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), SHADOWMAP_SIZE, 3);
+// 
+//        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), SHADOWMAP_SIZE, 1);
 //        dlsf.setLight(sun);
 //        dlsf.setEnabled(true);
 ////        fpp = new FilterPostProcessor(app.getAssetManager());
@@ -70,7 +67,7 @@ public class DefaultParam {
 //        app.getRootNode().addLight(ambient);
     }
 
-    private void cameraSettup() {
+    private void cameraSettup(SimpleApplication app) {
         app.getFlyByCamera().setEnabled(false);
         rtsCam = new RTSCamera(RTSCamera.UpVector.Y_UP);//, "AZERTY");
 //        rtsCam.setCenter(new Vector3f(8, 15f, 8));
@@ -79,7 +76,7 @@ public class DefaultParam {
         app.getStateManager().attach(rtsCam);
     }
     
-    private void initDebug() {
+    private void initDebug(SimpleApplication app) {
         ArrowDebugShape arrowShape = new ArrowDebugShape(app.getAssetManager(), app.getRootNode(), new Vector3f(0f, 0f, 0f));
     }
     

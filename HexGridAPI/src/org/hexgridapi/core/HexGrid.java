@@ -17,7 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 import org.hexgridapi.core.control.GhostControl;
 import org.hexgridapi.core.control.TileSelectionControl;
-import org.hexgridapi.core.mapgenerator.ProceduralGenerator;
+import org.hexgridapi.core.mapgenerator.ProceduralHexGrid;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.utility.HexCoordinate;
 import org.hexgridapi.utility.Vector2Int;
@@ -46,7 +46,7 @@ public class HexGrid {
     protected GhostControl ghostControl;
     protected HashMap chunksNodes = new HashMap<Vector2Int, Node>();
     protected Node areaRangeNode;
-    protected ProceduralGenerator mapGenerator;
+    protected ProceduralHexGrid mapGenerator;
     protected AssetManager assetManager;
 
     public HexGrid(MapData mapData, AssetManager assetManager, Node rootNode) {
@@ -98,6 +98,13 @@ public class HexGrid {
      */
     public final Node getTileNode() {
         return tileNode;
+    }
+
+    /**
+     * @return the currently used ghostControl.
+     */
+    public GhostControl getGhostControl() {
+        return ghostControl;
     }
 
     public final Set<Vector2Int> getChunksNodes() {
@@ -228,11 +235,5 @@ public class HexGrid {
 
     public void cleanup() {
         mapData.removeTileChangeListener(tileChangeListener);
-    }
-
-    public enum MatType {
-
-        DEFAULT,
-        TOON;
     }
 }

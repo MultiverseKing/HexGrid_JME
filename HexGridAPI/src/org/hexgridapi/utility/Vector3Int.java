@@ -25,31 +25,28 @@ public class Vector3Int {
         return Integer.toString(this.x) + "|" + Integer.toString(this.y) + "|" + Integer.toString(this.z);
     }
 
-    /**
-     *
-     */
     public Vector3Int() {
         this(0, 0, 0);
     }
-
-    /**
-     *
-     * @param value
-     */
+    
     public Vector3Int(Vector3f value) {
         this((int) value.x, (int) value.y, (int) value.z);
     }
-
-    /**
-     *
-     * @param x
-     * @param y
-     * @param z
-     */
+    
     public Vector3Int(int x, int y, int z) {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+    
+    /**
+     * Add the provided value to this as :
+     * x + value.x, y + value.y, z + value.z.
+     * @param value to add
+     * @return newly generated vector.
+     */
+    public Vector3Int add(Vector3Int value) {
+        return new Vector3Int(x + value.x, y + value.y, z + value.z);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.hexgridapi.core.control;
 
+import org.hexgridapi.events.GhostListener;
 import com.jme3.app.Application;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -13,6 +14,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,17 +27,19 @@ import org.hexgridapi.utility.HexCoordinate;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
- * @todo if chunk position is > 1 does not have shadow !?
+ * Chunk handling by himself and follow the camera.
+ *
+ * @todo if chunk position is > 1 from center remove shadow !?
  * @author roah
  */
 public class GhostControl extends ChunkControl {
 
     private final Node collisionNode = new Node("GhostCollision");
-    private final int radius = 1;
     private final HexGrid system;
     private final Camera cam;
     private GridRayCastControl rayControl;
     private Vector3f oldCamPosition = new Vector3f();
+    private ArrayList<GhostListener> listeners = new ArrayList<GhostListener>();
 
     public GhostControl(Application app, GreddyMeshingParameter meshParam, Material hexMat,
             MapData.GhostMode mode, Vector2Int pos, HexGrid system) {
@@ -48,7 +52,7 @@ public class GhostControl extends ChunkControl {
         Material mat = assetManager.loadMaterial("Materials/ghostCollision.j3m");
         collisionPlane.setMaterial(mat);
         collisionNode.attachChild(collisionPlane);
-        collisionPlane.setShadowMode(RenderQueue.ShadowMode.Off);
+//        collisionPlane.setShadowMode(RenderQueue.ShadowMode.Off);
         this.rayControl = new GridRayCastControl(app, collisionNode, ColorRGBA.Green);
         this.system = system;
     }
@@ -99,8 +103,8 @@ public class GhostControl extends ChunkControl {
         if (mode.equals(MapData.GhostMode.GHOST_PROCEDURAL)
                 || mode.equals(MapData.GhostMode.PROCEDURAL)) {
             Set<Vector2Int> list = system.getChunksNodes();
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
+            for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
+                for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
                     if (!(x == 0 && y == 0)
                             && !list.contains(chunkPosition.add(x, y))) {
                         genProcedural(x, y);
@@ -113,8 +117,8 @@ public class GhostControl extends ChunkControl {
             mat.setTexture("ColorMap", child.getMaterial().getTextureParam("ColorMap").getTextureValue());
             mat.setColor("Color", new ColorRGBA(0, 0, 1, 0.5f));
             child.getMaterial().setColor("Color", new ColorRGBA(0, 0, 1, 0.7f));
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
+            for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
+                for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
                     if (!(x == 0 && y == 0)) {
                         Node tileNode = new Node("TILES." + x + "|" + y);
                         Geometry tileGeo = new Geometry("NO_TILE", child.getMesh());
@@ -144,6 +148,14 @@ public class GhostControl extends ChunkControl {
         }
     }
 
+    public void registerListener(GhostListener listener) {
+        listeners.add(listener);
+    }
+
+    public boolean removeListener(GhostListener listener) {
+        return listeners.remove(listener);
+    }
+
     @Override
     protected void controlUpdate(float tpf) {
         if (spatial != null && !spatial.getCullHint().equals(Spatial.CullHint.Always)
@@ -168,16 +180,28 @@ public class GhostControl extends ChunkControl {
                 || mode.equals(MapData.GhostMode.PROCEDURAL)) {
             if (!initialise) {
                 update();
+                updateListeners();
             }
             genGhost();
         }
         updateCulling();
     }
 
+    private void updateListeners() {
+        for (GhostListener l : listeners) {
+            l.positionUpdate(chunkPosition);
+        }
+    }
+
+    /**
+     * Internal use.
+     * Update the culling to avoid overlapping chunk.
+     * (HexGrid chunk and this chunk is handled separetely)
+     */
     public void updateCulling() {
         Set<Vector2Int> list = system.getChunksNodes();
-        for (int x = -radius; x <= radius; x++) {
-            for (int y = -radius; y <= radius; y++) {
+        for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
+            for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
                 if (list.contains(chunkPosition.add(x, y))) {
                     if (mode.equals(MapData.GhostMode.GHOST)) {
                         ((Node) spatial).getChild("TILES." + x + "|" + y).setCullHint(Spatial.CullHint.Always);
@@ -192,8 +216,8 @@ public class GhostControl extends ChunkControl {
     }
 
     private boolean isInRange(Vector2Int pos) {
-        for (int x = -(radius - 1); x <= (radius - 1); x++) {
-            for (int y = -(radius - 1); y <= (radius - 1); y++) {
+        for (int x = -(HexSetting.GHOST_CONTROL_RADIUS - 1); x <= (HexSetting.GHOST_CONTROL_RADIUS - 1); x++) {
+            for (int y = -(HexSetting.GHOST_CONTROL_RADIUS - 1); y <= (HexSetting.GHOST_CONTROL_RADIUS - 1); y++) {
                 if (pos.equals(chunkPosition.add(x, y))) {
                     return true;
                 }
@@ -202,18 +226,30 @@ public class GhostControl extends ChunkControl {
         return false;
     }
 
+    /**
+     * Culling set to Inherit.
+     */
     public void show() {
         spatial.setCullHint(Spatial.CullHint.Inherit);
     }
 
+    /**
+     * Culling set to Always.
+     */
     public void hide() {
         spatial.setCullHint(Spatial.CullHint.Always);
     }
 
+    /**
+     * Hide all Ghost Tile
+     * (GhostTile are tile who didn't have any data linked to them)
+     * aka: if (tile == null) tile = ghostTile.
+     * /!\ does not work when using GhostMode.Procedural
+     */
     public void hideGhostTile(boolean hide) {
         if (mode.equals(MapData.GhostMode.GHOST_PROCEDURAL)) {
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -radius; y <= radius; y++) {
+            for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
+                for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
                     Spatial geo = ((Node) ((Node) spatial).getChild("TILES." + x + "|" + y)).getChild("NO_TILE");
                     if (geo != null && hide) {
                         geo.setCullHint(Spatial.CullHint.Always);

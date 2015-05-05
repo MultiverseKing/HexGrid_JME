@@ -35,7 +35,7 @@ public class ChunkControl extends AbstractControl {
     protected Vector2Int chunkPosition;
 
     /**
-     * Crete a new chunk.
+     * Create a new chunk.
      *
      * @param meshParam instance of mesh generator to use.
      * @param assetManager used to load texture and materials.
@@ -83,6 +83,7 @@ public class ChunkControl extends AbstractControl {
 
     /**
      * update all tile on the chunk, following the data contained in mapData.
+     * /!\ internal use.
      */
     public void update() {
         if (spatial == null) {
@@ -106,14 +107,19 @@ public class ChunkControl extends AbstractControl {
                 Material mat = hexMaterial.clone();
                 Geometry tile = new Geometry(value, mesh.get(value));
                 Texture text;
-                if (value.equals("EMPTY_TEXTURE_KEY")) {
-                    text = assetManager.loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false));
-                } else if (value.equals("NO_TILE") && (mode.equals(MapData.GhostMode.GHOST)
+//                if (value.equals("EMPTY_TEXTURE_KEY")) {
+//                    text = assetManager.loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false));
+//                } else 
+                if (value.equals("NO_TILE") && (mode.equals(MapData.GhostMode.GHOST)
                         || mode.equals(MapData.GhostMode.GHOST_PROCEDURAL))) {
-                    text = assetManager.loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false));
+                    TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false);
+                    k.setGenerateMips(true);
+                    text = assetManager.loadTexture(k);
                     mat.setColor("Color", ColorRGBA.Blue);
                 } else {
-                    text = assetManager.loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false));
+                    TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false);
+                    k.setGenerateMips(true);
+                    text = assetManager.loadTexture(k);
                 }
                 text.setWrap(Texture.WrapMode.Repeat);
 

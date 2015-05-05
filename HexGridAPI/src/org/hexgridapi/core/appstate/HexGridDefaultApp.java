@@ -8,7 +8,7 @@ import org.hexgridapi.core.RTSCamera;
  *
  * @author roah
  */
-public class HexGridDefaultApp extends SimpleApplication {
+public abstract class HexGridDefaultApp extends SimpleApplication {
 
     private RTSCamera rtsCam;
 
@@ -20,6 +20,9 @@ public class HexGridDefaultApp extends SimpleApplication {
     public void simpleInitApp() {
         super.inputManager.clearMappings();
         rtsCam = new DefaultParam(this, false).getCam();
+        initApp();
     }
+    
+    public abstract void initApp();
     
 }

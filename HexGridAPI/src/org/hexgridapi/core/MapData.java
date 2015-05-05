@@ -5,7 +5,7 @@ import org.hexgridapi.events.TileChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.hexgridapi.core.mapgenerator.ProceduralGenerator;
+import org.hexgridapi.core.mapgenerator.ProceduralHexGrid;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.loader.HexGridMapLoader;
 import org.hexgridapi.utility.HexCoordinate;
@@ -13,12 +13,16 @@ import org.hexgridapi.utility.Vector2Int;
 
 /**
  * This class holds the hex data of the map.
- * When setting textureKey avoid using "NO_TILES" && "SELECTION_TEXTURE" && "EMPTY_TEXTURE_KEY" 
+ * When setting textureKey avoid using "NO_TILES" && "SELECTION_TEXTURE" &&
+ * "EMPTY_TEXTURE_KEY"
  * these are used internaly as the Key index is :
- * -2 = and below used for non existant tile or ghost tile. StringKey == "NO_TILES"
+ * -2 = and below used for non existant tile or ghost tile. StringKey ==
+ * "NO_TILES"
  * -1 = used for areaTexture. StringKey == "SELECTION_TEXTURE"
- * 00 = default tecture used when specifiating no texture. StringKey == "EMPTY_TEXTURE_KEY"
- * 01 = inclusive and above used for user added texture (ordered the way the get added).
+ * 00 = default tecture used when specifiating no texture. StringKey ==
+ * "EMPTY_TEXTURE_KEY"
+ * 01 = inclusive and above used for user added texture (ordered the way the get
+ * added).
  *
  * @author Eike Foede, Roah
  */
@@ -29,7 +33,7 @@ public final class MapData {
     private final ArrayList<TileChangeListener> tileListeners = new ArrayList<TileChangeListener>();
     private final HexGridMapLoader hexGridMapLoader;
     private GhostMode mode;
-    private ProceduralGenerator generator;
+    private ProceduralHexGrid generator;
     private String mapName = "Undefined";
     private ArrayList<String> textureKeys = new ArrayList<String>();
 
@@ -42,7 +46,7 @@ public final class MapData {
         hexGridMapLoader = new HexGridMapLoader(assetManager);
         genTextureKeys(textureKeys);
         if (!mode.equals(GhostMode.NONE)) {
-            generator = new ProceduralGenerator(ProceduralGenerator.generateSeed(), this.textureKeys.size());
+            generator = new ProceduralHexGrid(ProceduralHexGrid.generateSeed(), this.textureKeys.size());
         }
         this.mode = mode;
     }
@@ -50,7 +54,7 @@ public final class MapData {
     private void genTextureKeys(Object[] userKey) {
         if (userKey != null) {
             for (int i = -1; i < userKey.length; i++) {
-                if(i == -1) {
+                if (i == -1) {
                     textureKeys.add("EMPTY_TEXTURE_KEY");
                 } else {
                     if (userKey[i].toString().equals("NO_TILES")
@@ -102,7 +106,7 @@ public final class MapData {
         return mode;
     }
 
-    public ProceduralGenerator getGenerator() {
+    public ProceduralHexGrid getGenerator() {
         return generator;
     }
 
@@ -308,7 +312,7 @@ public final class MapData {
         } else {
             try {
                 return textureKeys.get(textureKey);
-            } catch (IndexOutOfBoundsException e) {                
+            } catch (IndexOutOfBoundsException e) {
                 return "EMPTY_TEXTURE_KEY";
             }
         }

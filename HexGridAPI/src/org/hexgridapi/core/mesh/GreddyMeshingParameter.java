@@ -480,7 +480,6 @@ public final class GreddyMeshingParameter {
     }
 
     private enum Shape {
-
         SQUARE,
         CIRCLE;
     }
