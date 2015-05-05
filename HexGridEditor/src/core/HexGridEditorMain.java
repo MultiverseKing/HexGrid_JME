@@ -103,13 +103,17 @@ public class HexGridEditorMain extends HexGridDefaultApp {
 
         startCanvas();
     }
-
+    
     public boolean isStart() {
         return isStart;
     }
 
     public JFrame getRootWindow() {
         return rootWindow;
+    }
+    
+    @Override
+    public void initApp() {
     }
 
     public void startHexGridEditor() {
