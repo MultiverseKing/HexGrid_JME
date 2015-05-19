@@ -14,13 +14,14 @@ import org.hexgridapi.utility.ArrowDebugShape;
  * @author roah
  */
 public class DefaultParam {
+
     private RTSCamera rtsCam;
 
     public DefaultParam(SimpleApplication app, boolean debug) {
         app.setPauseOnLostFocus(false);
         lightSettup(app);
         cameraSettup(app);
-        if(debug){
+        if (debug) {
             initDebug(app);
         }
     }
@@ -39,15 +40,15 @@ public class DefaultParam {
 //        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), 1024, 1);
 //        dlsf.setLight(sun);
 //        fpp.addFilter(dlsf);
-        
-        /* AO */ 
+
+        /* AO */
 //        FilterPostProcessor fpp = new FilterPostProcessor(app.getAssetManager());
 //        SSAOFilter ssaoFilter = new SSAOFilter();//1f, 3.2f, 0.2f, 0.1f);
 //        fpp.addFilter(ssaoFilter);
 //        app.getViewPort().addProcessor(fpp);
-         
+
 //        /* DropShadow */
-        final int SHADOWMAP_SIZE=1024;
+        final int SHADOWMAP_SIZE = 1024;
 //        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), SHADOWMAP_SIZE, 1);
 //        dlsr.setLight(sun);
 //        app.getViewPort().addProcessor(dlsr);
@@ -58,7 +59,7 @@ public class DefaultParam {
 //        fpp = new FilterPostProcessor(app.getAssetManager());
         fpp.addFilter(dlsf);
         app.getViewPort().addProcessor(fpp);
-        
+
         /**
          * A white ambient light source.
          */
@@ -71,7 +72,7 @@ public class DefaultParam {
     private void cameraSettup(SimpleApplication app) {
         app.getFlyByCamera().setEnabled(false);
         rtsCam = new RTSCamera(RTSCamera.UpVector.Y_UP, "AZERTY");
-        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)){
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
             rtsCam.setCenter(new Vector3f(20, 15, 18));
         } else {
             rtsCam.setCenter(new Vector3f(11, 15, 15));
@@ -79,11 +80,11 @@ public class DefaultParam {
         rtsCam.setRot(120);
         app.getStateManager().attach(rtsCam);
     }
-    
+
     private void initDebug(SimpleApplication app) {
         ArrowDebugShape arrowShape = new ArrowDebugShape(app.getAssetManager(), app.getRootNode(), new Vector3f(0f, 0f, 0f));
     }
-    
+
     public RTSCamera getCam() {
         return rtsCam;
     }
