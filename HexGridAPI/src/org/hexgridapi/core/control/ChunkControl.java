@@ -1,23 +1,15 @@
 package org.hexgridapi.core.control;
 
-import com.jme3.asset.AssetManager;
-import com.jme3.asset.TextureKey;
-import com.jme3.material.Material;
-import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
-import com.jme3.renderer.queue.RenderQueue;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
-import com.jme3.texture.Texture;
-import java.util.HashMap;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.MapData;
-import org.hexgridapi.core.MapData.GhostMode;
-import org.hexgridapi.core.mesh.GreddyMeshingParameter;
+import org.hexgridapi.core.control.chunkbuilder.DefaultBuilder;
+import org.hexgridapi.core.mesh.GreddyMesher;
+import org.hexgridapi.utility.HexCoordinate;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
@@ -27,35 +19,14 @@ import org.hexgridapi.utility.Vector2Int;
  */
 public class ChunkControl extends AbstractControl {
 
-    protected final GhostMode mode;
-    protected final AssetManager assetManager;
-    protected final GreddyMeshingParameter meshParam;
-    protected final Material hexMaterial;
+    protected final DefaultBuilder builder;
     protected boolean onlyGround;
     protected Vector2Int chunkPosition;
 
-    /**
-     * Create a new chunk.
-     *
-     * @param meshParam instance of mesh generator to use.
-     * @param assetManager used to load texture and materials.
-     * @param onlyGround used to know if depth have to be added to the chunk.
-     * @param debugMode used to know if null tile need to be generated.
-     * @param chunkPosition initial position.
-     */
-    public ChunkControl(GreddyMeshingParameter meshParam, AssetManager assetManager,
-            Material hexMaterial, GhostMode mode, Vector2Int chunkPosition, boolean onlyGround) {
-        this.hexMaterial = hexMaterial;
-//        if (hexMaterial.getKey().getExtension().equals("j3md")) {
-//        } else {
-//            System.err.println("matCLone");
-//            this.hexMaterial = hexMaterial.clone();
-//        }
-        this.meshParam = meshParam;
-        this.assetManager = assetManager;
-        this.mode = mode;
+    public ChunkControl(DefaultBuilder builder, Vector2Int chunkPosition, boolean onlyGround) {
         this.chunkPosition = chunkPosition;
         this.onlyGround = onlyGround;
+        this.builder = builder;
     }
 
     @Override
@@ -64,8 +35,8 @@ public class ChunkControl extends AbstractControl {
             // initialize
             super.setSpatial(spatial);
             ((Node) spatial).attachChild(new Node("TILES.0|0"));
-//            spatial.setShadowMode(RenderQueue.ShadowMode.Inherit);
             update();
+            ((Node) spatial).setLocalTranslation(getChunkWorldPosition(chunkPosition));
         } else if (spatial == null) {
             // cleanup
         } else {
@@ -97,46 +68,7 @@ public class ChunkControl extends AbstractControl {
          * Generate the tile and attach them with the right texture.
          * 1 geometry by texture.
          */
-        setMesh((Node) ((Node) spatial).getChild("TILES.0|0"),
-                meshParam.getMesh(onlyGround, chunkPosition));
-    }
-
-    protected void setMesh(Node parent, HashMap<String, Mesh> mesh) {
-        if (!hexMaterial.getName().equals("arrayTextureMaterial")) {
-            for (String value : mesh.keySet()) {
-                Material mat = hexMaterial.clone();
-                Geometry tile = new Geometry(value, mesh.get(value));
-                Texture text;
-//                if (value.equals("EMPTY_TEXTURE_KEY")) {
-//                    text = assetManager.loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false));
-//                } else 
-                if (value.equals("NO_TILE") && (mode.equals(MapData.GhostMode.GHOST)
-                        || mode.equals(MapData.GhostMode.GHOST_PROCEDURAL))) {
-                    TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false);
-                    k.setGenerateMips(true);
-                    text = assetManager.loadTexture(k);
-                    mat.setColor("Color", ColorRGBA.Blue);
-                } else {
-                    TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false);
-                    k.setGenerateMips(true);
-                    text = assetManager.loadTexture(k);
-                }
-                text.setWrap(Texture.WrapMode.Repeat);
-
-                mat.setTexture("ColorMap", text);
-//            mat.setTexture("DiffuseMap", text);
-//            mat.getAdditionalRenderState().setWireframe(true);
-//            tile.getMesh().setMode(Mesh.Mode.Points);
-                tile.setMaterial(mat);
-                tile.setShadowMode(RenderQueue.ShadowMode.Inherit);
-                parent.attachChild(tile);
-            }
-        } else {
-            Geometry tile = new Geometry("Geometry.ArrayTexture.TILES.0|0", mesh.get("mesh"));
-            tile.setMaterial(hexMaterial);
-            tile.setShadowMode(RenderQueue.ShadowMode.Inherit);
-            parent.attachChild(tile);
-        }
+        builder.getTiles((Node) ((Node) spatial).getChild("TILES.0|0"), false, chunkPosition);
     }
 
     public Vector2Int getChunkPosition() {
@@ -144,29 +76,30 @@ public class ChunkControl extends AbstractControl {
     }
 
     /**
-     * @return false if the chunk contain no tile (excluding ghost tile).
-     * <p>If GhostMode.GHOST || GhostMode.GHOST_PROCEDURAL && only ghost
-     * tile<br>
-     * return true. </p>
-     * <p>If GhostMode.NONE || GhostMode.PROCEDURAL && contain no tile<br>
-     * return true. </p>
-     * @deprecated See {
-     * @see MapData#contain(Vector2Int)}
+     * Convert chunk position in hexMap to world unit.
+     *
+     * @param chunkPosition
+     * @hint world unit position is the same than the node containing the chunk.
+     * @return chunk world unit position.
      */
-    public boolean isEmpty() {
-        if ((mode.equals(MapData.GhostMode.GHOST)
-                || mode.equals(MapData.GhostMode.GHOST_PROCEDURAL))
-                && ((Node) ((Node) spatial).getChild("TILES.0|0"))
-                .getChildren().size() < 2
-                && ((Node) ((Node) spatial).getChild("TILES.0|0"))
-                .getChildren().get(0).getName().equals("NO_TILE")
-                || (mode.equals(MapData.GhostMode.NONE)
-                || mode.equals(MapData.GhostMode.PROCEDURAL))
-                && ((Node) ((Node) spatial).getChild("TILES.0|0"))
-                .getChildren().isEmpty()) {
-            return true;
+    public static Vector3f getChunkWorldPosition(Vector2Int chunkPosition) {
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
+            return new Vector3f(chunkPosition.x * HexSetting.CHUNK_SIZE * HexSetting.HEX_WIDTH, 0,
+                    (chunkPosition.y * HexSetting.CHUNK_SIZE) * (float) (HexSetting.HEX_RADIUS * 1.5));
         } else {
-            return false;
+//            int originPosY =// ((chunkPosition.x & 1) != 0 ? HexSetting.CHUNK_SIZE + 1 * (chunkPosition.y < 0 ? -1 : 1) : 0)
+//                     chunkPosition.y * (HexSetting.CHUNK_SIZE+2);
+//            int originPosX = //((chunkPosition.x & 1) != 0 ? (chunkPosition.x < 0 ? 1 : -1) : 0)
+//                     chunkPosition.x * (HexSetting.CHUNK_SIZE+1);// + ((chunkPosition.x & 1) != 0 ? 0 : 1));
+////            HexCoordinate chunkCenter = new HexCoordinate();
+//            System.err.println("ChunkPos = " + chunkPosition.x + ". World position = "+originPosX);
+//            return new Vector3f(originPosX*HexSetting.HEX_WIDTH, 0, originPosY * (float) (HexSetting.HEX_RADIUS * 1.5));
+            return new HexCoordinate(HexCoordinate.Coordinate.OFFSET, chunkPosition).toWorldPosition();
+//            float chunkDiamX = (HexSetting.CHUNK_SIZE * 2 + 1) * HexSetting.HEX_WIDTH;
+//            float chunkDiamY = (HexSetting.CHUNK_SIZE * 2 + 1) * HexSetting.HEX_RADIUS * 1.5f;
+//            return new Vector3f(chunkPosition.x * chunkDiamX
+//                    + ((chunkPosition.y & 1) == 0 ? 0 : HexSetting.HEX_WIDTH / 2),
+//                    0, chunkPosition.y * chunkDiamY);
         }
     }
 }

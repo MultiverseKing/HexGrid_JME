@@ -8,7 +8,7 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.mesh.GreddyMeshingParameter.CullingData;
+import org.hexgridapi.core.mesh.GreddyMesher.CullingData;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
@@ -69,7 +69,7 @@ public final class MeshGenerator {
      * @param greddyMeshParam parameter to use.
      * @return newly generated Mesh.
      */
-    public Mesh getMesh(GreddyMeshingParameter greddyMeshParam) {
+    public Mesh getMesh(GreddyMesher greddyMeshParam) {
         ArrayList<Vector3f[]> vertices = new ArrayList<Vector3f[]>();
         ArrayList<Vector2f[]> texCoord = new ArrayList<Vector2f[]>();
         ArrayList<int[]> index = new ArrayList<int[]>();
@@ -157,7 +157,7 @@ public final class MeshGenerator {
      * @param meshParam parameter to use.
      * @return newly generated Mesh.
      */
-    public Mesh getArrayTextureMesh(GreddyMeshingParameter meshParam) {
+    public Mesh getArrayTextureMesh(GreddyMesher meshParam) {
         ArrayList<Vector3f[]> vertices = new ArrayList<Vector3f[]>();
         ArrayList<Vector3f[]> texCoord = new ArrayList<Vector3f[]>();
         ArrayList<int[]> index = new ArrayList<int[]>();
@@ -621,7 +621,7 @@ public final class MeshGenerator {
          */
         for (int x = 0; x < size.x; x++) {
             int vert = x * 4 + arrayOffset;
-            if (!culling.getCulling(GreddyMeshingParameter.Position.TOP, x, GreddyMeshingParameter.Position.TOP_LEFT)) {
+            if (!culling.getCulling(GreddyMesher.Position.TOP, x, GreddyMesher.Position.TOP_LEFT)) {
                 index[i] = vert;
                 index[i + 1] = vert + 1;
                 index[i + 2] = vert + groundOffset;
@@ -630,7 +630,7 @@ public final class MeshGenerator {
                 index[i + 4] = vert + 1;
                 index[i + 5] = vert + 1 + groundOffset;
             }
-            if (!culling.getCulling(GreddyMeshingParameter.Position.TOP, x, GreddyMeshingParameter.Position.TOP_RIGHT)) {
+            if (!culling.getCulling(GreddyMesher.Position.TOP, x, GreddyMesher.Position.TOP_RIGHT)) {
                 index[i + 6] = (x + 1) * 4 + arrayOffset;
                 index[i + 7] = (x + 1) * 4 + arrayOffset + groundOffset;
                 index[i + 8] = vert + 1;
@@ -639,7 +639,7 @@ public final class MeshGenerator {
                 index[i + 10] = x != size.x - 1 ? (x + 1) * 4 + arrayOffset + groundOffset : size.x * 4 + arrayOffset + groundOffset;
                 index[i + 11] = vert + 1 + groundOffset;
             }
-            if (!culling.getCulling(GreddyMeshingParameter.Position.BOTTOM, x, GreddyMeshingParameter.Position.BOT_LEFT)) {
+            if (!culling.getCulling(GreddyMesher.Position.BOTTOM, x, GreddyMesher.Position.BOT_LEFT)) {
                 index[i + 12] = vert + 2;
                 index[i + 13] = vert + 1 + 2;
                 index[i + 14] = vert + groundOffset + 2;
@@ -648,7 +648,7 @@ public final class MeshGenerator {
                 index[i + 16] = vert + 1 + 2;
                 index[i + 17] = vert + 1 + groundOffset + 2;
             }
-            if (!culling.getCulling(GreddyMeshingParameter.Position.BOTTOM, x, GreddyMeshingParameter.Position.BOT_RIGHT)) {
+            if (!culling.getCulling(GreddyMesher.Position.BOTTOM, x, GreddyMesher.Position.BOT_RIGHT)) {
                 index[i + 18] = x != size.x - 1 ? (x + 1) * 4 + arrayOffset + groundOffset + 2 + 1 : size.x * 4 + arrayOffset + 1 + groundOffset;
                 index[i + 19] = x != size.x - 1 ? (x + 1) * 4 + arrayOffset + 2 + 1 : size.x * 4 + arrayOffset + 1;
                 index[i + 20] = vert + 2;
@@ -663,7 +663,7 @@ public final class MeshGenerator {
          * generate left/right face.
          */
         int offsetB = size.x * 4 + 2 + arrayOffset;
-        if (!culling.getCulling(GreddyMeshingParameter.Position.LEFT, 0, GreddyMeshingParameter.Position.LEFT)) {
+        if (!culling.getCulling(GreddyMesher.Position.LEFT, 0, GreddyMesher.Position.LEFT)) {
             index[i] = offsetB;
             index[i + 1] = offsetB + groundOffset;
             index[i + 2] = offsetB + 2;
@@ -673,7 +673,7 @@ public final class MeshGenerator {
             index[i + 5] = offsetB + groundOffset + 2;
         }
 
-        if (!culling.getCulling(GreddyMeshingParameter.Position.RIGHT, 0, GreddyMeshingParameter.Position.RIGHT)) {
+        if (!culling.getCulling(GreddyMesher.Position.RIGHT, 0, GreddyMesher.Position.RIGHT)) {
             index[i + 6] = offsetB + 1;
             index[i + 7] = offsetB + 3;
             index[i + 8] = offsetB + groundOffset + 1;
@@ -686,7 +686,7 @@ public final class MeshGenerator {
         i += 12;
         for (int y = 1; y < size.y; y++) {
             int vert = (y - 1) * 6;
-            if (!culling.getCulling(GreddyMeshingParameter.Position.LEFT, y, GreddyMeshingParameter.Position.LEFT)) {
+            if (!culling.getCulling(GreddyMesher.Position.LEFT, y, GreddyMesher.Position.LEFT)) {
                 index[i] = offsetB + vert + 4;
                 index[i + 1] = offsetB + vert + 2;
                 index[i + 2] = offsetB + groundOffset + vert + 2;
@@ -696,8 +696,8 @@ public final class MeshGenerator {
                 index[i + 5] = offsetB + groundOffset + vert + 4;
             }
 
-            if (!culling.getCulling(GreddyMeshingParameter.Position.LEFT, y, GreddyMeshingParameter.Position.TOP_LEFT)
-                    || !culling.getCulling(GreddyMeshingParameter.Position.LEFT, y - 1, GreddyMeshingParameter.Position.BOT_LEFT)) {
+            if (!culling.getCulling(GreddyMesher.Position.LEFT, y, GreddyMesher.Position.TOP_LEFT)
+                    || !culling.getCulling(GreddyMesher.Position.LEFT, y - 1, GreddyMesher.Position.BOT_LEFT)) {
                 index[i + 6] = offsetB + vert;
                 index[i + 7] = offsetB + groundOffset + vert;
                 index[i + 8] = offsetB + vert + 2;
@@ -707,7 +707,7 @@ public final class MeshGenerator {
                 index[i + 11] = offsetB + groundOffset + vert + 2;
             }
 
-            if (!culling.getCulling(GreddyMeshingParameter.Position.RIGHT, y, GreddyMeshingParameter.Position.RIGHT)) {
+            if (!culling.getCulling(GreddyMesher.Position.RIGHT, y, GreddyMesher.Position.RIGHT)) {
                 index[i + 12] = offsetB + vert + 3;
                 index[i + 13] = offsetB + vert + 5;
                 index[i + 14] = offsetB + groundOffset + vert + 3;
@@ -717,8 +717,8 @@ public final class MeshGenerator {
                 index[i + 17] = offsetB + groundOffset + vert + 3;
             }
 
-            if (!culling.getCulling(GreddyMeshingParameter.Position.RIGHT, y, GreddyMeshingParameter.Position.TOP_RIGHT)
-                    || !culling.getCulling(GreddyMeshingParameter.Position.RIGHT, y - 1, GreddyMeshingParameter.Position.BOT_RIGHT)) {
+            if (!culling.getCulling(GreddyMesher.Position.RIGHT, y, GreddyMesher.Position.TOP_RIGHT)
+                    || !culling.getCulling(GreddyMesher.Position.RIGHT, y - 1, GreddyMesher.Position.BOT_RIGHT)) {
                 index[i + 18] = offsetB + vert + 1;
                 index[i + 19] = offsetB + vert + 3;
                 index[i + 20] = offsetB + groundOffset + vert + 1;

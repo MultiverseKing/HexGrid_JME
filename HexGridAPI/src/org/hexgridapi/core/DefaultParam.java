@@ -5,7 +5,8 @@ import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
-import com.jme3.shadow.DirectionalLightShadowRenderer;
+import com.jme3.shadow.DirectionalLightShadowFilter;
+import org.hexgridapi.core.mesh.GreddyMesher;
 import org.hexgridapi.utility.ArrowDebugShape;
 
 /**
@@ -45,18 +46,18 @@ public class DefaultParam {
 //        fpp.addFilter(ssaoFilter);
 //        app.getViewPort().addProcessor(fpp);
          
-        /* DropShadow */
+//        /* DropShadow */
         final int SHADOWMAP_SIZE=1024;
-        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), SHADOWMAP_SIZE, 1);
-        dlsr.setLight(sun);
-        app.getViewPort().addProcessor(dlsr);
+//        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), SHADOWMAP_SIZE, 1);
+//        dlsr.setLight(sun);
+//        app.getViewPort().addProcessor(dlsr);
 // 
-//        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), SHADOWMAP_SIZE, 1);
-//        dlsf.setLight(sun);
-//        dlsf.setEnabled(true);
-////        fpp = new FilterPostProcessor(app.getAssetManager());
-//        fpp.addFilter(dlsf);
-//        app.getViewPort().addProcessor(fpp);
+        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), SHADOWMAP_SIZE, 1);
+        dlsf.setLight(sun);
+        dlsf.setEnabled(true);
+//        fpp = new FilterPostProcessor(app.getAssetManager());
+        fpp.addFilter(dlsf);
+        app.getViewPort().addProcessor(fpp);
         
         /**
          * A white ambient light source.
@@ -69,9 +70,12 @@ public class DefaultParam {
 
     private void cameraSettup(SimpleApplication app) {
         app.getFlyByCamera().setEnabled(false);
-        rtsCam = new RTSCamera(RTSCamera.UpVector.Y_UP);//, "AZERTY");
-//        rtsCam.setCenter(new Vector3f(8, 15f, 8));
-        rtsCam.setCenter(new Vector3f(8, 17, 8));
+        rtsCam = new RTSCamera(RTSCamera.UpVector.Y_UP, "AZERTY");
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)){
+            rtsCam.setCenter(new Vector3f(20, 15, 18));
+        } else {
+            rtsCam.setCenter(new Vector3f(11, 15, 15));
+        }
         rtsCam.setRot(120);
         app.getStateManager().attach(rtsCam);
     }

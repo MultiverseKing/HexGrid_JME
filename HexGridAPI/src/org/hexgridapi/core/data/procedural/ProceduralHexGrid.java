@@ -1,14 +1,10 @@
-package org.hexgridapi.core.mapgenerator;
+package org.hexgridapi.core.data.procedural;
 
 import com.jme3.math.FastMath;
-import java.util.HashMap;
 import libnoiseforjava.NoiseGen;
 import libnoiseforjava.module.Perlin;
-import org.hexgridapi.core.HexGrid;
-import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.HexTile;
+import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.utility.HexCoordinate;
-import org.hexgridapi.utility.Vector2Int;
 
 /**
  *
@@ -51,35 +47,6 @@ public final class ProceduralHexGrid extends Generator {
      */
     public int getSeed() {
         return perlin.getSeed();
-    }
-
-    /**
-     * Generate a range of data following the current seed for the specifiated
-     * param and chunk.
-     * Do not use (0 & 1) as param value, these are used internaly.
-     *
-     * @param chunkPos where to generate the data for.
-     * @param paramList any integer number (except 0 && 1)
-     * @return all the data generated for the specifiated param and chunk.
-     * @throws IllegalArgumentException if param == 0 | param == 1
-     * @deprecated 
-     */
-    public ProceduralChunkData getChunkValue(Vector2Int chunkPos, int[] paramList) throws IllegalArgumentException {
-        Vector2Int chunkInitTile = HexGrid.getInitialChunkTile(chunkPos).toOffset();
-        HashMap<Integer, HashMap<Vector2Int, Float>> data = new HashMap<Integer, HashMap<Vector2Int, Float>>();
-
-        for (int paramValue : paramList) {
-            for (int x = 0; x < HexSetting.CHUNK_SIZE; x++) {
-                for (int y = 0; y < HexSetting.CHUNK_SIZE; y++) {
-                    if (!data.containsKey(paramValue)) {
-                        data.put(paramValue, new HashMap<Vector2Int, Float>());
-                    }
-                    data.get(paramValue).put( new Vector2Int(x, y), 
-                            getCustom(x + chunkInitTile.x, x + chunkInitTile.x, paramValue));
-                }
-            }
-        }
-        return new ProceduralChunkData(data);
     }
 
     public HexTile getTileValue(HexCoordinate tilePos) {

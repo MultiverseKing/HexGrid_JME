@@ -1,6 +1,6 @@
 package org.hexgridapi.loader;
 
-import org.hexgridapi.core.HexTile;
+import org.hexgridapi.core.data.HexTile;
 import com.jme3.asset.AssetInfo;
 import com.jme3.asset.AssetKey;
 import com.jme3.asset.AssetLoader;

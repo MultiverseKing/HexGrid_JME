@@ -2,26 +2,21 @@ package org.hexgridapi.core.control;
 
 import org.hexgridapi.events.GhostListener;
 import com.jme3.app.Application;
-import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.Camera;
-import com.jme3.renderer.queue.RenderQueue;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import com.jme3.scene.VertexBuffer;
-import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.MapData;
-import org.hexgridapi.core.mesh.GreddyMeshingParameter;
+import org.hexgridapi.core.control.chunkbuilder.DefaultBuilder;
+import org.hexgridapi.core.control.chunkbuilder.GhostBuilder;
+import org.hexgridapi.core.data.MapData;
+import org.hexgridapi.core.mesh.GreddyMesher;
 import org.hexgridapi.events.MouseInputEvent;
 import org.hexgridapi.utility.HexCoordinate;
 import org.hexgridapi.utility.Vector2Int;
@@ -29,122 +24,47 @@ import org.hexgridapi.utility.Vector2Int;
 /**
  * Chunk handling by himself and follow the camera.
  *
+ * @todo shadow...
  * @todo if chunk position is > 1 from center remove shadow !?
  * @author roah
  */
 public class GhostControl extends ChunkControl {
 
     private final Node collisionNode = new Node("GhostCollision");
+    private final MapData.GhostMode mode;
     private final HexGrid system;
     private final Camera cam;
     private GridRayCastControl rayControl;
     private Vector3f oldCamPosition = new Vector3f();
     private ArrayList<GhostListener> listeners = new ArrayList<GhostListener>();
 
-    public GhostControl(Application app, GreddyMeshingParameter meshParam, Material hexMat,
-            MapData.GhostMode mode, Vector2Int pos, HexGrid system) {
-        super(meshParam, app.getAssetManager(), hexMat, mode, pos, false);
+    public GhostControl(Application app, DefaultBuilder builder,
+            MapData.GhostMode mode, Vector2Int chunkPosition, HexGrid system) {
+        super(GhostBuilder.getBuilder(builder), chunkPosition, false);
         if (mode.equals(MapData.GhostMode.NONE)) {
             throw new UnsupportedOperationException(mode + " isn't allowed for Ghost Control");
         }
         this.cam = app.getCamera();
-        Geometry collisionPlane = new Geometry("ghostCollision", genQuad(3f));
-        Material mat = assetManager.loadMaterial("Materials/ghostCollision.j3m");
-        collisionPlane.setMaterial(mat);
-        collisionNode.attachChild(collisionPlane);
-//        collisionPlane.setShadowMode(RenderQueue.ShadowMode.Off);
+        collisionNode.attachChild(((GhostBuilder)super.builder).getCollisionPlane());
         this.rayControl = new GridRayCastControl(app, collisionNode, ColorRGBA.Green);
         this.system = system;
-    }
-
-    private static Mesh genQuad(float radius) {
-        float sizeX = HexSetting.CHUNK_SIZE * HexSetting.HEX_WIDTH;
-        float sizeY = HexSetting.CHUNK_SIZE * (HexSetting.HEX_RADIUS * 1.5f) - HexSetting.HEX_RADIUS / 2;
-        float posY = 0;
-        Vector3f[] vertices = new Vector3f[]{
-            new Vector3f(-(HexSetting.HEX_WIDTH / 2 + sizeX * radius), posY, -(HexSetting.HEX_RADIUS + sizeY * radius)), // top left
-
-            new Vector3f(sizeX + sizeX * radius, posY, -(HexSetting.HEX_RADIUS + sizeY * radius)), // top right
-
-            new Vector3f(-(HexSetting.HEX_WIDTH / 2 + sizeX * radius), posY, sizeY + sizeY * radius), // bot left
-
-            new Vector3f(sizeX + sizeX * radius, posY, sizeY + sizeY * radius) // bot right
-        };
-        Vector2f[] texCoord = new Vector2f[]{new Vector2f(), new Vector2f(1, 0), new Vector2f(0, 1), new Vector2f(1, 1)};
-        int[] index = new int[]{0, 2, 1, 1, 2, 3};
-
-        Mesh result = new Mesh();
-        result.setBuffer(VertexBuffer.Type.Position, 3, BufferUtils.createFloatBuffer(vertices));
-        result.setBuffer(VertexBuffer.Type.TexCoord, 2, BufferUtils.createFloatBuffer(texCoord));
-        result.setBuffer(VertexBuffer.Type.Index, 3, BufferUtils.createIntBuffer(index));
-        result.createCollisionData();
-        result.updateBound();
-
-        return result;
+        this.mode = mode;
     }
 
     @Override
     public void setSpatial(Spatial spatial) {
         super.setSpatial(spatial);
         if (spatial != null && spatial instanceof Node) {
-            ((Node) spatial).getParent().getParent().attachChild(collisionNode); //@todo check if it is HexGridNode
-            if (mode.equals(MapData.GhostMode.GHOST)) {
-                genGhost();
+            ((Node) spatial).getParent().getParent().attachChild(collisionNode);
+            oldCamPosition = cam.getLocation().clone();
+            if (((GhostBuilder) builder).getMode().equals(MapData.GhostMode.GHOST)) {
+                ((GhostBuilder) builder).generateGhost(system, (Node) spatial, chunkPosition, onlyGround);
             }
             updatePosition(true);
         } else if (spatial == null) {
             // cleanup
         } else {
             throw new UnsupportedOperationException("Provided spatial must be a Node.");
-        }
-    }
-
-    private void genGhost() {
-        if (mode.equals(MapData.GhostMode.GHOST_PROCEDURAL)
-                || mode.equals(MapData.GhostMode.PROCEDURAL)) {
-            Set<Vector2Int> list = system.getChunksNodes();
-            for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
-                for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
-                    if (!(x == 0 && y == 0)
-                            && !list.contains(chunkPosition.add(x, y))) {
-                        genProcedural(x, y);
-                    }
-                }
-            }
-        } else {
-            Geometry child = (Geometry) ((Node) ((Node) spatial).getChild("TILES.0|0")).getChild(0);
-            Material mat = assetManager.loadMaterial("Materials/hexMat.j3m");
-            mat.setTexture("ColorMap", child.getMaterial().getTextureParam("ColorMap").getTextureValue());
-            mat.setColor("Color", new ColorRGBA(0, 0, 1, 0.5f));
-            child.getMaterial().setColor("Color", new ColorRGBA(0, 0, 1, 0.7f));
-            for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
-                for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
-                    if (!(x == 0 && y == 0)) {
-                        Node tileNode = new Node("TILES." + x + "|" + y);
-                        Geometry tileGeo = new Geometry("NO_TILE", child.getMesh());
-                        tileGeo.setMaterial(mat);
-                        tileNode.attachChild(tileGeo);
-                        tileNode.setLocalTranslation(HexGrid.getChunkWorldPosition(chunkPosition.add(x, y)));
-                        ((Node) spatial).attachChild(tileNode);
-                        tileNode.setCullHint(Spatial.CullHint.Inherit);
-                    }
-                }
-            }
-        }
-    }
-
-    private void genProcedural(int x, int y) {
-        Node tileNode;
-        if (((Node) spatial).getChild("TILES." + x + "|" + y) != null) {
-            tileNode = (Node) ((Node) spatial).getChild("TILES." + x + "|" + y);
-            tileNode.detachAllChildren();
-        } else {
-            tileNode = new Node("TILES." + x + "|" + y);
-            tileNode.setLocalTranslation(HexGrid.getChunkWorldPosition(chunkPosition.add(x, y)));
-        }
-        setMesh(tileNode, meshParam.getMesh(onlyGround, chunkPosition.add(x, y)));
-        if (((Node) spatial).getChild("TILES." + x + "|" + y) == null) {
-            ((Node) spatial).attachChild(tileNode);
         }
     }
 
@@ -163,7 +83,8 @@ public class GhostControl extends ChunkControl {
             MouseInputEvent event = rayControl.castRay(null);
             if (event != null) {
                 HexCoordinate pos = event.getPosition();
-                if (pos != null && !isInRange(pos.getCorrespondingChunk())) {
+                if (pos != null && !pos.getCorrespondingChunk().equals(chunkPosition)
+                        && !isInRange(pos.getCorrespondingChunk())) {
                     this.chunkPosition = pos.getCorrespondingChunk();
                     updatePosition(false);
                 }
@@ -173,16 +94,16 @@ public class GhostControl extends ChunkControl {
     }
 
     private void updatePosition(boolean initialise) {
-        Vector3f pos = HexGrid.getChunkWorldPosition(chunkPosition);
-        spatial.setLocalTranslation(pos);
+        Vector3f pos = getChunkWorldPosition(chunkPosition);
         collisionNode.setLocalTranslation(pos);
+        spatial.setLocalTranslation(pos);
         if (mode.equals(MapData.GhostMode.GHOST_PROCEDURAL)
                 || mode.equals(MapData.GhostMode.PROCEDURAL)) {
             if (!initialise) {
                 update();
                 updateListeners();
             }
-            genGhost();
+            ((GhostBuilder) builder).generateGhost(system, (Node) spatial, chunkPosition, onlyGround);
         }
         updateCulling();
     }
@@ -200,25 +121,47 @@ public class GhostControl extends ChunkControl {
      */
     public void updateCulling() {
         Set<Vector2Int> list = system.getChunksNodes();
-        for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
-            for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
-                if (list.contains(chunkPosition.add(x, y))) {
-                    if (mode.equals(MapData.GhostMode.GHOST)) {
-                        ((Node) spatial).getChild("TILES." + x + "|" + y).setCullHint(Spatial.CullHint.Always);
-                    } else {
-                        ((Node) ((Node) spatial).getChild("TILES." + x + "|" + y)).detachAllChildren();
-                    }
-                } else if (mode.equals(MapData.GhostMode.GHOST)) {
-                    ((Node) spatial).getChild("TILES." + x + "|" + y).setCullHint(Spatial.CullHint.Inherit);
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
+            for (int x = -HexSetting.GHOST_CONTROL_RADIUS; x <= HexSetting.GHOST_CONTROL_RADIUS; x++) {
+                for (int y = -HexSetting.GHOST_CONTROL_RADIUS; y <= HexSetting.GHOST_CONTROL_RADIUS; y++) {
+                    setCulling(x, y, list.contains(chunkPosition.add(x, y)));
                 }
+            }
+        } else {
+            HexCoordinate coord = new HexCoordinate(HexCoordinate.Coordinate.OFFSET, Vector2Int.ZERO);
+            for (HexCoordinate c : coord.getCoordinateInRange(HexSetting.GHOST_CONTROL_RADIUS)) {
+                Vector2Int offset = c.toOffset();
+                setCulling(offset.x, offset.y, list.contains(chunkPosition.add(offset.x, offset.y)));
             }
         }
     }
 
+    private void setCulling(int x, int y, boolean set) {
+        if (set) {
+            if (mode.equals(MapData.GhostMode.GHOST)) {
+                ((Node) spatial).getChild("TILES." + x + "|" + y).setCullHint(Spatial.CullHint.Always);
+            } else {
+                ((Node) ((Node) spatial).getChild("TILES." + x + "|" + y)).detachAllChildren();
+            }
+        } else if (mode.equals(MapData.GhostMode.GHOST)) {
+            ((Node) spatial).getChild("TILES." + x + "|" + y).setCullHint(Spatial.CullHint.Inherit);
+        }
+    }
+
     private boolean isInRange(Vector2Int pos) {
-        for (int x = -(HexSetting.GHOST_CONTROL_RADIUS - 1); x <= (HexSetting.GHOST_CONTROL_RADIUS - 1); x++) {
-            for (int y = -(HexSetting.GHOST_CONTROL_RADIUS - 1); y <= (HexSetting.GHOST_CONTROL_RADIUS - 1); y++) {
-                if (pos.equals(chunkPosition.add(x, y))) {
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
+            for (int x = -(HexSetting.GHOST_CONTROL_RADIUS - 1); x <= (HexSetting.GHOST_CONTROL_RADIUS - 1); x++) {
+                for (int y = -(HexSetting.GHOST_CONTROL_RADIUS - 1); y <= (HexSetting.GHOST_CONTROL_RADIUS - 1); y++) {
+                    if (pos.equals(chunkPosition.add(x, y))) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            HexCoordinate coord = new HexCoordinate(HexCoordinate.Coordinate.OFFSET, Vector2Int.ZERO);
+            for (HexCoordinate c : coord.getCoordinateInRange(HexSetting.GHOST_CONTROL_RADIUS)) {
+                Vector2Int offset = c.toOffset();
+                if (pos.equals(chunkPosition.add(offset.x, offset.y))) {
                     return true;
                 }
             }

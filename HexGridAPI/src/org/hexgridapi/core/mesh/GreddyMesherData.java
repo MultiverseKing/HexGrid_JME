@@ -7,7 +7,7 @@ import org.hexgridapi.utility.Vector2Int;
  *
  * @author roah
  */
-final class GreddyMeshingElementMeshData {
+final class GreddyMesherData {
 
     /**
      * Mesh parameter needed to generate the mesh.
@@ -17,7 +17,7 @@ final class GreddyMeshingElementMeshData {
     private ArrayList<Integer> height = new ArrayList<Integer>();
     private int readIndex = -1;
 
-    GreddyMeshingElementMeshData(Vector2Int position, Integer height) {
+    GreddyMesherData(Vector2Int position, Integer height) {
         add(position, height);
     }
 

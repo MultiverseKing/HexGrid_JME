@@ -7,7 +7,7 @@ import com.jme3.asset.AssetManager;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
 import org.hexgridapi.core.HexGrid;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.MapData;
 
 /**
  * This appState handle the connection between "tile data" and "visual tile".
@@ -38,9 +38,7 @@ public abstract class AbstractHexGridAppState extends HexGrid implements AppStat
     public final void initialize(AppStateManager stateManager, Application app) {
 //        mapData.registerChunkChangeListener(this);
 //        mapData.registerTileChangeListener(this);
-        if(!mapData.getMode().equals(MapData.GhostMode.NONE)){
-            initialiseGhostGrid(app);
-        }
+        super.initialise(app);
 //        ((Node)app.getViewPort().getScenes().get(0)).attachChild(gridNode);
         initializeSystem(stateManager, app);
         initialized = true;

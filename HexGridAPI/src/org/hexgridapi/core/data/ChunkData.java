@@ -1,4 +1,4 @@
-package org.hexgridapi.core;
+package org.hexgridapi.core.data;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -7,7 +7,7 @@ import org.hexgridapi.utility.HexCoordinate;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
- * Contain all hex data.
+ * Contain all user Hex data.
  *
  * @author roah
  */

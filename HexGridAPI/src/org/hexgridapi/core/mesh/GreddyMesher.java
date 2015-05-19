@@ -3,10 +3,9 @@ package org.hexgridapi.core.mesh;
 import com.jme3.scene.Mesh;
 import java.util.HashMap;
 import java.util.Iterator;
-import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.HexTile;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.utility.HexCoordinate;
 import org.hexgridapi.utility.HexCoordinate.Coordinate;
 import org.hexgridapi.utility.Vector2Int;
@@ -18,32 +17,29 @@ import org.hexgridapi.utility.Vector2Int;
  *
  * @author roah
  */
-public final class GreddyMeshingParameter {
+public final class GreddyMesher {
 
     private final MapData mapData;
     /**
      * Contain all list of parameter for a specifate element.
      */
-    private HashMap<String, GreddyMeshingElementMeshData> elementMeshData = new HashMap<String, GreddyMeshingElementMeshData>();
-    private int groundHeight = 0;
-    private Vector2Int inspectedChunk;
+    private HashMap<String, GreddyMesherData> meshData = new HashMap<String, GreddyMesherData>();
+    private int groundHeight = HexSetting.CHUNK_DEPTH;
     private boolean onlyGround;
-    private Shape shapeType; //Used for culling.
     private String inspectedTexture;
+    private Vector2Int chunkPosition;
     private final boolean useArrayTexture;
     private Iterator<String> meshIterator;
 
-    public GreddyMeshingParameter(MapData mapData, boolean useArrayTexture) {
+    public GreddyMesher(MapData mapData, boolean useArrayTexture) {
         this.mapData = mapData;
         this.useArrayTexture = useArrayTexture;
     }
 
-    private void initialize(HexCoordinate centerPosition, int radius, boolean onlyGround, Shape shapeType) {
+    private void initialize(boolean onlyGround) {
         clear();
         this.onlyGround = onlyGround;
-        this.shapeType = shapeType;
-        boolean[][] isVisited = getVisitedList(radius);
-        Vector2Int chunkInitTile = HexGrid.getInitialChunkTile(inspectedChunk).toOffset();
+        boolean[][] isVisited = getVisitedList();
         /**
          * x && y == coord local
          */
@@ -53,53 +49,58 @@ public final class GreddyMeshingParameter {
                     HexTile currentTile;
                     String textValue;
                     boolean currentIsInRange;
-                    HexCoordinate currentTileMapCoord; //global coord -> used in map data and range check
-                    if (centerPosition != null && radius > 0) {
-                        currentTileMapCoord = getNextTileCoord(centerPosition, radius, null, x, y, chunkInitTile);
-                        currentTile = mapData.getTile(currentTileMapCoord);
-                        currentIsInRange = getIsInRange(radius, null, x, y);
+                    if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON)) {
+                        currentIsInRange = getIsInRange(null, x, y);
+                        currentTile = currentIsInRange ? mapData.getTile(getNextTileCoord(null, x, y)) : null;
                     } else {
-                        currentTileMapCoord = new HexCoordinate(Coordinate.OFFSET, x + chunkInitTile.x, y + chunkInitTile.y);
-                        currentTile = mapData.getTile(currentTileMapCoord);
+                        Vector2Int chunkInitTile = getInitialChunkTile().toOffset();
+                        currentTile = mapData.getTile(new HexCoordinate(Coordinate.OFFSET, x + chunkInitTile.x, y + chunkInitTile.y));
                         currentIsInRange = false;
                     }
-                    if (currentTile == null || centerPosition != null && !currentIsInRange) {
-                        textValue = mapData.getTextureValue(-1); //Value used to not generate mesh on that position.
+                    if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON) && !currentIsInRange) {
+                        textValue = null;
+                    } else if (currentTile == null) {
+                        textValue = mapData.getTextureValue(-2); //Value used to not generate mesh on that position.
                     } else {
                         textValue = mapData.getTextureValue(currentTile.getTextureKey());
                     }
                     Integer tileHeight = currentTile == null ? null : currentTile.getHeight();
 
-                    if (elementMeshData.isEmpty() || !elementMeshData.containsKey(textValue)) {
-                        elementMeshData.put(textValue, new GreddyMeshingElementMeshData(new Vector2Int(x, y), tileHeight));
+                    if (meshData.isEmpty() || !meshData.containsKey(textValue)) {
+                        meshData.put(textValue, new GreddyMesherData(new Vector2Int(x, y), tileHeight));
                     } else {
-                        elementMeshData.get(textValue).add(new Vector2Int(x, y), tileHeight);
+                        meshData.get(textValue).add(new Vector2Int(x, y), tileHeight);
                     }
 
                     if (tileHeight != null && tileHeight < groundHeight + HexSetting.CHUNK_DEPTH) {
                         groundHeight = tileHeight;
                     }
 
-                    setSize(centerPosition, radius, isVisited, elementMeshData.get(textValue),
-                            currentTile, currentIsInRange, chunkInitTile);
+                    setSize(isVisited, meshData.get(textValue), currentTile, currentIsInRange);
                 }
             }
         }
     }
 
-    private void setSize(HexCoordinate centerPos, int radius, boolean[][] isVisited, GreddyMeshingElementMeshData currentGreddyData,
-            HexTile currentTile, boolean currentIsInRange, Vector2Int chunkOffset) {
+    private void setSize(boolean[][] isVisited, GreddyMesherData currentGreddyData,
+            HexTile currentTile, boolean currentIsInRange) {
 
         // Define the size on X.
         for (int x = 1; x < isVisited.length - currentGreddyData.getLastAddedPosition().x; x++) {
             boolean alreadyVisited = isVisited[currentGreddyData.getLastAddedPosition().x + x][currentGreddyData.getLastAddedPosition().y];
-            HexTile nextTile = mapData.getTile(getNextTileCoord(centerPos, radius, currentGreddyData.getLastAddedPosition(), x, 0, chunkOffset));
-            if (!alreadyVisited && currentTile == null && nextTile == null
-                    || !alreadyVisited && centerPos == null && currentTile != null && nextTile != null
+            HexTile nextTile;
+            boolean nextIsInRange = HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON)
+                    ? getIsInRange(currentGreddyData.getLastAddedPosition(), x, 0) : false;
+            if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) || nextIsInRange) {
+                nextTile = mapData.getTile(getNextTileCoord(currentGreddyData.getLastAddedPosition(), x, 0));
+            } else {
+                nextTile = null;
+            }
+            if (!alreadyVisited && HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && currentTile == null && nextTile == null
+                    || !alreadyVisited && HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && currentTile != null && nextTile != null
                     && currentTile.getTextureKey() == nextTile.getTextureKey() && currentTile.getHeight() == nextTile.getHeight()
-                    || !alreadyVisited && centerPos != null && currentTile != null && nextTile != null
-                    && getIsInRange(radius, currentGreddyData.getLastAddedPosition(), x, 0) == currentIsInRange
-                    && currentTile.getHeight() == nextTile.getHeight()) {
+                    || !alreadyVisited && HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON) && currentTile != null && nextTile != null
+                    && nextIsInRange == currentIsInRange && currentTile.getHeight() == nextTile.getHeight()) {
                 currentGreddyData.expandSizeX();
                 isVisited[currentGreddyData.getLastAddedPosition().x + x][currentGreddyData.getLastAddedPosition().y] = true;
             } else {
@@ -111,14 +112,23 @@ public final class GreddyMeshingParameter {
             //We check if the next Y line got the same properties
             for (int x = 0; x < currentGreddyData.getLastAddedSize().x; x++) {
                 boolean alreadyVisited = isVisited[currentGreddyData.getLastAddedPosition().x + x][currentGreddyData.getLastAddedPosition().y + y];
-                HexTile nextTile = mapData.getTile(getNextTileCoord(centerPos, radius, currentGreddyData.getLastAddedPosition(), x, y, chunkOffset));
+//                HexTile nextTile = mapData.getTile(getNextTileCoord(radius, currentGreddyData.getLastAddedPosition(), x, y));
+
+                HexTile nextTile;
+                boolean nextIsInRange = HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON)
+                        ? getIsInRange(currentGreddyData.getLastAddedPosition(), x, y) : false;
+                if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) || nextIsInRange) {
+                    nextTile = mapData.getTile(getNextTileCoord(currentGreddyData.getLastAddedPosition(), x, y));
+                } else {
+                    nextTile = null;
+                }
                 if (alreadyVisited || currentTile == null && nextTile != null || currentTile != null && nextTile == null
-                        || centerPos == null && currentTile != null && nextTile != null
+                        || HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && currentTile != null && nextTile != null
                         && !mapData.getTextureValue(nextTile.getTextureKey()).equals(mapData.getTextureValue(currentTile.getTextureKey()))
-                        || centerPos == null && currentTile != null && nextTile != null && nextTile.getHeight() != currentTile.getHeight()
-                        || centerPos != null && currentTile != null && nextTile != null
-                        && getIsInRange(radius, currentGreddyData.getLastAddedPosition(), x, y) != currentIsInRange
-                        || centerPos != null && currentTile != null && nextTile != null
+                        || HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && currentTile != null
+                        && nextTile != null && nextTile.getHeight() != currentTile.getHeight()
+                        || HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON) && nextIsInRange != currentIsInRange
+                        || HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON) && currentTile != null && nextTile != null
                         && nextTile.getHeight() != currentTile.getHeight()) {
                     //if one tile didn't match the requirement we stop the search
                     return;
@@ -134,48 +144,38 @@ public final class GreddyMeshingParameter {
         }
     }
 
-    private boolean getIsInRange(int radius, Vector2Int position, int x, int y) {
-        return new HexCoordinate(Coordinate.OFFSET, radius, radius)
+    private boolean getIsInRange(Vector2Int position, int x, int y) {
+        return new HexCoordinate(Coordinate.OFFSET, HexSetting.CHUNK_SIZE, HexSetting.CHUNK_SIZE)
                 .hasInRange(new HexCoordinate(Coordinate.OFFSET,
                 (position != null ? position.x : 0) + x,
-                (position != null ? position.y : 0) + y), radius);
+                (position != null ? position.y : 0) + y), HexSetting.CHUNK_SIZE);
     }
 
-    private HexCoordinate getNextTileCoord(HexCoordinate centerPos, int radius, Vector2Int position, int x, int y, Vector2Int chunkOffset) {
-        if (centerPos != null) {
+    /**
+     * @return tile coordinate inside mapData.
+     */
+    private HexCoordinate getNextTileCoord(Vector2Int inspectedPos, int x, int y) {
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON)) {
             Vector2Int coord = new Vector2Int(
-                    x + (position != null ? position.x : 0) - radius,
-                    y + (position != null ? position.y : 0) - radius);
-            if ((radius & 1) == 0) {
-                if ((centerPos.toOffset().y & 1) == 0) {
-                    return centerPos.add(coord);
-                } else {
-                    if ((coord.y & 1) == 0) {
-                        return centerPos.add(coord);
-                    } else {
-                        return centerPos.add(coord.x + 1, coord.y);
-                    }
-                }
+                    x + (inspectedPos != null ? inspectedPos.x : 0) - HexSetting.CHUNK_SIZE,
+                    y + (inspectedPos != null ? inspectedPos.y : 0) - HexSetting.CHUNK_SIZE);
+            //-----------------------------
+            if ((HexSetting.CHUNK_SIZE & 1) == 0 && (chunkPosition.y & 1) != 0 && (coord.y & 1) != 0) {
+                return new HexCoordinate(Coordinate.OFFSET, chunkPosition.add(coord.x + 1, coord.y));
+            } else if ((HexSetting.CHUNK_SIZE & 1) != 0 && (chunkPosition.y & 1) == 0 && (coord.y & 1) != 0) {
+                return new HexCoordinate(Coordinate.OFFSET, chunkPosition.add(coord.x - 1, coord.y));
             } else {
-                if ((centerPos.toOffset().y & 1) == 0) {
-                    if ((coord.y & 1) == 0) {
-                        return centerPos.add(coord);
-                    } else {
-                        return centerPos.add(coord.x - 1, coord.y);
-                    }
-                } else {
-                    return centerPos.add(coord);
-                }
+                return new HexCoordinate(Coordinate.OFFSET, chunkPosition.add(coord));
             }
         } else {
-            return new HexCoordinate(Coordinate.OFFSET,
-                    x + position.x + chunkOffset.x,
-                    y + position.y + chunkOffset.y);
+            Vector2Int chunkInitTile = getInitialChunkTile().toOffset();
+            return new HexCoordinate(Coordinate.OFFSET, x + inspectedPos.x + chunkInitTile.x, y + inspectedPos.y + chunkInitTile.y);
         }
     }
 
-    private boolean[][] getVisitedList(int radius) {
-        int chunkSize = radius < 1 ? HexSetting.CHUNK_SIZE : (radius * 2) + 1;
+    private boolean[][] getVisitedList() {
+        int chunkSize = HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) 
+                ? HexSetting.CHUNK_SIZE : (HexSetting.CHUNK_SIZE * 2) + 1;
         boolean[][] isVisited = new boolean[chunkSize][chunkSize];
         return isVisited;
     }
@@ -183,42 +183,28 @@ public final class GreddyMeshingParameter {
     // <editor-fold defaultstate="collapsed" desc="Getters">
     /**
      * Generate one or multiple mesh corresponding to the data contained in
-     * mapData if not ghost, the count of generated mesh is equals
-     * the amount of texture.
+     * mapData if not ghost with the setting of HexSetting, 
+     * the count of generated mesh is equals the amount of texture (if not using texture Array).
      *
      * @param onlyGround generate side face ?
-     * @return list of all generated mesh. (1 mesh by texture)
+     * @return list of all generated mesh. (1 mesh by texture if no arrayTexture)
      */
     public HashMap<String, Mesh> getMesh(boolean onlyGround, Vector2Int inspectedChunk) {
-        this.inspectedChunk = inspectedChunk;
-        initialize(null, 0, onlyGround, Shape.SQUARE);
-        return getMesh();
-    }
-
-    /**
-     * Generate a mesh from a specifiate radius.
-     *
-     * @param centerPosition
-     * @param radius must be greater than 0 (exclusive)
-     * @param onlyGround generate side face ?
-     * @return
-     */
-    public HashMap<String, Mesh> getMesh(HexCoordinate centerPosition, int radius, boolean onlyGround, Vector2Int inspectedChunk) {
-        this.inspectedChunk = inspectedChunk;
-        if (radius <= 0) {
-            radius = 1;
-        }
-        initialize(centerPosition, radius, onlyGround, Shape.CIRCLE);
+        this.chunkPosition = inspectedChunk;
+        initialize(onlyGround);
         return getMesh();
     }
 
     private HashMap<String, Mesh> getMesh() {
         if (!(mapData.getMode().equals(MapData.GhostMode.GHOST)
                 || mapData.getMode().equals(MapData.GhostMode.GHOST_PROCEDURAL))) {
-            elementMeshData.remove(mapData.getTextureValue(-1));
+            meshData.remove(mapData.getTextureValue(-1));
         }
-        HashMap<String, Mesh> mesh = new HashMap<String, Mesh>(elementMeshData.size());
-        meshIterator = elementMeshData.keySet().iterator();
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.HEXAGON)) {
+            meshData.remove(null);
+        }
+        HashMap<String, Mesh> mesh = new HashMap<String, Mesh>(meshData.size());
+        meshIterator = meshData.keySet().iterator();
 
         if (useArrayTexture) {
             String value = meshIterator.next();
@@ -238,21 +224,21 @@ public final class GreddyMeshingParameter {
      * @return position in chunk of the current element mesh visited.
      */
     public Vector2Int getCurrentPositionParam() {
-        return elementMeshData.get(inspectedTexture).getPosition();
+        return meshData.get(inspectedTexture).getPosition();
     }
 
     /**
      * @return the size of the current element mesh visited.
      */
     public Vector2Int getCurrentSizeParam() {
-        return elementMeshData.get(inspectedTexture).getSize();
+        return meshData.get(inspectedTexture).getSize();
     }
 
     /**
      * @return height of the current element mesh visited.
      */
     public int getCurrentHeightParam() {
-        return elementMeshData.get(inspectedTexture).getHeight();
+        return meshData.get(inspectedTexture).getHeight();
     }
 
     /**
@@ -285,7 +271,7 @@ public final class GreddyMeshingParameter {
      * @return
      */
     public int getElementMeshCount() {
-        return elementMeshData.get(inspectedTexture).size();
+        return meshData.get(inspectedTexture).size();
     }
 
     /**
@@ -294,11 +280,11 @@ public final class GreddyMeshingParameter {
      * @return
      */
     public boolean hasNext() {
-        boolean hasNext = elementMeshData.get(inspectedTexture).hasNext();
+        boolean hasNext = meshData.get(inspectedTexture).hasNext();
         if (useArrayTexture) {
             if (!hasNext && meshIterator.hasNext()) {
                 inspectedTexture = meshIterator.next();
-                return elementMeshData.get(inspectedTexture).hasNext();
+                return meshData.get(inspectedTexture).hasNext();
             }
         }
         return hasNext;
@@ -312,6 +298,8 @@ public final class GreddyMeshingParameter {
      */
     public CullingData getCullingData() {
         return new CullingData();
+
+
     }
 
     /**
@@ -331,10 +319,10 @@ public final class GreddyMeshingParameter {
         boolean[][][] culling = new boolean[4][][];
 
         private CullingData() {
-            GreddyMeshingElementMeshData inspectedMesh = elementMeshData.get(inspectedTexture);
+            GreddyMesherData inspectedMesh = meshData.get(inspectedTexture);
             boolean isOddStart = (inspectedMesh.getPosition().y & 1) == 0;
 
-            Vector2Int chunkInitTile = HexGrid.getInitialChunkTile(inspectedChunk).toOffset();
+            Vector2Int chunkInitTile = getInitialChunkTile().toOffset();
             HexCoordinate coord = new HexCoordinate(Coordinate.OFFSET,
                     inspectedMesh.getPosition().x + chunkInitTile.x, inspectedMesh.getPosition().y + chunkInitTile.y);
             for (int i = 0; i < 4; i++) {
@@ -343,7 +331,7 @@ public final class GreddyMeshingParameter {
                 for (int j = 0; j < currentSize; j++) {
 
                     if (i == 0) { // top chunk = -(Z)
-                        if (shapeType.equals(Shape.SQUARE) && inspectedMesh.getPosition().y == 0) {
+                        if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && inspectedMesh.getPosition().y == 0) {
                             culling[i][j][0] = false; // top left
                             culling[i][j][1] = false; // top right
                             culling[i][j][2] = false;
@@ -354,7 +342,7 @@ public final class GreddyMeshingParameter {
                             culling[i][j][2] = false;
                         }
                     } else if (i == 1) { //bot chunk = (Z)
-                        if (shapeType.equals(Shape.SQUARE) && inspectedMesh.getPosition().y == HexSetting.CHUNK_SIZE - 1) {
+                        if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && inspectedMesh.getPosition().y == HexSetting.CHUNK_SIZE - 1) {
                             culling[i][j][0] = false; // top left
                             culling[i][j][1] = false; // top right
                             culling[i][j][2] = false;
@@ -365,7 +353,7 @@ public final class GreddyMeshingParameter {
                             culling[i][j][2] = false;
                         }
                     } else if (i == 2) { // left chunk = -(X)
-                        if (shapeType.equals(Shape.SQUARE) && inspectedMesh.getPosition().x == 0) {
+                        if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && inspectedMesh.getPosition().x == 0) {
                             culling[i][j][0] = false; // top left
                             culling[i][j][1] = false; // top right
                             culling[i][j][2] = false;
@@ -384,7 +372,7 @@ public final class GreddyMeshingParameter {
                             }
                         }
                     } else { // right chunk = (X)
-                        if (shapeType.equals(Shape.SQUARE) && inspectedMesh.getPosition().x == HexSetting.CHUNK_SIZE - 1) {
+                        if (HexSetting.CHUNK_SHAPE_TYPE.equals(ShapeType.SQUARE) && inspectedMesh.getPosition().x == HexSetting.CHUNK_SIZE - 1) {
                             culling[i][j][0] = false; // top left
                             culling[i][j][1] = false; // top right
                             culling[i][j][2] = false;
@@ -462,6 +450,13 @@ public final class GreddyMeshingParameter {
         }
     }
 
+    private HexCoordinate getInitialChunkTile() {
+        return new HexCoordinate(HexCoordinate.Coordinate.OFFSET,
+                chunkPosition.x * HexSetting.CHUNK_SIZE,
+                chunkPosition.y * HexSetting.CHUNK_SIZE);
+    }
+
+
     public enum Position {
 
         TOP,
@@ -475,12 +470,18 @@ public final class GreddyMeshingParameter {
     }
 
     private void clear() {
-        elementMeshData.clear();
+        meshData.clear();
         groundHeight = 0;
+
+
     }
 
-    private enum Shape {
+    public enum ShapeType {
+
         SQUARE,
-        CIRCLE;
+        /**
+         * @deprecated not handled {@link org.hexgridapi.core.control.chunkbuilder.GhostHexagonBuilder}
+         */
+        HEXAGON;
     }
 }

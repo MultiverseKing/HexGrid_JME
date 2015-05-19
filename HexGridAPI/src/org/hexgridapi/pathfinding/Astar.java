@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import org.hexgridapi.core.HexTile;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.utility.HexCoordinate;
 
 /**

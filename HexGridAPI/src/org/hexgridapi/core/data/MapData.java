@@ -1,11 +1,11 @@
-package org.hexgridapi.core;
+package org.hexgridapi.core.data;
 
 import com.jme3.asset.AssetManager;
 import org.hexgridapi.events.TileChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.hexgridapi.core.mapgenerator.ProceduralHexGrid;
+import org.hexgridapi.core.data.procedural.ProceduralHexGrid;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.loader.HexGridMapLoader;
 import org.hexgridapi.utility.HexCoordinate;

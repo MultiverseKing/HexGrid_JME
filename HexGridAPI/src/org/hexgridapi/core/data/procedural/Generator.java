@@ -1,4 +1,4 @@
-package org.hexgridapi.core.mapgenerator;
+package org.hexgridapi.core.data.procedural;
 
 import java.util.Random;
 
@@ -6,7 +6,7 @@ import java.util.Random;
  *
  * @author roah
  */
-public class Generator {
+public abstract class Generator {
     private static Random GENERATOR = new Random(System.currentTimeMillis());
 
     public static int generateSeed() {

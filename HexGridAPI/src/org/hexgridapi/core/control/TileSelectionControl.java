@@ -39,7 +39,7 @@ public class TileSelectionControl implements TileInputListener {
     private ArrayList<HexCoordinate> coords = new ArrayList<HexCoordinate>();
     private ArrayList<TileSelectionListener> listeners = new ArrayList<TileSelectionListener>();
     private boolean isSelectionGroup = false;
-    private HexCoordinate selectedTile;
+    private HexCoordinate selectedTile = new HexCoordinate();
     private CursorControl cursorControl;
 
     public void initialise(Application app) {

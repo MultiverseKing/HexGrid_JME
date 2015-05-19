@@ -16,6 +16,7 @@ import java.io.IOException;
  */
 public class Vector2Int implements Savable {
     
+    public static final Vector2Int ZERO = new Vector2Int();
     public int x;
     public int y;
 

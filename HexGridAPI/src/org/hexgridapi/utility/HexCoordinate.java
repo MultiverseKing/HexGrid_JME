@@ -4,6 +4,7 @@ import org.hexgridapi.core.HexSetting;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import java.util.ArrayList;
+import org.hexgridapi.core.mesh.GreddyMesher;
 
 /**
  * Data is stored as AXIAL cordinate.
@@ -26,10 +27,13 @@ public final class HexCoordinate {
     private static Vector2Int offsetToAxial(Vector2Int data) {
         return new Vector2Int(data.x - (data.y - (data.y & 1)) / 2, data.y);
     }
-
-    private static Vector2Int cubicToAxial(Vector3Int data) {
-        return new Vector2Int(data.x, data.z);
+    private static Vector2Int offsetQToAxial(Vector2Int data) {
+        return new Vector2Int(data.y, data.x - (data.y - (data.y&1)) / 2);
     }
+
+//    private static Vector2Int cubicToAxial(Vector3Int data) {
+//        return new Vector2Int(data.x, data.z);
+//    }
 
     /**
      * Only for internal use. (Axial)
@@ -42,10 +46,12 @@ public final class HexCoordinate {
     public HexCoordinate() {
         this(0, 0);
     }
-    
+
     public HexCoordinate(Coordinate type, Vector2Int pos) {
         if (type.equals(Coordinate.OFFSET)) {
             pos = offsetToAxial(pos);
+        } else if (type.equals(Coordinate.CUBIC)) {
+            throw new UnsupportedOperationException("Vector2Int is not an allowed Value for Cubic.");
         }
         q = pos.x;
         r = pos.y;
@@ -73,9 +79,8 @@ public final class HexCoordinate {
      * @param pos CUBIC coordinate
      */
     public HexCoordinate(Vector3Int pos) {
-        Vector2Int posAxial = cubicToAxial(pos);
-        q = posAxial.x;
-        r = posAxial.y;
+        q = pos.x;
+        r = pos.z;
     }
 
     /**
@@ -196,24 +201,33 @@ public final class HexCoordinate {
      * Return the chunk who hold the tile.
      */
     public Vector2Int getCorrespondingChunk() {
-        Vector2Int tileOffset = toOffset();
-        int x = ((int) FastMath.abs(tileOffset.x) + (tileOffset.x < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
-        int y = ((int) FastMath.abs(tileOffset.y) + (tileOffset.y < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
-        Vector2Int result = new Vector2Int(tileOffset.x < 0 ? (x + 1) * -1 : x, tileOffset.y < 0 ? (y + 1) * -1 : y);
-        return result;
+        Vector2Int pos = toOffset();
+        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
+            int x = ((int) FastMath.abs(pos.x) + (pos.x < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
+            int y = ((int) FastMath.abs(pos.y) + (pos.y < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
+            return new Vector2Int(pos.x < 0 ? (x + 1) * -1 : x, pos.y < 0 ? (y + 1) * -1 : y);
+        } else if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.HEXAGON)) { //@todo
+//            int x = (int) FastMath.abs(pos.x) / (HexSetting.CHUNK_SIZE * 2 + 1) - HexSetting.CHUNK_SIZE;
+//            int y = (int) FastMath.abs(pos.y) / (HexSetting.CHUNK_SIZE * 2 + 1) - HexSetting.CHUNK_SIZE;
+//            return new Vector2Int(pos.x < 0 ? x * -1 : x, pos.y < 0 ? y * -1 : y);
+            return new Vector2Int(); //@todo
+        } else {
+            throw new UnsupportedOperationException(HexSetting.CHUNK_SHAPE_TYPE + " isn't a supported type.");
+        }
     }
 
     /**
      * Return the tile position inside his corresponding chunk.
+     *
+     * @todo update for hexagonal chunk
      */
-    public final HexCoordinate getTilePosInChunk() {
-        Vector2Int chunk = getCorrespondingChunk();
-        Vector2Int tileOffset = toOffset();
-        return new HexCoordinate(Coordinate.OFFSET,
-                (int) (FastMath.abs(tileOffset.x) - FastMath.abs(chunk.x) * HexSetting.CHUNK_SIZE),
-                (int) (FastMath.abs(tileOffset.y) - FastMath.abs(chunk.y) * HexSetting.CHUNK_SIZE));
-    }
-
+//    public final HexCoordinate getTilePosInChunk() {
+//        Vector2Int chunk = getCorrespondingChunk();
+//        Vector2Int tileOffset = toOffset();
+//        return new HexCoordinate(Coordinate.OFFSET,
+//                (int) (FastMath.abs(tileOffset.x) - FastMath.abs(chunk.x) * HexSetting.CHUNK_SIZE),
+//                (int) (FastMath.abs(tileOffset.y) - FastMath.abs(chunk.y) * HexSetting.CHUNK_SIZE));
+//    }
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof HexCoordinate) {
@@ -281,7 +295,10 @@ public final class HexCoordinate {
         ArrayList<HexCoordinate> result = new ArrayList<HexCoordinate>();
         for (int x = -range; x <= range; x++) {
             for (int y = Math.max(-range, -x - range); y <= Math.min(range, range - x); y++) {
-                result.add(new HexCoordinate(Coordinate.AXIAL, new Vector2Int(x + q, y + r)));
+                HexCoordinate coord = new HexCoordinate(Coordinate.AXIAL, new Vector2Int(x + q, y + r));
+                if (!coord.toOffset().equals(Vector2Int.ZERO)) {
+                    result.add(coord);
+                }
             }
         }
         return result;
@@ -308,6 +325,13 @@ public final class HexCoordinate {
         return result;
     }
 
+    /**
+     * Chexk the range using Offset coordinate.
+     *
+     * @param offsetPos Offset coordinate of the tile.
+     * @param range the max range.
+     * @return true if the position is in the range
+     */
     public boolean hasInRange(Vector2Int offsetPos, int range) {
         return hasInRange(new HexCoordinate(Coordinate.OFFSET, offsetPos), range);
     }

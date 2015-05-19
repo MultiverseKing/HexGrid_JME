@@ -1,6 +1,6 @@
 package org.hexgridapi.events;
 
-import org.hexgridapi.core.HexTile;
+import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.utility.HexCoordinate;
 
 /**

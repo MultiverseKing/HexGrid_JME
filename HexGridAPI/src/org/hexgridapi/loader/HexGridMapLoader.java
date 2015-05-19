@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.hexgridapi.loader;
 
 import com.jme3.asset.AssetKey;
@@ -12,7 +8,7 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.utility.Vector2Int;
 
 /**

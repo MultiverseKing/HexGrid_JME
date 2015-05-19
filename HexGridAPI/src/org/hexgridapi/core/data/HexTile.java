@@ -1,4 +1,4 @@
-package org.hexgridapi.core;
+package org.hexgridapi.core.data;
 
 import com.jme3.export.InputCapsule;
 import com.jme3.export.JmeExporter;

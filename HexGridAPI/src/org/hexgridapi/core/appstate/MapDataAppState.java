@@ -4,7 +4,7 @@ import com.jme3.app.Application;
 import com.jme3.app.state.AppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.renderer.RenderManager;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.MapData;
 
 /**
  * Tiles data manager AppState.

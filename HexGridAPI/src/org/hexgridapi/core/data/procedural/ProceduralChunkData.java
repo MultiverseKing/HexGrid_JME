@@ -1,4 +1,4 @@
-package org.hexgridapi.core.mapgenerator;
+package org.hexgridapi.core.data.procedural;
 
 import java.util.HashMap;
 import org.hexgridapi.utility.Vector2Int;
