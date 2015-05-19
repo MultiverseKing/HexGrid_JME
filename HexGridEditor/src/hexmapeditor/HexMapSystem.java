@@ -6,8 +6,8 @@ import com.jme3.asset.AssetManager;
 import com.jme3.scene.Node;
 import java.util.List;
 import org.hexgridapi.core.appstate.MouseControlSystem;
-import org.hexgridapi.core.HexTile;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.appstate.AbstractHexGridAppState;
 import org.hexgridapi.core.control.ChunkControl;
 import org.hexgridapi.core.control.TileSelectionControl;
@@ -33,9 +33,53 @@ public final class HexMapSystem extends AbstractHexGridAppState {
     public void initializeSystem(AppStateManager stateManager, Application app) {
         this.app = (HexGridEditorMain) app;
         tileSelectionControl = app.getStateManager().getState(MouseControlSystem.class).getSelectionControl();
+        if (mapData.getMode().equals(MapData.GhostMode.NONE)) {
+            // <editor-fold defaultstate="collapsed" desc="Initialise some tile to show something">
+            mapData.setTile(new HexCoordinate[]{
+                //* H letters *//
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, 0)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(2, 0)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, 0)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(4, 0)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(5, 0)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, 0)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, 4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(2, 4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, 4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(4, 4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(5, 4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, 4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, 1)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, 2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, 3)),
+                //* E letters *//
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, -2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(2, -2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, -2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(4, -2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(5, -2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, -2)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, -3)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, -4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, -5)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(1, -6)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, -3)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, -4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(3, -5)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, -3)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, -4)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, -5)),
+                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(6, -6)),}, 
+                    new HexTile[]{new HexTile()});
+            // </editor-fold>
+        }
     }
 
-    // <editor-fold defaultstate="collapsed" desc="Getters && Setters">
+    // <editor-fold defaultstate="collapsed" desc="Getters && Setters">    
+    public MapData.GhostMode getMode() {
+        return mapData.getMode();
+    }
+
     public int getSeed() {
         return mapData.getSeed();
     }

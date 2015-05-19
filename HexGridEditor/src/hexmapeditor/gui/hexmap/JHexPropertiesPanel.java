@@ -34,10 +34,13 @@ import org.hexgridapi.events.TileSelectionListener;
 import org.hexgridapi.utility.HexCoordinate;
 import core.HexGridEditorMain;
 import hexmapeditor.gui.JCursorPositionPanel;
+import org.hexgridapi.core.data.MapData;
 
 /**
- * @todo in short : Add a dropBox to chose the kind of replacement to set when ghost tile isn't visible.
- * @todo extended : When using showGhost all ghost tile got removed but this lead to ugly 
+ * @todo in short : Add a dropBox to chose the kind of replacement to set when
+ * ghost tile isn't visible.
+ * @todo extended : When using showGhost all ghost tile got removed but this
+ * lead to ugly
  * visual since there is no replacement for it.
  * @author roah
  */
@@ -122,17 +125,30 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
         seedPan.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
         seedPan.setAlignmentX(0);
 
-        JLabel currentSeed = new JLabel("Seed : " + String.valueOf(editorSystem.getSeed()));
-        comps.put("currentSeed", currentSeed);
-        seedPan.add(currentSeed);
-        seedPan.add(Box.createRigidArea(new Dimension(5, 0)));
-        add(seedPan);
+        if (!editorSystem.getMode().equals(MapData.GhostMode.NONE)) {
+            JLabel currentSeed = new JLabel("Seed : " + String.valueOf(editorSystem.getSeed()));
+            comps.put("currentSeed", currentSeed);
+            seedPan.add(currentSeed);
+            seedPan.add(Box.createRigidArea(new Dimension(5, 0)));
+            add(seedPan);
+        }
 
         /*-------*/
         separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setMaximumSize(
                 new Dimension(Integer.MAX_VALUE, 2));
         add(separator);
+
+//        /* Test */
+//        JButton generate = new JButton(new AbstractAction("Add Chunk") {
+//            @Override
+//            public void actionPerformed(ActionEvent e) {
+//                onAction(e);
+//            }
+//        });
+//        add(generate);
+//        comps.put("generate", generate);
+
     }
 
     private void onAction(ActionEvent e) {
@@ -226,12 +242,14 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
     private TileChangeListener tileListener = new TileChangeListener() {
         @Override
         public void onTileChange(TileChangeEvent... events) {
-            if (!currentIsGroup && events.length == 1
-                    && events[0].getTilePos().equals(mouseSystem.getSelectionControl().getSelectedPos())) {
-                if (!editorSystem.tileExist() != currentIsGhost) {
-                    buildSingleTileMenu();
-                } else {
-                    updateSingleTileMenu();
+            if (currentIsGhost != null) {
+                if (!currentIsGroup && events.length == 1
+                        && events[0].getTilePos().equals(mouseSystem.getSelectionControl().getSelectedPos())) {
+                    if (!editorSystem.tileExist() != currentIsGhost) {
+                        buildSingleTileMenu();
+                    } else {
+                        updateSingleTileMenu();
+                    }
                 }
             }
         }

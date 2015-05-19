@@ -22,7 +22,7 @@ import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
-import org.hexgridapi.core.MapData;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.appstate.HexGridDefaultApp;
 import org.hexgridapi.core.appstate.MapDataAppState;
 import org.hexgridapi.core.appstate.MouseControlSystem;
