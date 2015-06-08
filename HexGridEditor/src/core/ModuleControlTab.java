@@ -29,10 +29,10 @@ public final class ModuleControlTab implements JPanelTabListener {
         ModuleControlTab.rootNode = app.getRootNode();
         ModuleControlTab.app = app;
         ModuleControlTab.canvas = ((JmeCanvasContext) app.getContext()).getCanvas();
-
-//        canvasResizer();
         
-        tabController.setPreferredSize(canvas.getSize());
+        canvasResizer();
+        
+//        tabController.setPreferredSize(canvas.getSize());
         tabController.registerTabChangeListener(this);
     }
 
@@ -78,7 +78,7 @@ public final class ModuleControlTab implements JPanelTabListener {
             }
             rootNode.attachChild(((Base3DModule) tab).getModuleNode());
             ((Base3DModule) tab).onContextGainFocus(app, canvas);
-            canvas.setSize(((Base3DModule) tab).getSize());
+//            canvas.setSize(((Base3DModule) tab).getSize());
             app.getRootFrame().revalidate();
             currentModule = (Base3DModule) tab;
         }

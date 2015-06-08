@@ -46,19 +46,20 @@ public final class HexMapModule extends Base3DModule {
         hexMapSystem = new HexMapSystem(mapData);
         
         setLayout(new BorderLayout());
-        add(panelController, BorderLayout.EAST);
         panelController.add(new JCursorPositionPanel(mouseSystem));
+        validate();
     }
 
     @Override
     public void onContextGainFocus(SimpleApplication app, Canvas canvas) {
         add(canvas, BorderLayout.CENTER);
+        add(panelController, BorderLayout.EAST);
         this.app = app;
         app.getInputManager().addMapping("Confirm", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         app.getInputManager().addMapping("Cancel", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
         
         app.getStateManager().attachAll(mapDataState, hexMapSystem, mouseSystem);
-        validate();
+        revalidate();
         isStart = true;
     }
 

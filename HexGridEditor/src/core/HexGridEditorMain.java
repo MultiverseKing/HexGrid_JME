@@ -36,6 +36,7 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
         Dimension dim = new Dimension(1024, 768);
         initSettings.setWidth(dim.width);
         initSettings.setHeight(dim.height);
+        
         java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 
         rootFrame = new JFrame(windowName);
@@ -49,13 +50,6 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
         setSettings(initSettings);
         
         createCanvas(); // create canvas!
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-            }
-        });
-        startCanvas();
-        
         JmeCanvasContext ctx = (JmeCanvasContext) getContext();
         ctx.getCanvas().setSize(dim);
 
@@ -72,6 +66,7 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
         rootFrame.setLocationRelativeTo(null);
         rootFrame.setVisible(true);
         
+        startCanvas();
         ctx.setSystemListener(this);
     }
 

@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -32,23 +33,34 @@ public class JPanelTabController extends JPanel {
     public JPanelTabController(String name) {
 //        setName("HexPropertiesPanelHolder");
         setName(name);
-        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        setAlignmentX(0);
+//        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        setLayout(new BorderLayout());
+//        setAlignmentX(0);
         setPreferredSize(new Dimension(170, Integer.MAX_VALUE));
-
+        
         iconPan = new JPanel();
+        buildNorthHolder();
+        validate();
+    }
+
+    private void buildNorthHolder() {
+        JPanel northHolder = new JPanel();
+        northHolder.setLayout(new BoxLayout(northHolder, BoxLayout.PAGE_AXIS));
         iconPan.setBorder(BorderFactory.createBevelBorder(-1));//createLineBorder(Color.BLACK));
         iconPan.setLayout(new BoxLayout(iconPan, BoxLayout.LINE_AXIS));
-        iconPan.setAlignmentX(0);
-        iconPan.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
-        add(iconPan);
+//        iconPan.setAlignmentX(0);
+        iconPan.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+//        iconPan.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
 
-        add(Box.createRigidArea(new Dimension(0, 2)));
+//        iconPan.add(Box.createRigidArea(new Dimension(0, 2)));
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
-        add(separator);
-        add(Box.createRigidArea(new Dimension(0, 3)));
-        validate();
+        northHolder.add(Box.createRigidArea(new Dimension(0, 1)));
+        northHolder.add(iconPan);
+        northHolder.add(Box.createRigidArea(new Dimension(0, 1)));
+        northHolder.add(separator);
+        
+        add(northHolder, BorderLayout.NORTH);
     }
 
     public void add(JPanelTab panel) {
@@ -71,7 +83,7 @@ public class JPanelTabController extends JPanel {
             iconGrp.add(buttonIco);
             panels.put(panel.getName(), panel);
             if (!initialized) {
-                super.add(panel);
+                super.add(panel, BorderLayout.CENTER);
                 iconGrp.setSelected(buttonIco.getModel(), true);
                 buttonIco.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                 panel.isShow();
