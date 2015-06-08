@@ -1,4 +1,4 @@
-package hexmapeditor.gui.database;
+package packagemanager;
 
 import core.HexGridEditorMain;
 import java.awt.BorderLayout;

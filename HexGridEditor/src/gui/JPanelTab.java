@@ -13,18 +13,19 @@ import utility.ImageConverter;
  *
  * @author roah
  */
-public abstract class JPropertiesPanel extends JPanel {
+public abstract class JPanelTab extends JPanel {
 
     private ImageIcon imgIcon;
 
-    public JPropertiesPanel(Image img, String name) {
+    public JPanelTab(Image img, String name) {
         this(ImageConverter.convertToIcon(img, 16, 16), name);
     }
 
-    public JPropertiesPanel(ImageIcon icon, String name) {
+    public JPanelTab(ImageIcon icon, String name) {
         this.imgIcon = icon;
         super.setName(name);
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
+        setMinimumSize(new Dimension(10, 10));
         setAlignmentX(0);
     }
 
@@ -47,6 +48,5 @@ public abstract class JPropertiesPanel extends JPanel {
     }
 
     public abstract void isShow();
-
     public abstract void isHidden();
 }

@@ -1,8 +1,7 @@
-package hexmapeditor.gui.hexmap;
+package hexmap.gui;
 
 import gui.ComboBoxRenderer;
-import gui.JPropertiesPanel;
-import hexmapeditor.HexMapSystem;
+import gui.JPanelTab;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -31,23 +30,22 @@ import org.hexgridapi.core.appstate.MouseControlSystem;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.events.TileChangeListener;
 import org.hexgridapi.events.TileSelectionListener;
-import org.hexgridapi.utility.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 import core.HexGridEditorMain;
-import hexmapeditor.gui.JCursorPositionPanel;
+import hexmap.HexMapSystem;
 import org.hexgridapi.core.data.MapData;
 
 /**
  * @todo in short : Add a dropBox to chose the kind of replacement to set when
  * ghost tile isn't visible.
  * @todo extended : When using showGhost all ghost tile got removed but this
- * lead to ugly
- * visual since there is no replacement for it.
+ * lead to ugly visual since there is no replacement for it.
  * @author roah
  */
-public final class JHexPropertiesPanel extends JPropertiesPanel {
+public final class JHexPanelTab extends JPanelTab {
 
     private final HexGridEditorMain editorMain;
-    private HexMapSystem editorSystem;
+    private HexMapSystem hexSystem;
     private MouseControlSystem mouseSystem;
     private Boolean currentIsGhost;
     private boolean currentIsGroup = false;
@@ -56,12 +54,12 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
     private boolean update = true;
     private boolean ghostIsVisible = true;
 
-    public JHexPropertiesPanel(HexGridEditorMain editorMain) {
+    public JHexPanelTab(HexGridEditorMain editorMain) {
         super(editorMain.getAssetManager().loadTexture(
                 "Textures/Icons/Buttons/configKey.png").getImage(), "HexMapConfig");
         this.editorMain = editorMain;
         mouseSystem = editorMain.getStateManager().getState(MouseControlSystem.class);
-        editorSystem = editorMain.getStateManager().getState(HexMapSystem.class);
+        hexSystem = editorMain.getStateManager().getState(HexMapSystem.class);
 
         editorMain.getStateManager().getState(MouseControlSystem.class).getSelectionControl().registerTileListener(selectionListener);
         editorMain.getStateManager().getState(MapDataAppState.class).getMapData().registerTileChangeListener(tileListener);
@@ -93,7 +91,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
         mapNameLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 18));
         add(mapNameLabel);
 
-        JTextField mapName = new JTextField(editorSystem.getMapName());
+        JTextField mapName = new JTextField(hexSystem.getMapName());
         mapName.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -104,7 +102,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        editorSystem.setMapName(((JTextField) comps.get("mapName")).getText());
+                        hexSystem.setMapName(((JTextField) comps.get("mapName")).getText());
                         return null;
                     }
                 });
@@ -125,8 +123,8 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
         seedPan.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
         seedPan.setAlignmentX(0);
 
-        if (!editorSystem.getMode().equals(MapData.GhostMode.NONE)) {
-            JLabel currentSeed = new JLabel("Seed : " + String.valueOf(editorSystem.getSeed()));
+        if (hexSystem.isUsingProcedural()) {
+            JLabel currentSeed = new JLabel("Seed : " + String.valueOf(hexSystem.getSeed()));
             comps.put("currentSeed", currentSeed);
             seedPan.add(currentSeed);
             seedPan.add(Box.createRigidArea(new Dimension(5, 0)));
@@ -157,7 +155,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
             editorMain.enqueue(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
-                    editorSystem.setTilePropertiesTexTure(editorSystem.getTextureValueFromKey(value));
+                    hexSystem.setTilePropertiesTexTure(hexSystem.getTextureValueFromKey(value));
                     return null;
                 }
             });
@@ -167,14 +165,11 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
             return;
         }
         switch (e.getActionCommand()) {
-            case "GenerateMap":
-                editorSystem.generateFromSeed();
-                break;
             case "Show ghost":
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        editorSystem.hideGhost(ghostIsVisible);
+                        hexSystem.hideGhost(ghostIsVisible);
                         ghostIsVisible = !ghostIsVisible;
                         return null;
                     }
@@ -184,7 +179,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        editorSystem.removeTile();
+                        hexSystem.removeTile();
                         return null;
                     }
                 });
@@ -193,7 +188,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        editorSystem.setTilePropertiesUp();
+                        hexSystem.setTilePropertiesUp();
                         return null;
                     }
                 });
@@ -202,7 +197,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        editorSystem.setTilePropertiesDown();
+                        hexSystem.setTilePropertiesDown();
                         return null;
                     }
                 });
@@ -211,7 +206,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        editorSystem.setNewTile();
+                        hexSystem.setNewTile();
                         return null;
                     }
                 });
@@ -224,7 +219,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
         @Override
         public void onTileSelectionUpdate(HexCoordinate currentSelection, ArrayList<HexCoordinate> selectedList) {
             if (currentIsGhost == null || !selectedList.isEmpty() != currentIsGroup
-                    || !editorSystem.tileExist() != currentIsGhost) {
+                    || !hexSystem.tileExist() != currentIsGhost) {
                 if (!selectedList.isEmpty()) {
                     buildMultiTileMenu(selectedList);
                 } else {
@@ -245,7 +240,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
             if (currentIsGhost != null) {
                 if (!currentIsGroup && events.length == 1
                         && events[0].getTilePos().equals(mouseSystem.getSelectionControl().getSelectedPos())) {
-                    if (!editorSystem.tileExist() != currentIsGhost) {
+                    if (!hexSystem.tileExist() != currentIsGhost) {
                         buildSingleTileMenu();
                     } else {
                         updateSingleTileMenu();
@@ -253,11 +248,16 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
                 }
             }
         }
+        
+        @Override
+        public void onGridReload(){
+            
+        }
     };
 
     private void buildTileMenu() {
 
-        currentIsGhost = !editorSystem.tileExist();
+        currentIsGhost = !hexSystem.tileExist();
         if (tileProperties == null) {
             tileProperties = new JPanel();
             tileProperties.setLayout(new BoxLayout(tileProperties, BoxLayout.PAGE_AXIS));
@@ -340,7 +340,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
             heightPanel.add(btn, BorderLayout.SOUTH);
             JLabel height;
             if (!isMulti) {
-                height = new JLabel("height : " + editorSystem.getTileHeight());
+                height = new JLabel("height : " + hexSystem.getTileHeight());
             } else {
                 height = new JLabel("height : undefined");
             }
@@ -352,7 +352,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
         } else {
             addComp(tileProperties, comps.get("heightPanel"));
             if (!isMulti) {
-                ((JLabel) comps.get("height")).setText("height : " + editorSystem.getTileHeight());
+                ((JLabel) comps.get("height")).setText("height : " + hexSystem.getTileHeight());
             } else {
                 ((JLabel) comps.get("height")).setText("height : undefined");
             }
@@ -363,7 +363,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
     private int addTextureList() {
         if (!comps.containsKey("textureList")) {
             ComboBoxRenderer combo = new ComboBoxRenderer(
-                    editorMain.getAssetManager(), editorSystem.getTextureKeys());
+                    editorMain.getAssetManager(), hexSystem.getTextureKeys());
             JComboBox textureList = new JComboBox(combo.getArray());
             textureList.addActionListener(new ActionListener() {
                 @Override
@@ -380,7 +380,7 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
         } else {
             addComp(tileProperties, comps.get("textureList"));
             update = false;
-            int var = editorSystem.getTextureKeys().indexOf(editorSystem.getTileTextureKey());
+            int var = hexSystem.getTextureKeys().indexOf(hexSystem.getTileTextureKey());
             ((JComboBox) comps.get("textureList")).setSelectedIndex(var);
         }
         return 1;
@@ -406,14 +406,14 @@ public final class JHexPropertiesPanel extends JPropertiesPanel {
 
     // </editor-fold>
     private void updateSingleTileMenu() {
-        currentIsGhost = !editorSystem.tileExist();
+        currentIsGhost = !hexSystem.tileExist();
         if (!currentIsGhost) {
-            ((JLabel) comps.get("height")).setText("height : " + editorSystem.getTileHeight());
+            ((JLabel) comps.get("height")).setText("height : " + hexSystem.getTileHeight());
             update = false;
             editorMain.enqueue(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
-                    int var = editorSystem.getTextureKeys().indexOf(editorSystem.getTileTextureKey());
+                    int var = hexSystem.getTextureKeys().indexOf(hexSystem.getTileTextureKey());
                     ((JComboBox) comps.get("textureList")).setSelectedIndex(var);
                     return null;
                 }

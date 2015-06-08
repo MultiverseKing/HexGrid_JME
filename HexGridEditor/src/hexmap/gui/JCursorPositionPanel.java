@@ -1,8 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package hexmapeditor.gui;
+package hexmap.gui;
 
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -13,7 +9,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.hexgridapi.core.appstate.MouseControlSystem;
 import org.hexgridapi.events.TileSelectionListener;
-import org.hexgridapi.utility.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  *
@@ -42,7 +39,7 @@ public class JCursorPositionPanel extends JPanel {
         public void onTileSelectionUpdate(HexCoordinate currentSelection, ArrayList<HexCoordinate> selectedList) {
             cursorPos = currentSelection;
             cursorPosition.setText("Hex pos : " + currentSelection.toOffset());
-            chunkPosition.setText("Chunk pos : " + currentSelection.getCorrespondingChunk());
+            chunkPosition.setText("Chunk pos : " + ChunkCoordinate.getNewInstance(currentSelection));
         }
     };
     public HexCoordinate getPosition(){

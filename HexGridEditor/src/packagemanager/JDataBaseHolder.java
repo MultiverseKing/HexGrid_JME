@@ -1,4 +1,4 @@
-package hexmapeditor.gui.database;
+package packagemanager;
 
 import core.HexGridEditorMain;
 import java.awt.BorderLayout;
@@ -32,11 +32,11 @@ public class JDataBaseHolder {
         /**
          * Panel who hold everything.
          */
-        rootPanel = new JDialog(main.getRootWindow(), "Database", true);
+        rootPanel = new JDialog(main.getRootFrame(), "Database", true);
 
         rootPanel.setMaximumSize(new Dimension(
-                (int)(main.getRootWindow().getWidth()*0.1f), 
-                (int)(main.getRootWindow().getHeight()*0.8f)));
+                (int)(main.getRootFrame().getWidth()*0.1f), 
+                (int)(main.getRootFrame().getHeight()*0.8f)));
         rootPanel.setLayout(new BorderLayout());
         rootPanel.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         rootPanel.addWindowListener(new WindowAdapter() {

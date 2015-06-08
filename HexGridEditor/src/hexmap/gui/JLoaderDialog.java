@@ -1,4 +1,4 @@
-package hexmapeditor.gui.hexmap;
+package hexmap.gui;
 
 import javax.swing.JOptionPane;
 import javax.swing.JDialog;
