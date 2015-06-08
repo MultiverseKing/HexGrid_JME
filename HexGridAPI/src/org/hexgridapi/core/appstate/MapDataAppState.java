@@ -7,7 +7,7 @@ import com.jme3.renderer.RenderManager;
 import org.hexgridapi.core.data.MapData;
 
 /**
- * Tiles data manager AppState.
+ * Tiles data wrapped under AppState for convenience.
  *
  * @author roah
  */

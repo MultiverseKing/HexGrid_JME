@@ -1,7 +1,6 @@
 package org.hexgridapi.core;
 
 import com.jme3.math.FastMath;
-import org.hexgridapi.core.mesh.GreddyMesher;
 
 /**
  * Contain parameters used to generate the room grid.
@@ -25,7 +24,7 @@ public final class HexSetting {
     /**
      * Number of hex contain in a chunk.
      */
-    public final static GreddyMesher.ShapeType CHUNK_SHAPE_TYPE = GreddyMesher.ShapeType.SQUARE;
+//    public final static GreddyMesher.ShapeType CHUNK_SHAPE_TYPE = GreddyMesher.ShapeType.HEXAGON;
     /**
      * Number of hex contain in a chunk.
      * if(GreddyMesher.ShapeType.HEXAGON) (this is the radius)
@@ -35,7 +34,7 @@ public final class HexSetting {
     /**
      * Ghost control size.
      */
-    public final static int GHOST_CONTROL_RADIUS = 1;
+//    public final static int GHOST_CONTROL_RADIUS = 1;
     /**
      * The initial depth given to any generated chunk.
      */

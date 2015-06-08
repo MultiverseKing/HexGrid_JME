@@ -3,14 +3,12 @@ package org.hexgridapi.core.appstate;
 import com.jme3.app.Application;
 import com.jme3.app.state.AppState;
 import com.jme3.app.state.AppStateManager;
-import com.jme3.asset.AssetManager;
 import com.jme3.renderer.RenderManager;
-import com.jme3.scene.Node;
 import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.data.MapData;
 
 /**
- * This appState handle the connection between "tile data" and "visual tile".
+ * AppState inplementing the Hexgrid, can be used as starting point.
  *
  * @author roah
  */
@@ -28,11 +26,9 @@ public abstract class AbstractHexGridAppState extends HexGrid implements AppStat
     /**
      *
      * @param mapData tile dataHandler of the grid.
-     * @param enableGhostTile is inexisting tile should be generated as ghost ?
-     * @param mode generate the grid following this param
      */
-    public AbstractHexGridAppState(MapData mapData, AssetManager assetManager, Node rootNode) {
-        super(mapData, assetManager, rootNode);
+    public AbstractHexGridAppState(MapData mapData) {
+        super(mapData);
     }
 
     public final void initialize(AppStateManager stateManager, Application app) {

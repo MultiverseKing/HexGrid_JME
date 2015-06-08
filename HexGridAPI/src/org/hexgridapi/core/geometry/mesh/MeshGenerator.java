@@ -1,4 +1,4 @@
-package org.hexgridapi.core.mesh;
+package org.hexgridapi.core.geometry.mesh;
 
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
@@ -8,11 +8,11 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.mesh.GreddyMesher.CullingData;
+import org.hexgridapi.core.geometry.mesh.GreddyMesher.CullingData;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
- * Maths used to generate the room grid.
+ * Used to generate Mesh used by the grid.
  *
  * @todo improve method to not have to use System.ArrayCopy
  * @author roah

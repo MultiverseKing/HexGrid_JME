@@ -15,25 +15,26 @@ import com.jme3.scene.Spatial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.hexgridapi.core.HexSetting;
+import org.hexgridapi.core.appstate.AbstractHexGridAppState;
 import org.hexgridapi.core.appstate.MapDataAppState;
 import org.hexgridapi.core.appstate.MouseControlSystem;
-import org.hexgridapi.core.mesh.MeshGenerator;
+import org.hexgridapi.core.geometry.mesh.MeshGenerator;
 import org.hexgridapi.events.MouseInputEvent;
 import org.hexgridapi.events.TileInputListener;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.events.TileChangeListener;
 import org.hexgridapi.events.TileSelectionListener;
-import org.hexgridapi.utility.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  * Generate tile on the field to be used as selection control. <br>
  * Used by {@link MouseControlSystem} by default.
- * 
+ *
  * @author roah
  */
 public class TileSelectionControl implements TileInputListener {
 
-    private final Node node = new Node("tileSelectionNode");
+    private final Node TileSelectionNode = new Node("tileSelectionNode");
     private static HashMap<Integer, Mesh> singleTile = new HashMap<Integer, Mesh>();
     private static Material mat;
     private ArrayList<HexCoordinate> coords = new ArrayList<HexCoordinate>();
@@ -47,7 +48,7 @@ public class TileSelectionControl implements TileInputListener {
             mat = app.getAssetManager().loadMaterial("Materials/hexMat.j3m");
 //            mat.setTexture("DiffuseMap", app.getAssetManager().loadTexture(new TextureKey("Textures/EMPTY_TEXTURE_KEY.png", false)));
 //            mat.setColor("Diffuse", new ColorRGBA(1, 0, 0, 0.3f));
-            mat.setTexture("ColorMap", app.getAssetManager().loadTexture(new TextureKey(HexSetting.TEXTURE_PATH+"EMPTY_TEXTURE_KEY.png", false)));
+            mat.setTexture("ColorMap", app.getAssetManager().loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false)));
             mat.setColor("Color", new ColorRGBA(1, 0, 0, 0.3f));
             mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Additive);
         }
@@ -62,11 +63,11 @@ public class TileSelectionControl implements TileInputListener {
          */
         app.getStateManager().getState(MouseControlSystem.class).registerTileInputListener(this);
         app.getStateManager().getState(MapDataAppState.class).getMapData().registerTileChangeListener(tileChangeListener);
-        cursorControl = new CursorControl(app);
+        cursorControl = new CursorControl(app, TileSelectionNode);
         /**
          * @todo attach to hexGridNode and not to rootNode
          */
-        ((Node) app.getViewPort().getScenes().get(0)).attachChild(node);
+        app.getStateManager().getState(AbstractHexGridAppState.class).getGridNode().attachChild(TileSelectionNode);
     }
     /**
      * Listeners.
@@ -94,7 +95,7 @@ public class TileSelectionControl implements TileInputListener {
         public void onTileChange(TileChangeEvent... events) {
             for (int i = 0; i < events.length; i++) {
                 if (coords.contains(events[i].getTilePos())) {
-                    Spatial tile = node.getChild(events[i].getTilePos().toOffset().toString());
+                    Spatial tile = TileSelectionNode.getChild(events[i].getTilePos().toOffset().toString());
                     if (events[i].getNewTile() != null) {
                         ((Geometry) tile).setMesh(getMesh(events[i].getNewTile().getHeight()));
                         cursorControl.setHeight(events[i].getNewTile().getHeight());
@@ -111,12 +112,16 @@ public class TileSelectionControl implements TileInputListener {
                 }
             }
         }
+
+        @Override
+        public void onGridReload() {
+        }
     };
 
     public void registerTileListener(TileSelectionListener listener) {
         this.listeners.add(listener);
     }
-    
+
     public void removeTileListener(TileSelectionListener listener) {
         this.listeners.remove(listener);
     }
@@ -143,7 +148,7 @@ public class TileSelectionControl implements TileInputListener {
                 addGeo(pos, height);
                 coords.add(pos);
             } else {
-                node.getChild(pos.toOffset().toString()).removeFromParent();
+                TileSelectionNode.getChild(pos.toOffset().toString()).removeFromParent();
                 coords.remove(pos);
             }
         }
@@ -160,7 +165,7 @@ public class TileSelectionControl implements TileInputListener {
         Geometry geo = new Geometry(pos.toOffset().toString(), getMesh(height));
         geo.setMaterial(mat);
         geo.setLocalTranslation(pos.toWorldPosition());
-        node.attachChild(geo);
+        TileSelectionNode.attachChild(geo);
 
     }
 
@@ -179,7 +184,7 @@ public class TileSelectionControl implements TileInputListener {
 
     private void clearSelectionGroup() {
         coords.clear();
-        for (Spatial s : node.getChildren()) {
+        for (Spatial s : TileSelectionNode.getChildren()) {
             s.removeFromParent();
         }
     }

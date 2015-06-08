@@ -1,47 +1,49 @@
 package org.hexgridapi.core.control;
 
-import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
-import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.control.chunkbuilder.DefaultBuilder;
-import org.hexgridapi.core.mesh.GreddyMesher;
-import org.hexgridapi.utility.HexCoordinate;
-import org.hexgridapi.utility.Vector2Int;
+import org.hexgridapi.core.geometry.builder.ChunkBuilder;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 
 /**
- * Directly control the chunk geometry, all tiles geometry.
+ * Directly control the chunk geometry. aka : all geometry tiles.
  *
  * @author roah
  */
 public class ChunkControl extends AbstractControl {
 
-    protected final DefaultBuilder builder;
-    protected boolean onlyGround;
-    protected Vector2Int chunkPosition;
+    protected final ChunkBuilder builder;
+    protected ChunkCoordinate chunkPosition;
 
-    public ChunkControl(DefaultBuilder builder, Vector2Int chunkPosition, boolean onlyGround) {
+    public ChunkControl(ChunkBuilder builder, ChunkCoordinate chunkPosition) {
         this.chunkPosition = chunkPosition;
-        this.onlyGround = onlyGround;
         this.builder = builder;
     }
 
     @Override
     public void setSpatial(Spatial spatial) {
+        setSpatial(spatial, true);
+    }
+
+    protected final void setSpatial(Spatial spatial, boolean update) {
         if (spatial != null && spatial instanceof Node) {
             // initialize
             super.setSpatial(spatial);
-            ((Node) spatial).attachChild(new Node("TILES.0|0"));
-            update();
-            ((Node) spatial).setLocalTranslation(getChunkWorldPosition(chunkPosition));
+            ((Node) spatial).attachChild(new Node("TILES." + ChunkCoordinate.getNewInstance())); //@todo
+            if (update) {
+                updateChunk();
+            }
+            ((Node) spatial).setLocalTranslation(chunkPosition.getChunkOrigin().toWorldPosition());
         } else if (spatial == null) {
             // cleanup
         } else {
             throw new UnsupportedOperationException("Provided spatial must be a Node.");
         }
+
     }
 
     @Override
@@ -53,53 +55,59 @@ public class ChunkControl extends AbstractControl {
     }
 
     /**
-     * update all tile on the chunk, following the data contained in mapData.
+     * updateChunk all tile on the chunk, following the data contained in
+     * mapData.
      * /!\ internal use.
      */
-    public void update() {
-        if (spatial == null) {
-            return;
-        }
+    public void updateChunk() {
+//        if (spatial == null) {
+//            throw new RuntimeException("There is no Spatial to work with.");
+//        }
         /**
          * remove the old tile from the chunk.
          */
-        ((Node) ((Node) spatial).getChild("TILES.0|0")).detachAllChildren();
+        ((Node) ((Node) spatial).getChild("TILES." + ChunkCoordinate.getNewInstance())).detachAllChildren();
         /**
          * Generate the tile and attach them with the right texture.
-         * 1 geometry by texture.
+         * 1 geometry by texture if not using texture Array.
          */
-        builder.getTiles((Node) ((Node) spatial).getChild("TILES.0|0"), false, chunkPosition);
+        builder.addChunkTo((Node) ((Node) spatial).getChild("TILES."
+                + ChunkCoordinate.getNewInstance()), chunkPosition);
     }
 
-    public Vector2Int getChunkPosition() {
+    /**
+     * @return the position of this chunk.
+     */
+    public ChunkCoordinate getChunkPosition() {
         return chunkPosition;
     }
 
     /**
-     * Convert chunk position in hexMap to world unit.
-     *
-     * @param chunkPosition
-     * @hint world unit position is the same than the node containing the chunk.
-     * @return chunk world unit position.
+     * Culling set to Inherit.
      */
-    public static Vector3f getChunkWorldPosition(Vector2Int chunkPosition) {
-        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
-            return new Vector3f(chunkPosition.x * HexSetting.CHUNK_SIZE * HexSetting.HEX_WIDTH, 0,
-                    (chunkPosition.y * HexSetting.CHUNK_SIZE) * (float) (HexSetting.HEX_RADIUS * 1.5));
-        } else {
-//            int originPosY =// ((chunkPosition.x & 1) != 0 ? HexSetting.CHUNK_SIZE + 1 * (chunkPosition.y < 0 ? -1 : 1) : 0)
-//                     chunkPosition.y * (HexSetting.CHUNK_SIZE+2);
-//            int originPosX = //((chunkPosition.x & 1) != 0 ? (chunkPosition.x < 0 ? 1 : -1) : 0)
-//                     chunkPosition.x * (HexSetting.CHUNK_SIZE+1);// + ((chunkPosition.x & 1) != 0 ? 0 : 1));
-////            HexCoordinate chunkCenter = new HexCoordinate();
-//            System.err.println("ChunkPos = " + chunkPosition.x + ". World position = "+originPosX);
-//            return new Vector3f(originPosX*HexSetting.HEX_WIDTH, 0, originPosY * (float) (HexSetting.HEX_RADIUS * 1.5));
-            return new HexCoordinate(HexCoordinate.Coordinate.OFFSET, chunkPosition).toWorldPosition();
-//            float chunkDiamX = (HexSetting.CHUNK_SIZE * 2 + 1) * HexSetting.HEX_WIDTH;
-//            float chunkDiamY = (HexSetting.CHUNK_SIZE * 2 + 1) * HexSetting.HEX_RADIUS * 1.5f;
-//            return new Vector3f(chunkPosition.x * chunkDiamX
-//                    + ((chunkPosition.y & 1) == 0 ? 0 : HexSetting.HEX_WIDTH / 2),
-//                    0, chunkPosition.y * chunkDiamY);
+    public void show() {
+        spatial.setCullHint(Spatial.CullHint.Inherit);
+    }
+
+    /**
+     * Culling set to Always.
+     */
+    public void hide() {
+        spatial.setCullHint(Spatial.CullHint.Always);
+    }
+
+    /**
+     * Hide all Ghost Tile
+     * (GhostTile are tile who didn't have any data linked to them)
+     * aka: if (tile == null) tile = ghostTile.
+     * /!\ does not work when using GhostMode.Procedural
+     */
+    public void hideGhostTile(boolean hide) {
+        Spatial geo = ((Node) ((Node) spatial).getChild("TILES." + ChunkCoordinate.getNewInstance())).getChild("NO_TILE");
+        if (geo != null && hide) {
+            geo.setCullHint(Spatial.CullHint.Always);
+        } else if (geo != null) {
+            geo.setCullHint(Spatial.CullHint.Inherit);
         }
     }
 }

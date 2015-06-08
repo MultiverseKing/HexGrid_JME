@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.utility.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  * Dijkstra algorithm

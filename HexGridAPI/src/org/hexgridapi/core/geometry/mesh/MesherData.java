@@ -1,13 +1,14 @@
-package org.hexgridapi.core.mesh;
+package org.hexgridapi.core.geometry.mesh;
 
 import java.util.ArrayList;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
- *
+ * Used to store the data for a single optimized Mesh.
+ * 
  * @author roah
  */
-final class GreddyMesherData {
+final class MesherData {
 
     /**
      * Mesh parameter needed to generate the mesh.
@@ -17,7 +18,7 @@ final class GreddyMesherData {
     private ArrayList<Integer> height = new ArrayList<Integer>();
     private int readIndex = -1;
 
-    GreddyMesherData(Vector2Int position, Integer height) {
+    MesherData(Vector2Int position, Integer height) {
         add(position, height);
     }
 

@@ -15,8 +15,9 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.debug.Arrow;
 import com.jme3.scene.shape.Sphere;
 import java.util.Iterator;
+import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.events.MouseInputEvent;
-import org.hexgridapi.utility.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  *
@@ -25,29 +26,51 @@ import org.hexgridapi.utility.HexCoordinate;
 public class GridRayCastControl {
 
     private final Application app;
-    private Spatial collisionObj;
+    private final String apiGridNodeID;
+    private Spatial collisionNode;
     private Node rayDebug;
+
+    /**
+     * Handle the mouse picking.
+     * This by default use the
+     * {@link org.hexgridapi.core.HexGrid#getGridNode() ()}
+     * as collision reference.
+     *
+     * @param app application running.
+     * @param system internal use.
+     * @param debugColor used to show where the ray collide, if null no debug.
+     */
+    public GridRayCastControl(Application app, HexGrid system, ColorRGBA debugColor) {
+        this(app, system, system.getBuilderNode(), debugColor);
+    }
 
     /**
      * Handle the mouse picking. no debug.
      *
-     * @param app application running
-     * @param collisionObj the node the ray interact with
+     * @param app currently running app.
+     * @param system internal use.
+     * @param collisionObj reference used by the ray to interact with. if null
+     * {@link org.hexgridapi.core.HexGrid#getGridNode() ()} is used as collision
+     * reference.
      */
-    public GridRayCastControl(Application app, Spatial collisionObj) {
-        this(app, collisionObj, null);
+    public GridRayCastControl(Application app, HexGrid system, Spatial collisionObj) {
+        this(app, system, collisionObj, null);
     }
 
     /**
      * Handle the mouse picking. taking into account the debug.
      *
      * @param app currently running app.
-     * @param collisionNode the node the ray interact with
-     * @param debugColor used to show where the ray collide, if null no debug
+     * @param system internal use.
+     * @param collisionObj reference used by the ray to interact with. if null
+     * {@link org.hexgridapi.core.HexGrid#getGridNode() ()} is used as collision
+     * reference.
+     * @param debugColor used to show where the ray collide, if null no debug.
      */
-    public GridRayCastControl(Application app, Spatial collisionNode, ColorRGBA debugColor) {
-        this.collisionObj = collisionNode;
+    public GridRayCastControl(Application app, HexGrid system, Spatial collisionObj, ColorRGBA debugColor) {
+        this.collisionNode = collisionObj != null ? collisionObj : system.getGridNode();
         this.app = app;
+        this.apiGridNodeID = system.getGridNode().getName();
         if (debugColor != null) {
             initialiseDebug(debugColor);
         }
@@ -93,14 +116,13 @@ public class GridRayCastControl {
      * Cast the defined ray on the defined collision node then return it
      * converted as Hex event.
      *
-     * @param ray Can be get from {
-     * @see #get3DRay(CastFrom)}
+     * @param ray Can be get from {@link #get3DRay(CastFrom)}
      * @return null if no collision.
      */
     public MouseInputEvent castRay(Ray ray) {
         CollisionResults results = new CollisionResults();
         ray = ray != null ? ray : get3DRay(CastFrom.SCREEN_CENTER);
-        collisionObj.collideWith(ray, results);
+        collisionNode.collideWith(ray, results);
         if (results.size() != 0) {
             for (int i = 0; i < results.size(); i++) {
                 CollisionResult closest = results.getCollision(i);
@@ -114,10 +136,10 @@ public class GridRayCastControl {
         } else {
             //Error catching.
             System.out.println("null raycast");
-            if (collisionObj instanceof Node) {
-                ((Node) collisionObj).detachChild(rayDebug);
-            } else if (collisionObj.getParent() != null) {
-                collisionObj.getParent().detachChild(rayDebug);
+            if (collisionNode instanceof Node) {
+                ((Node) collisionNode).detachChild(rayDebug);
+            } else if (collisionNode.getParent() != null) {
+                collisionNode.getParent().detachChild(rayDebug);
             }
             return null;
         }
@@ -127,7 +149,7 @@ public class GridRayCastControl {
      * Generate a new ray by converting 2d screen coordinates
      * to 3D world coordinates.
      *
-     * @param from Which 2d screen coordinate as parameter
+     * @param from coordinate to use as parameter
      * @return Newly generated ray from parameter
      */
     public Ray get3DRay(CastFrom from) {
@@ -174,16 +196,21 @@ public class GridRayCastControl {
 //        return null;
     }
 
+    /**
+     * Make the ray have a new Collision reference.
+     * This get ride of the current debug.
+     * @param collisionNode new reference.
+     */
     public void setCollisionNode(Spatial collisionNode) {
         clearRayDebug();
-        this.collisionObj = collisionNode;
+        this.collisionNode = collisionNode;
     }
 
     private void setDebugPosition(Vector3f pos) {
-        if (rayDebug != null && collisionObj != null) {
-            Node parent = (Node) (collisionObj instanceof Node ? collisionObj : collisionObj.getParent());
+        if (rayDebug != null && collisionNode != null) {
+            Node parent = (Node) (collisionNode instanceof Node ? collisionNode : collisionNode.getParent());
             while (parent != null) {
-                if (parent.getName().equals("HexGridNode")) {
+                if (parent.getName().equals(apiGridNodeID)) {
                     if (parent.hasChild(rayDebug)) {
                         rayDebug.setLocalTranslation(pos);
                     } else {
@@ -194,17 +221,19 @@ public class GridRayCastControl {
                 }
                 parent = parent.getParent();
             }
-            throw new NullPointerException("HexGridNode cannot be found.");
+            throw new NullPointerException(apiGridNodeID + " cannot be found.");
         }
-    }
-
-    public Spatial getDebug() {
-        return rayDebug;
     }
 
     public enum CastFrom {
 
+        /**
+         * Current mouse position on screen.
+         */
         MOUSE,
+        /**
+         * Always the center of the screen.
+         */
         SCREEN_CENTER;
     }
 

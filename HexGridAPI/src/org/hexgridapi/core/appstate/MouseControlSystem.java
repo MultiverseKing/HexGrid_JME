@@ -47,7 +47,7 @@ public class MouseControlSystem extends AbstractAppState {
         /**
          * Activate the RaycastDebug.
          */
-        rayCastControl = new GridRayCastControl(app, app.getStateManager().getState(AbstractHexGridAppState.class).getTileNode(), ColorRGBA.Red);
+        rayCastControl = new GridRayCastControl(app, app.getStateManager().getState(AbstractHexGridAppState.class), ColorRGBA.Red);
         tileSelectionControl.initialise(app);
     }
 
@@ -106,7 +106,7 @@ public class MouseControlSystem extends AbstractAppState {
                 }
             } else {
                 inputListeners.get(listenerPulseIndex).onMouseAction(
-                        new MouseInputEvent(MouseInputEventType.PULSE, tileSelectionControl.getSelectedPos(), 
+                        new MouseInputEvent(MouseInputEventType.PULSE, tileSelectionControl.getSelectedPos(),
                         mapData.getTile(tileSelectionControl.getSelectedPos()).getHeight(),
                         rayCastControl.get3DRay(GridRayCastControl.CastFrom.MOUSE), null));
             }
@@ -116,7 +116,7 @@ public class MouseControlSystem extends AbstractAppState {
     public void clearDebug() {
         rayCastControl.clearRayDebug();
     }
-    
+
     @Override
     public void update(float tpf) {
         if (listenerPulseIndex != -1) {
@@ -174,7 +174,7 @@ public class MouseControlSystem extends AbstractAppState {
         Ray ray = rayCastControl.get3DRay(GridRayCastControl.CastFrom.MOUSE);
         MouseInputEvent event;
         if (!mouseInput.equals(MouseInputEventType.PULSE)) {
-                event = callRayActionListeners(mouseInput, ray);
+            event = callRayActionListeners(mouseInput, ray);
             if (event == null) {
                 event = rayCastControl.castRay(ray);
                 if (event != null && event.getPosition() != null) { // && !event.getEventPosition().equals(lastHexPos)) {
@@ -216,7 +216,7 @@ public class MouseControlSystem extends AbstractAppState {
         }
         return event;
     }
-    
+
     public TileSelectionControl getSelectionControl() {
         return tileSelectionControl;
     }
@@ -241,6 +241,7 @@ public class MouseControlSystem extends AbstractAppState {
 ////            enable--;
 ////        }
 //    }
+
     @Override
     public void cleanup() {
         super.cleanup();

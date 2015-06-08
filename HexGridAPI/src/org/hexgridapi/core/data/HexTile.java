@@ -57,9 +57,6 @@ public class HexTile implements Savable {
         textureKey = capsule.readInt("textureKey", (byte) 0);
     }
 
-    protected void extendedread(InputCapsule capsule) throws IOException {
-    }
-
     /**
      * Returns a clone of this tile with changed height param.
      */

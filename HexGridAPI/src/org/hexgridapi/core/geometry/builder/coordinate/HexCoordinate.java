@@ -1,10 +1,14 @@
-package org.hexgridapi.utility;
+package org.hexgridapi.core.geometry.builder.coordinate;
 
 import org.hexgridapi.core.HexSetting;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import java.util.ArrayList;
-import org.hexgridapi.core.mesh.GreddyMesher;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.hexgridapi.utility.Rotation;
+import org.hexgridapi.utility.Vector2Int;
+import org.hexgridapi.utility.Vector3Int;
 
 /**
  * Data is stored as AXIAL cordinate.
@@ -13,7 +17,7 @@ import org.hexgridapi.core.mesh.GreddyMesher;
  * http://www.redblobgames.com --Changed version by Eike Foede-- This Class is
  * only used as a converter system so we can simplifie algorithm.
  */
-public final class HexCoordinate {
+public class HexCoordinate implements Cloneable {
 
     /**
      * Axial position in Grid. q == x
@@ -27,13 +31,14 @@ public final class HexCoordinate {
     private static Vector2Int offsetToAxial(Vector2Int data) {
         return new Vector2Int(data.x - (data.y - (data.y & 1)) / 2, data.y);
     }
-    private static Vector2Int offsetQToAxial(Vector2Int data) {
-        return new Vector2Int(data.y, data.x - (data.y - (data.y&1)) / 2);
-    }
 
-//    private static Vector2Int cubicToAxial(Vector3Int data) {
-//        return new Vector2Int(data.x, data.z);
-//    }
+    public static Vector3Int offsetToCubic(Vector2Int coord) {
+        int x = coord.y - (coord.x - (coord.x & 1)) / 2;
+        int z = coord.x;
+        int y = -x - z;
+
+        return new Vector3Int(x, y, z);
+    }
 
     /**
      * Only for internal use. (Axial)
@@ -125,7 +130,8 @@ public final class HexCoordinate {
     public Vector3f toWorldPosition() {
         Vector2Int offsetPos = toOffset();
         return new Vector3f((offsetPos.x) * HexSetting.HEX_WIDTH
-                + ((offsetPos.y & 1) == 0 ? 0 : HexSetting.HEX_WIDTH / 2), 0.05f, offsetPos.y * HexSetting.HEX_RADIUS * 1.5f);
+                + ((offsetPos.y & 1) == 0 ? 0 : HexSetting.HEX_WIDTH / 2), 0.0f, 
+                offsetPos.y * HexSetting.HEX_RADIUS * 1.5f);
     }
 
     /**
@@ -196,53 +202,25 @@ public final class HexCoordinate {
         }
         return null;
     }
-
-    /**
-     * Return the chunk who hold the tile.
-     */
-    public Vector2Int getCorrespondingChunk() {
-        Vector2Int pos = toOffset();
-        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
-            int x = ((int) FastMath.abs(pos.x) + (pos.x < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
-            int y = ((int) FastMath.abs(pos.y) + (pos.y < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
-            return new Vector2Int(pos.x < 0 ? (x + 1) * -1 : x, pos.y < 0 ? (y + 1) * -1 : y);
-        } else if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.HEXAGON)) { //@todo
-//            int x = (int) FastMath.abs(pos.x) / (HexSetting.CHUNK_SIZE * 2 + 1) - HexSetting.CHUNK_SIZE;
-//            int y = (int) FastMath.abs(pos.y) / (HexSetting.CHUNK_SIZE * 2 + 1) - HexSetting.CHUNK_SIZE;
-//            return new Vector2Int(pos.x < 0 ? x * -1 : x, pos.y < 0 ? y * -1 : y);
-            return new Vector2Int(); //@todo
-        } else {
-            throw new UnsupportedOperationException(HexSetting.CHUNK_SHAPE_TYPE + " isn't a supported type.");
-        }
-    }
-
-    /**
-     * Return the tile position inside his corresponding chunk.
-     *
-     * @todo update for hexagonal chunk
-     */
-//    public final HexCoordinate getTilePosInChunk() {
-//        Vector2Int chunk = getCorrespondingChunk();
-//        Vector2Int tileOffset = toOffset();
-//        return new HexCoordinate(Coordinate.OFFSET,
-//                (int) (FastMath.abs(tileOffset.x) - FastMath.abs(chunk.x) * HexSetting.CHUNK_SIZE),
-//                (int) (FastMath.abs(tileOffset.y) - FastMath.abs(chunk.y) * HexSetting.CHUNK_SIZE));
-//    }
+    
     @Override
     public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
         if (obj instanceof HexCoordinate) {
-            HexCoordinate coord = (HexCoordinate) obj;
+            final HexCoordinate coord = (HexCoordinate) obj;
             if (coord.toAxial().x == q && coord.toAxial().y == r) {
                 return true;
             }
         } else if (obj instanceof Vector2Int) {
-            Vector2Int coord = (Vector2Int) obj;
+            final Vector2Int coord = (Vector2Int) obj;
             if (coord.x == toOffset().x && coord.y == toOffset().y) {
                 return true;
             }
         } else if (obj instanceof String) {
             try {
-                HexCoordinate coord = new HexCoordinate(Coordinate.OFFSET, new Vector2Int((String) obj));
+                final HexCoordinate coord = new HexCoordinate(Coordinate.OFFSET, Vector2Int.fromString((String) obj));
                 if (coord.toAxial().x == q && coord.toAxial().y == r) {
                     return true;
                 }
@@ -350,14 +328,29 @@ public final class HexCoordinate {
         return false;
     }
 
-    public HexCoordinate duplicate() {
-        return new HexCoordinate(q, r);
+    @Override
+    public HexCoordinate clone() {
+        try {
+            return (HexCoordinate) super.clone();
+        } catch (CloneNotSupportedException ex) {
+            Logger.getLogger(HexCoordinate.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     public enum Coordinate {
 
+        /**
+         * Offset R coordinate.
+         */
         OFFSET,
+        /**
+         * Axial coordinate.
+         */
         AXIAL,
+        /**
+         * Cubic coordinate.
+         */
         CUBIC;
     }
 }

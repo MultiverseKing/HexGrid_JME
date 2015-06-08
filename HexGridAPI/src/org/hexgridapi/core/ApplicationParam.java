@@ -6,18 +6,18 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.shadow.DirectionalLightShadowFilter;
-import org.hexgridapi.core.mesh.GreddyMesher;
+import org.hexgridapi.core.geometry.mesh.GreddyMesher;
 import org.hexgridapi.utility.ArrowDebugShape;
 
 /**
  *
  * @author roah
  */
-public class DefaultParam {
+public class ApplicationParam {
 
     private RTSCamera rtsCam;
 
-    public DefaultParam(SimpleApplication app, boolean debug) {
+    public ApplicationParam(SimpleApplication app, boolean debug) {
         app.setPauseOnLostFocus(false);
         lightSettup(app);
         cameraSettup(app);
@@ -72,11 +72,11 @@ public class DefaultParam {
     private void cameraSettup(SimpleApplication app) {
         app.getFlyByCamera().setEnabled(false);
         rtsCam = new RTSCamera(RTSCamera.UpVector.Y_UP, "AZERTY");
-        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
-            rtsCam.setCenter(new Vector3f(20, 15, 18));
-        } else {
-            rtsCam.setCenter(new Vector3f(11, 15, 15));
-        }
+        rtsCam.setCenter(new Vector3f(20, 15, 18));
+//        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
+//        } else {
+//            rtsCam.setCenter(new Vector3f(11, 15, 15));
+//        }
         rtsCam.setRot(120);
         app.getStateManager().attach(rtsCam);
     }

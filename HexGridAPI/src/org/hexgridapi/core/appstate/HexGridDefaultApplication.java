@@ -1,14 +1,14 @@
 package org.hexgridapi.core.appstate;
 
 import com.jme3.app.SimpleApplication;
-import org.hexgridapi.core.DefaultParam;
+import org.hexgridapi.core.ApplicationParam;
 import org.hexgridapi.core.RTSCamera;
 
 /**
  *
  * @author roah
  */
-public abstract class HexGridDefaultApp extends SimpleApplication {
+public abstract class HexGridDefaultApplication extends SimpleApplication {
 
     private RTSCamera rtsCam;
 
@@ -19,7 +19,7 @@ public abstract class HexGridDefaultApp extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         super.inputManager.clearMappings();
-        rtsCam = new DefaultParam(this, false).getCam();
+        rtsCam = new ApplicationParam(this, false).getCam();
         initApp();
     }
     

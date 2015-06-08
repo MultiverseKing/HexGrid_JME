@@ -4,13 +4,14 @@ import com.jme3.math.FastMath;
 import libnoiseforjava.NoiseGen;
 import libnoiseforjava.module.Perlin;
 import org.hexgridapi.core.data.HexTile;
-import org.hexgridapi.utility.HexCoordinate;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  *
  * @author roah
  */
 public final class ProceduralHexGrid extends Generator {
+
     /**
      * Module used for the generation.
      */
@@ -26,7 +27,8 @@ public final class ProceduralHexGrid extends Generator {
      * @todo textureCount is unused
      * @param seed
      */
-    public ProceduralHexGrid(int seed, int textureCount) {
+    public ProceduralHexGrid(int textureCount) {
+        int seed = ProceduralHexGrid.generateSeed();
         if (validateSeed(seed)) {
 //            if (heightMin != null) {
 //                this.heightMin = (int) (heightMin <= 0 ? FastMath.abs(heightMin) : heightMin);
@@ -34,12 +36,16 @@ public final class ProceduralHexGrid extends Generator {
 //            if (heightMax != null && heightMax > 0) {
 //                this.heightMax = heightMax;
 //            }
-            this.textureCount = textureCount;
+            this.textureCount = textureCount + 1;
 //            perlin.setFrequency(2.0);
 //            perlin.setPersistence(0.5);
             perlin.setNoiseQuality(NoiseGen.NoiseQuality.QUALITY_FAST);
             perlin.setSeed(seed);
         }
+    }
+
+    public void setSeed(int seed) {
+        perlin.setSeed(seed);
     }
 
     /**

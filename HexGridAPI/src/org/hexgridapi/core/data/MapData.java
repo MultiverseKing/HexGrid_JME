@@ -1,15 +1,16 @@
 package org.hexgridapi.core.data;
 
+import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 import com.jme3.asset.AssetManager;
 import org.hexgridapi.events.TileChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import org.hexgridapi.core.data.procedural.ProceduralHexGrid;
+import org.hexgridapi.core.geometry.builder.GridParam;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.loader.HexGridMapLoader;
-import org.hexgridapi.utility.HexCoordinate;
-import org.hexgridapi.utility.Vector2Int;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  * This class holds the hex data of the map.
@@ -28,50 +29,25 @@ import org.hexgridapi.utility.Vector2Int;
  */
 public final class MapData {
 
-    private final AssetManager assetManager; //used for save/loading map
     private final ChunkData chunkData = new ChunkData();
     private final ArrayList<TileChangeListener> tileListeners = new ArrayList<TileChangeListener>();
     private final HexGridMapLoader hexGridMapLoader;
-    private GhostMode mode;
-    private ProceduralHexGrid generator;
+    private final GridParam gridParameters;
     private String mapName = "Undefined";
-    private ArrayList<String> textureKeys = new ArrayList<String>();
-
-    public MapData(AssetManager assetManager) {
-        this(null, assetManager, GhostMode.PROCEDURAL);
-    }
-
-    public MapData(Object[] textureKeys, AssetManager assetManager, GhostMode mode) {
-        this.assetManager = assetManager;
+    /**
+     * Create a new instance of data for the map.
+     *
+     * @param textureKeys list of texture to use.
+     * @param assetManager used to load the texture.
+     * @param generator if using procedural generation.
+     */
+    public MapData(AssetManager assetManager, GridParam param) {//, GhostMode mode) {
         hexGridMapLoader = new HexGridMapLoader(assetManager);
-        genTextureKeys(textureKeys);
-        if (!mode.equals(GhostMode.NONE)) {
-            generator = new ProceduralHexGrid(ProceduralHexGrid.generateSeed(), this.textureKeys.size());
-        }
-        this.mode = mode;
-    }
-
-    private void genTextureKeys(Object[] userKey) {
-        if (userKey != null) {
-            for (int i = -1; i < userKey.length; i++) {
-                if (i == -1) {
-                    textureKeys.add("EMPTY_TEXTURE_KEY");
-                } else {
-                    if (userKey[i].toString().equals("NO_TILES")
-                            || userKey[i].toString().equals("EMPTY_TEXTURE_KEY")
-                            || userKey[i].toString().equals("SELECTION_TEXTURE")) {
-                        throw new IllegalArgumentException(userKey[i] + " is not allowed.");
-                    }
-                    textureKeys.add(userKey[i].toString());
-                }
-            }
-        } else {
-            textureKeys.add("EMPTY_TEXTURE_KEY");
-        }
+        this.gridParameters = param;
     }
 
     /**
-     * Register a listener to respond to Tile Event.
+     * Register a listener to respond to tile event.
      *
      * @param listener to register.
      */
@@ -80,7 +56,7 @@ public final class MapData {
     }
 
     /**
-     * Remove listener from event on tile.
+     * Remove listener from responding to tile event.
      *
      * @param listener
      */
@@ -96,22 +72,36 @@ public final class MapData {
     }
 
     /**
-     * @return current map name.
+     * Set the current map name.
      */
     public void setMapName(String mapName) {
         this.mapName = mapName;
     }
 
-    public GhostMode getMode() {
-        return mode;
+//    public GhostMode getMode() {
+//        return mode;
+//    }
+    /**
+     *
+     * @return the seed currently used for the procedural generation.
+     */
+    public int getSeed() {
+        return gridParameters.getGenerator().getSeed();
     }
 
     public ProceduralHexGrid getGenerator() {
-        return generator;
+        return gridParameters.getGenerator();
     }
 
-    public int getSeed() {
-        return generator.getSeed();
+    /**
+     * Generating a new seed cause the map to be reset.
+     */
+    public void generateNewSeed() {
+        Cleanup();
+        for (TileChangeListener l : tileListeners) {
+            l.onGridReload();
+        }
+        gridParameters.getGenerator().setSeed(ProceduralHexGrid.generateSeed());
     }
 
     /**
@@ -129,22 +119,20 @@ public final class MapData {
      * @param chunkPos inspected chunk.
      * @return true the specifiate chunk got any tile stored.
      */
-    public boolean contain(Vector2Int chunkPos) {
+    public boolean contain(ChunkCoordinate chunkPos) {
         return chunkData.contain(chunkPos);
     }
 
     /**
      * Get tile(s) properties. (one tile)
      *
-     * @param tilePos Offset position of the tile.
+     * @param tilePos position of the tile.
      * @return can be null
      */
     public HexTile getTile(HexCoordinate tilePos) {
         HexTile t = chunkData.getTile(tilePos);
-        if (t == null && !chunkData.contain(tilePos)
-                && (mode.equals(GhostMode.GHOST_PROCEDURAL)
-                || mode.equals(GhostMode.PROCEDURAL))) {
-            t = generator.getTileValue(tilePos);
+        if (t == null && gridParameters.getGenerator() != null) {
+            t = gridParameters.getGenerator().getTileValue(tilePos);
         }
         return t;
     }
@@ -152,16 +140,15 @@ public final class MapData {
     /**
      * Get tile(s) properties. (multiple tile)
      *
-     * @param tilePos Offset position of the tile.
+     * @param tilePos position of the tile.
      * @return can contain null
      */
     public HexTile[] getTile(HexCoordinate[] tilePos) {
         HexTile[] result = new HexTile[tilePos.length];
         for (int i = 0; i < tilePos.length; i++) {
             result[i] = chunkData.getTile(tilePos[i]);
-            if (result[i] == null && mode.equals(GhostMode.GHOST_PROCEDURAL)
-                    || mode.equals(GhostMode.PROCEDURAL)) {
-                result[i] = generator.getTileValue(tilePos[i]);
+            if (result[i] == null && gridParameters.getGenerator() != null) {
+                result[i] = gridParameters.getGenerator().getTileValue(tilePos[i]);
             }
         }
         return result;
@@ -178,24 +165,26 @@ public final class MapData {
     }
 
     /**
-     * Change the designed tile(s) properties.
-     * if tile array size is == 1 the given properties will be apply on all
-     * position,
-     * else the two array size must match.
+     * Change the designed tile(s) properties. <br>
+     * If {
+     *
+     * @param tileValue} size == 1 the given properties will be apply on all
+     * position, else the two array size must match.
      *
      * @param tilePos position of the tile to change.
-     * @param tile tile to change.
+     * @param tileValue tile to change.
      */
-    public void setTile(HexCoordinate[] tilePos, HexTile[] tile) {
+    public void setTile(HexCoordinate[] tilePos, HexTile... tileValue) {
         TileChangeEvent[] tceList = new TileChangeEvent[tilePos.length];
         boolean arrayUpdate = false;
-        if (tile.length > 1 && tile.length == tilePos.length) {
+        if (tileValue.length > 1 && tileValue.length == tilePos.length) {
             arrayUpdate = true;
-        } else if (tile.length > 1 && tile.length != tilePos.length) {
-            throw new UnsupportedOperationException("Inserted param does not match the requiment tile.length != tilePos.length");
+        } else if (tileValue.length > 1 && tileValue.length != tilePos.length) {
+            throw new UnsupportedOperationException("Inserted param does not match "
+                    + "the requiment as : if(tile.length > 1) tile.length == tilePos.length");
         }
         for (int i = 0; i < tilePos.length; i++) {
-            tceList[i] = updateTileData(tilePos[i], arrayUpdate ? tile[i] : tile[0]);
+            tceList[i] = updateTileData(tilePos[i], arrayUpdate ? tileValue[i] : tileValue[0]);
         }
         updateTileListeners(tceList);
     }
@@ -231,28 +220,34 @@ public final class MapData {
             oldTile = chunkData.add(tilePos, tile);
         } else {
             oldTile = chunkData.remove(tilePos);
-            if (oldTile == null && mode.equals(GhostMode.GHOST_PROCEDURAL)) {
-                chunkData.add(tilePos, null);
+            if (oldTile == null && gridParameters.getGenerator() != null) { //@todo
+                chunkData.add(tilePos, new HexTile(0, getTextureKey("NO_TILE")));
             }
         }
         return new TileChangeEvent(tilePos, oldTile, tile);
     }
 
+    /**
+     * @todo
+     */
     public boolean saveArea(String mapName) {
         this.mapName = mapName;
         return hexGridMapLoader.saveArea(mapName);
     }
 
+    /**
+     * @todo
+     */
     public boolean loadArea(String mapName) {
         return hexGridMapLoader.loadArea(mapName);
     }
 
-    /**
-     * The texture used when adding a tile with no texture.
-     *
-     * @param Key texture to use as default
-     * @todo
-     */
+//    /**
+//     * The texture used when adding a tile with no texture.
+//     *
+//     * @param Key texture to use as default
+//     * @todo
+//     */
 //    public void setDefaultTexture(String Key) {
 //        for (Vector2Int coord : tileData.keySet()) {
 //            tileData.put(coord, tileData.get(coord).cloneChangedTextureKey(getTextureKey(Key)));
@@ -311,7 +306,7 @@ public final class MapData {
             return "NO_TILE";
         } else {
             try {
-                return textureKeys.get(textureKey);
+                return gridParameters.getTextureKeys().get(textureKey);
             } catch (IndexOutOfBoundsException e) {
                 return "EMPTY_TEXTURE_KEY";
             }
@@ -329,7 +324,7 @@ public final class MapData {
         if (value == null || value.equals("NO_TILE")) {
             return -1;
         }
-        int result = textureKeys.indexOf(value);
+        int result = gridParameters.getTextureKeys().indexOf(value);
         if (result == -1) {
             throw new NoSuchFieldError(value + " is not in the registered key List.");
         } else {
@@ -339,36 +334,16 @@ public final class MapData {
 
     /**
      *
-     * @return all registered texture value, cannot be edited
+     * @return all registered texture value. (read only)
      */
     public List<String> getTextureKeys() {
-        return Collections.unmodifiableList(textureKeys);
+        return Collections.unmodifiableList(gridParameters.getTextureKeys());
     }
 
     /**
-     * Used to define how the chunk will handle tiles if they does not exist.
+     * @return The currently used Parameters.
      */
-    public enum GhostMode {
-
-        /**
-         * null chunk will be ignored,
-         * null tiles will be ignored.
-         */
-        NONE,
-        /**
-         * null chunk will be generated as ghost,
-         * null tiles will be generated as ghost.
-         */
-        GHOST,
-        /**
-         * null chunk will be generated proceduraly,
-         * null tile will be ignored.
-         */
-        PROCEDURAL,
-        /**
-         * null chunk will be generated proceduraly,
-         * null tile will be generated as ghost.
-         */
-        GHOST_PROCEDURAL;
+    public GridParam getGridParameters() {
+        return gridParameters;
     }
 }

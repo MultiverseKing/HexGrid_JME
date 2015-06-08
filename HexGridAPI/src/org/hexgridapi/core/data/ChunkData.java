@@ -1,10 +1,10 @@
 package org.hexgridapi.core.data;
 
+import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import org.hexgridapi.utility.HexCoordinate;
-import org.hexgridapi.utility.Vector2Int;
+import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  * Contain all user Hex data.
@@ -16,13 +16,13 @@ public class ChunkData {
     /**
      * Map holding all chunk on the current memory.
      */
-    private HashMap<Vector2Int, HashMap> chunks = new HashMap<Vector2Int, HashMap>();
+    private HashMap<ChunkCoordinate, HashMap> chunks = new HashMap<ChunkCoordinate, HashMap>();
 
     HexTile add(HexCoordinate tilePos, HexTile tile) {
-        if (!chunks.containsKey(tilePos.getCorrespondingChunk())) {
-            chunks.put(tilePos.getCorrespondingChunk(), new HashMap<HexCoordinate, HexTile>());
+        if (!chunks.containsKey(ChunkCoordinate.getNewInstance(tilePos))) {
+            chunks.put(ChunkCoordinate.getNewInstance(tilePos), new HashMap<HexCoordinate, HexTile>());
         }
-        return (HexTile) chunks.get(tilePos.getCorrespondingChunk()).put(tilePos, tile);
+        return (HexTile) chunks.get(ChunkCoordinate.getNewInstance(tilePos)).put(tilePos, tile);
     }
     
     /**
@@ -31,8 +31,8 @@ public class ChunkData {
      * @return old Contained tile.
      */
     HexTile remove(HexCoordinate tilePos){
-        if (chunks.containsKey(tilePos.getCorrespondingChunk())) {
-            return (HexTile) chunks.get(tilePos.getCorrespondingChunk()).remove(tilePos);
+        if (chunks.containsKey(ChunkCoordinate.getNewInstance(tilePos))) {
+            return (HexTile) chunks.get(ChunkCoordinate.getNewInstance(tilePos)).remove(tilePos);
         }
         return null;
     }
@@ -44,13 +44,13 @@ public class ChunkData {
      * @return null if the tile doesn't exist.
      */
     HexTile getTile(HexCoordinate tilePos) {
-        if (chunks.containsKey(tilePos.getCorrespondingChunk())) {
-            return (HexTile) chunks.get(tilePos.getCorrespondingChunk()).get(tilePos);
+        if (chunks.containsKey(ChunkCoordinate.getNewInstance(tilePos))) {
+            return (HexTile) chunks.get(ChunkCoordinate.getNewInstance(tilePos)).get(tilePos);
         }
         return null;
     }
     
-    boolean exist(Vector2Int chunk, HexCoordinate tilePos) {
+    boolean exist(ChunkCoordinate chunk, HexCoordinate tilePos) {
         if (chunks.containsKey(chunk)) {
             if (chunks.get(chunk).containsKey(tilePos.toOffset())) {
                 return true;
@@ -59,7 +59,7 @@ public class ChunkData {
         return false;
     }
 
-    Collection getChunkTiles(Vector2Int chunkPos) {
+    Collection getChunkTiles(ChunkCoordinate chunkPos) {
         return Collections.unmodifiableCollection(chunks.get(chunkPos).values());
     }
 
@@ -88,7 +88,7 @@ public class ChunkData {
      * @param chunkPos inspected chunk.
      * @return true if stored.
      */
-    boolean contain(Vector2Int chunkPos) {
+    boolean contain(ChunkCoordinate chunkPos) {
         return chunks.containsKey(chunkPos);
     }
     
@@ -99,8 +99,8 @@ public class ChunkData {
      * @return true if stored.
      */
     boolean contain(HexCoordinate tilePos) {
-        if (contain(tilePos.getCorrespondingChunk())) {
-            return chunks.get(tilePos.getCorrespondingChunk()).containsKey(tilePos);
+        if (contain(ChunkCoordinate.getNewInstance(tilePos))) {
+            return chunks.get(ChunkCoordinate.getNewInstance(tilePos)).containsKey(tilePos);
         }
         return false;
     }
