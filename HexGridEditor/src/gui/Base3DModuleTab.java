@@ -10,13 +10,13 @@ import javax.swing.ImageIcon;
  *
  * @author roah
  */
-public abstract class Base3DModule extends JPanelTab {
+public abstract class Base3DModuleTab extends JPanelTab {
 
-    public Base3DModule(Image img, String name) {
+    public Base3DModuleTab(Image img, String name) {
         super(img, name);
     }
 
-    public Base3DModule(ImageIcon icon, String name) {
+    public Base3DModuleTab(ImageIcon icon, String name) {
         super(icon, name);
     }
 

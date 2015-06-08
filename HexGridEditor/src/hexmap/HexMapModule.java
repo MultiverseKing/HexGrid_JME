@@ -5,8 +5,10 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.scene.Node;
-import gui.Base3DModule;
+import gui.Base3DModuleTab;
+import gui.JPanelTab;
 import gui.JPanelTabController;
+import gui.JPanelTabListener;
 import hexmap.gui.JCursorPositionPanel;
 import hexmap.gui.JHexEditorMenu;
 import java.awt.BorderLayout;
@@ -22,21 +24,22 @@ import org.hexgridapi.core.geometry.builder.coordinate.SquareCoordinate;
  *
  * @author roah
  */
-public final class HexMapModule extends Base3DModule {
+public final class HexMapModule extends Base3DModuleTab implements JPanelTabListener {
 
     private static JPanelTabController panelController = new JPanelTabController("HexMapPanelControl");
     private final MouseControlSystem mouseSystem = new MouseControlSystem();
     private MapDataAppState mapDataState;
     private HexMapSystem hexMapSystem;
     private SimpleApplication app;
-    private boolean isStart;
+    private boolean isStart = true;
 
     public HexMapModule(Application app, JMenuBar menu) {
-        super(app.getAssetManager().loadTexture("Textures/Icons/Buttons/hexIconBW.png").getImage(), "HexGridModule");
+        super(app.getAssetManager().loadTexture("Textures/Icons/Buttons/hexIconBW.png").getImage(), "HexGrid Module");
         
         JHexEditorMenu editorMenu = new JHexEditorMenu(this);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.New);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.Load);
+        editorMenu.setAction(JHexEditorMenu.HexMenuAction.Save);
         menu.add(editorMenu);
         
         MapData mapData = new MapData(app.getAssetManager(), 
@@ -46,7 +49,9 @@ public final class HexMapModule extends Base3DModule {
         hexMapSystem = new HexMapSystem(mapData);
         
         setLayout(new BorderLayout());
-        panelController.add(new JCursorPositionPanel(mouseSystem));
+        
+        panelController.add(new HexMapPropertiesPanel(getIcon(), new JCursorPositionPanel(mouseSystem)));
+        panelController.registerTabChangeListener(this);
         validate();
     }
 
@@ -73,19 +78,39 @@ public final class HexMapModule extends Base3DModule {
         app.getStateManager().detach(hexMapSystem);
         isStart = false;
     }
+    public void addPropertiesTab(JPanelTab tab){
+        panelController.add(tab);
+    }
+
+    @Override
+    public void onPanelChange(JPanelTab tab) {
+//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void generateNewMap() {
+//        mapDataState.getMapData().generateNewSeed();
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public boolean isStart() {
+        return isStart;
+    }
 
     @Override
     public Node getModuleNode() {
         return hexMapSystem.getGridNode();
     }
 
-    public void generateNewMap() {
-        mapDataState.getMapData().generateNewSeed();
+    public MouseControlSystem getMouseSystem() {
+        return mouseSystem;
     }
 
-    public boolean isStart() {
-//        if(app.getStateManager().hasState(hexMapSystem) && hexMapSystem.)
-        return isStart;
+    public MapData getMapDataState() {
+        return mapDataState.getMapData();
+    }
+
+    public HexMapSystem getHexMapSystem() {
+        return hexMapSystem;
     }
 
     public String getMapName() {

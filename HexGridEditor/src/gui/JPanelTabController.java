@@ -75,7 +75,7 @@ public class JPanelTabController extends JPanel {
                     }
                 }
             });
-            buttonIco.setPreferredSize(new Dimension(15, 15));
+            buttonIco.setPreferredSize(new Dimension(16, 16));
             buttonIco.setMaximumSize(new Dimension(20, 20));
             buttonIco.setBorder(BorderFactory.createEmptyBorder());
             buttonIco.setContentAreaFilled(false);
@@ -100,7 +100,7 @@ public class JPanelTabController extends JPanel {
 
     private void updatePanel(String newPan) {
         for (Component c : this.getComponents()) {
-            if (c instanceof JPanel && !((JPanel) c).equals(iconPan)) {
+            if (c instanceof JPanelTab && !((JPanel) c).equals(iconPan)) {
                 panels.get(c.getName()).isHidden();
                 this.remove(panels.get(c.getName()));
                 break;

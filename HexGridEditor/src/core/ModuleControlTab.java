@@ -1,6 +1,6 @@
 package core;
 
-import gui.Base3DModule;
+import gui.Base3DModuleTab;
 import com.jme3.scene.Node;
 import com.jme3.system.JmeCanvasContext;
 import gui.JPanelTab;
@@ -23,7 +23,7 @@ public final class ModuleControlTab implements JPanelTabListener {
     private static HexGridEditorMain app;
     private static Canvas canvas;
     private static Node rootNode;
-    private Base3DModule currentModule;
+    private Base3DModuleTab currentModule;
 
     ModuleControlTab(HexGridEditorMain app) {
         ModuleControlTab.rootNode = app.getRootNode();
@@ -70,17 +70,17 @@ public final class ModuleControlTab implements JPanelTabListener {
 
     @Override
     public void onPanelChange(JPanelTab tab) {
-        if (tab instanceof Base3DModule) {
+        if (tab instanceof Base3DModuleTab) {
             if (currentModule != null) {
                 currentModule.onContextLostFocus();
                 currentModule.remove(canvas);
                 currentModule.getModuleNode().removeFromParent();
             }
-            rootNode.attachChild(((Base3DModule) tab).getModuleNode());
-            ((Base3DModule) tab).onContextGainFocus(app, canvas);
-//            canvas.setSize(((Base3DModule) tab).getSize());
+            rootNode.attachChild(((Base3DModuleTab) tab).getModuleNode());
+            ((Base3DModuleTab) tab).onContextGainFocus(app, canvas);
+//            canvas.setSize(((Base3DModuleTab) tab).getSize());
             app.getRootFrame().revalidate();
-            currentModule = (Base3DModule) tab;
+            currentModule = (Base3DModuleTab) tab;
         }
     }
 }

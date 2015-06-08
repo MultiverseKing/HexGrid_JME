@@ -18,10 +18,6 @@ import org.hexgridapi.core.appstate.HexGridDefaultApplication;
  */
 public class HexGridEditorMain extends HexGridDefaultApplication {
 
-    protected final ModuleControlTab moduleControl;
-    private static JFrame rootFrame;
-    private boolean isStart = false;
-
     public static void main(String[] args) {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
@@ -30,13 +26,17 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
             }
         });
     }
+    protected final ModuleControlTab moduleControl;
+    private static JFrame rootFrame;
+    private HexMapModule hexMapModule;
+    private boolean isStart = false;
 
     public HexGridEditorMain(String windowName) {
         AppSettings initSettings = new AppSettings(true);
         Dimension dim = new Dimension(1024, 768);
         initSettings.setWidth(dim.width);
         initSettings.setHeight(dim.height);
-        
+
         java.util.logging.Logger.getLogger("").setLevel(Level.WARNING);
 
         rootFrame = new JFrame(windowName);
@@ -48,7 +48,7 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
             }
         });
         setSettings(initSettings);
-        
+
         createCanvas(); // create canvas!
         JmeCanvasContext ctx = (JmeCanvasContext) getContext();
         ctx.getCanvas().setSize(dim);
@@ -65,7 +65,7 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
         rootFrame.pack();
         rootFrame.setLocationRelativeTo(null);
         rootFrame.setVisible(true);
-        
+
         startCanvas();
         ctx.setSystemListener(this);
     }
@@ -78,9 +78,14 @@ public class HexGridEditorMain extends HexGridDefaultApplication {
         return moduleControl;
     }
 
+    public HexMapModule getHexMapModule() {
+        return hexMapModule;
+    }
+
     @Override
     public final void initApp() {
-        moduleControl.addRootTab(new HexMapModule(this, rootFrame.getJMenuBar()));
+        hexMapModule = new HexMapModule(this, rootFrame.getJMenuBar());
+        moduleControl.addRootTab(hexMapModule);
         initApplication();
     }
 
