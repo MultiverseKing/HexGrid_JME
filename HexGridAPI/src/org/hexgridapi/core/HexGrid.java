@@ -53,8 +53,8 @@ public class HexGrid {
     /**
      * @return the node containing all tile.
      */
-    public final Node getBuilderNode() {
-        return builder.getBuilderNode();
+    public final ChunkBuilder getBuilder() {
+        return builder;
     }
 
     public void cleanup() {

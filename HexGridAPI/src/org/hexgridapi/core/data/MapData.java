@@ -34,6 +34,7 @@ public final class MapData {
     private final HexGridMapLoader hexGridMapLoader;
     private final GridParam gridParameters;
     private String mapName = "Undefined";
+
     /**
      * Create a new instance of data for the map.
      *
@@ -218,11 +219,17 @@ public final class MapData {
         HexTile oldTile;
         if (tile != null) {
             oldTile = chunkData.add(tilePos, tile);
-        } else {
-            oldTile = chunkData.remove(tilePos);
-            if (oldTile == null && gridParameters.getGenerator() != null) { //@todo
-                chunkData.add(tilePos, new HexTile(0, getTextureKey("NO_TILE")));
+            if (oldTile != null && gridParameters.getGenerator() != null
+                    && oldTile.getTextureKey() == getTextureKey(DefaultTextureValue.NO_TILE)) {
+                chunkData.remove(tilePos);
             }
+        } else if (chunkData.contain(tilePos)) {
+            oldTile = chunkData.remove(tilePos);
+        } else if (!chunkData.contain(tilePos)
+                && gridParameters.getGenerator() != null) {
+            oldTile = chunkData.add(tilePos, new HexTile(0, getTextureKey(DefaultTextureValue.NO_TILE)));
+        } else {
+            oldTile = null;
         }
         return new TileChangeEvent(tilePos, oldTile, tile);
     }
@@ -332,6 +339,10 @@ public final class MapData {
         }
     }
 
+    public int getTextureKey(DefaultTextureValue value) throws NoSuchFieldError {
+        return getTextureKey(value.toString());
+    }
+
     /**
      *
      * @return all registered texture value. (read only)
@@ -345,5 +356,12 @@ public final class MapData {
      */
     public GridParam getGridParameters() {
         return gridParameters;
+    }
+
+    public enum DefaultTextureValue {
+
+        NO_TILE,
+        EMPTY_TEXTURE_KEY,
+        SELECTION_TEXTURE
     }
 }

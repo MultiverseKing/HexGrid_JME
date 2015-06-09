@@ -33,7 +33,7 @@ public class GridRayCastControl {
     /**
      * Handle the mouse picking.
      * This by default use the
-     * {@link org.hexgridapi.core.HexGrid#getGridNode() ()}
+     * {@link org.hexgridapi.core.HexGrid#getGridNode()}
      * as collision reference.
      *
      * @param app application running.
@@ -41,7 +41,7 @@ public class GridRayCastControl {
      * @param debugColor used to show where the ray collide, if null no debug.
      */
     public GridRayCastControl(Application app, HexGrid system, ColorRGBA debugColor) {
-        this(app, system, system.getBuilderNode(), debugColor);
+        this(app, system, null, debugColor);
     }
 
     /**
@@ -50,7 +50,7 @@ public class GridRayCastControl {
      * @param app currently running app.
      * @param system internal use.
      * @param collisionObj reference used by the ray to interact with. if null
-     * {@link org.hexgridapi.core.HexGrid#getGridNode() ()} is used as collision
+     * {@link org.hexgridapi.core.HexGrid#getGridNode()} is used as collision
      * reference.
      */
     public GridRayCastControl(Application app, HexGrid system, Spatial collisionObj) {
@@ -126,9 +126,11 @@ public class GridRayCastControl {
         if (results.size() != 0) {
             for (int i = 0; i < results.size(); i++) {
                 CollisionResult closest = results.getCollision(i);
-                if (!closest.getGeometry().getName().contains("SphereDebugRayCast")) {
+                if (!closest.getGeometry().getName().contains("SphereDebugRayCast")
+                        && !closest.getGeometry().getParent().getName().contains("HexGridFXNode")) {
                     setDebugPosition(closest.getContactPoint());
-                    HexCoordinate newPos = convertMouseCollision(results);
+//                    HexCoordinate newPos = convertMouseCollision(results);
+                    HexCoordinate newPos = new HexCoordinate(closest.getContactPoint());
                     return new MouseInputEvent(null, newPos, null, ray, closest);
                 }
             }
@@ -171,6 +173,7 @@ public class GridRayCastControl {
         return ray;
     }
 
+    // @todo improve the picking for when clicking on the side of an hex
     private HexCoordinate convertMouseCollision(CollisionResults rayResults) {
         HexCoordinate tilePos;
         Vector3f pos;
@@ -199,6 +202,7 @@ public class GridRayCastControl {
     /**
      * Make the ray have a new Collision reference.
      * This get ride of the current debug.
+     *
      * @param collisionNode new reference.
      */
     public void setCollisionNode(Spatial collisionNode) {

@@ -6,7 +6,6 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
 import org.hexgridapi.core.geometry.builder.ChunkBuilder;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 
 /**

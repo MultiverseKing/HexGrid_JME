@@ -72,7 +72,7 @@ public final class GreddyMesher {
                     if (isHexagon() && !currentIsInRange) {
                         textValue = null;
                     } else if (currentTile == null) {
-                        textValue = "NO_TILE";
+                        textValue = MapData.DefaultTextureValue.NO_TILE.toString();
                     } else {
                         textValue = mapData.getTextureValue(currentTile.getTextureKey());
                     }
@@ -267,7 +267,7 @@ public final class GreddyMesher {
 
     private HashMap<String, Mesh> generateMesh(boolean generateVoid) {
         if (!generateVoid) {
-            meshData.remove("NO_TILE");
+            meshData.remove(MapData.DefaultTextureValue.NO_TILE.toString());
         }
         if (isHexagon()) {
             meshData.remove(null);
@@ -314,8 +314,8 @@ public final class GreddyMesher {
      * @return height of the current element mesh visited.
      */
     public int getCurrentTextureIDParam() {
-        if (inspectedTexture.equals("NO_TILES")
-                || inspectedTexture.equals("EMPTY_TEXTURE_KEY")) {
+        if (inspectedTexture.equals(MapData.DefaultTextureValue.NO_TILE.toString())
+                || inspectedTexture.equals(MapData.DefaultTextureValue.EMPTY_TEXTURE_KEY.toString())) {
             return 0;
         }
         return mapData.getTextureKey(inspectedTexture);

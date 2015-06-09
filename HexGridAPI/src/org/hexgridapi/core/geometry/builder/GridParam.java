@@ -1,6 +1,7 @@
 package org.hexgridapi.core.geometry.builder;
 
 import java.util.ArrayList;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.data.procedural.ProceduralHexGrid;
 
 /**
@@ -83,21 +84,16 @@ public class GridParam {
     }
 
     private void genTextureKeys(Object[] userKey) {
+        textureKeys.add(MapData.DefaultTextureValue.EMPTY_TEXTURE_KEY.toString());
         if (userKey != null) {
-            for (int i = -1; i < userKey.length; i++) {
-                if (i == -1) {
-                    textureKeys.add("EMPTY_TEXTURE_KEY");
-                } else {
-                    if (userKey[i].toString().equals("NO_TILES")
-                            || userKey[i].toString().equals("EMPTY_TEXTURE_KEY")
-                            || userKey[i].toString().equals("SELECTION_TEXTURE")) {
-                        throw new IllegalArgumentException(userKey[i] + " is not allowed.");
-                    }
-                    textureKeys.add(userKey[i].toString());
+            for (int i = 0; i < userKey.length; i++) {
+                if (userKey[i].toString().equals(MapData.DefaultTextureValue.NO_TILE.toString())
+                        || userKey[i].toString().equals(MapData.DefaultTextureValue.EMPTY_TEXTURE_KEY.toString())
+                        || userKey[i].toString().equals(MapData.DefaultTextureValue.SELECTION_TEXTURE.toString())) {
+                    throw new IllegalArgumentException(userKey[i] + " is not allowed.");
                 }
+                textureKeys.add(userKey[i].toString());
             }
-        } else {
-            textureKeys.add("EMPTY_TEXTURE_KEY");
         }
     }
 

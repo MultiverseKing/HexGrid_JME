@@ -10,7 +10,6 @@ import java.util.List;
 import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 import org.hexgridapi.core.HexSetting;
 import org.hexgridapi.core.control.buffercontrol.ChunkBuffer;
-import org.hexgridapi.core.control.buffercontrol.HexagonBufferControl;
 import org.hexgridapi.utility.Vector2Int;
 import org.hexgridapi.utility.Vector3Int;
 

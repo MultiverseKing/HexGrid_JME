@@ -1,22 +1,14 @@
 package org.hexgridapi.core.geometry.builder;
 
 import com.jme3.app.Application;
-import com.jme3.app.SimpleApplication;
 import com.jme3.asset.AssetManager;
 import com.jme3.asset.TextureKey;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
-import com.jme3.math.FastMath;
-import com.jme3.math.Plane;
-import com.jme3.math.Quaternion;
-import com.jme3.math.Vector2f;
-import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue;
-import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
-import com.jme3.scene.shape.Quad;
 import com.jme3.texture.Texture;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,7 +35,6 @@ import org.hexgridapi.events.TileChangeListener;
  */
 public class ChunkBuilder {
 
-    private ChunkBufferControl bufferControl;
     private Node builderNode;
     private MapData mapData;
     private Material hexMaterial;
@@ -103,7 +94,7 @@ public class ChunkBuilder {
         
         
         if (useBuffer && ChunkCoordinate.getBuilderCoordinateType().getClass().isInstance(ChunkBuffer.class)) {
-            bufferControl = new ChunkBufferControl(app, system, this);
+            ChunkBufferControl bufferControl = new ChunkBufferControl(app, mapData, system, this);
         } else if (useBuffer) {
             throw new UnsupportedOperationException(ChunkCoordinate.getBuilderCoordinateType().getSimpleName()
                     + " does not Implements BufferControl.");
@@ -254,9 +245,6 @@ public class ChunkBuilder {
             } else {
                 chunksNodes.get(chunkPos).updateChunk();
             }
-        }
-        if(useBuffer){
-            bufferControl.updateCulling();
         }
     }
 
