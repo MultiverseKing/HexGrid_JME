@@ -5,6 +5,7 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.scene.Node;
+import core.HexGridEditorMain;
 import gui.Base3DModuleTab;
 import gui.JPanelTab;
 import gui.JPanelTabController;
@@ -44,13 +45,15 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         
         MapData mapData = new MapData(app.getAssetManager(), 
                 new GridParam(new String[]{"EARTH", "ICE", "NATURE", "VOLT"}, 
-                SquareCoordinate.class, true, true, false, true));
+//                SquareCoordinate.class, true, true, false, true));
+                SquareCoordinate.class, true, false, false, true));
         mapDataState = new MapDataAppState(mapData);
         hexMapSystem = new HexMapSystem(mapData);
         
         setLayout(new BorderLayout());
         
-        panelController.add(new HexMapPropertiesPanel(getIcon(), new JCursorPositionPanel(mouseSystem)));
+//        panelController.add(new HexMapPropertiesPanel(getIcon(), new JCursorPositionPanel(mouseSystem)));
+        panelController.add(new HexMapPanelTab((HexGridEditorMain) app, mapDataState, hexMapSystem, mouseSystem));
         panelController.registerTabChangeListener(this);
         validate();
     }

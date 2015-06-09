@@ -1,4 +1,4 @@
-package hexmap.gui;
+package hexmap;
 
 import gui.ComboBoxRenderer;
 import gui.JPanelTab;
@@ -33,6 +33,7 @@ import org.hexgridapi.events.TileSelectionListener;
 import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 import core.HexGridEditorMain;
 import hexmap.HexMapSystem;
+import hexmap.gui.JCursorPositionPanel;
 import org.hexgridapi.core.data.MapData;
 
 /**
@@ -42,7 +43,7 @@ import org.hexgridapi.core.data.MapData;
  * lead to ugly visual since there is no replacement for it.
  * @author roah
  */
-public final class JHexPanelTab extends JPanelTab {
+public final class HexMapPanelTab extends JPanelTab {
 
     private final HexGridEditorMain editorMain;
     private HexMapSystem hexSystem;
@@ -54,19 +55,19 @@ public final class JHexPanelTab extends JPanelTab {
     private boolean update = true;
     private boolean ghostIsVisible = true;
 
-    public JHexPanelTab(HexGridEditorMain editorMain) {
+    public HexMapPanelTab(HexGridEditorMain editorMain, MapDataAppState mapDataState, HexMapSystem hexMapSystem, MouseControlSystem mouseSystem) {
         super(editorMain.getAssetManager().loadTexture(
                 "Textures/Icons/Buttons/configKey.png").getImage(), "HexMapConfig");
         this.editorMain = editorMain;
-        mouseSystem = editorMain.getStateManager().getState(MouseControlSystem.class);
-        hexSystem = editorMain.getStateManager().getState(HexMapSystem.class);
+        this.mouseSystem = mouseSystem;
+        hexSystem = hexMapSystem;
 
-        editorMain.getStateManager().getState(MouseControlSystem.class).getSelectionControl().registerTileListener(selectionListener);
-        editorMain.getStateManager().getState(MapDataAppState.class).getMapData().registerTileChangeListener(tileListener);
+        this.mouseSystem.getSelectionControl().registerTileListener(selectionListener);
+        mapDataState.getMapData().registerTileChangeListener(tileListener);
 
         buildMenu();
     }
-
+    
     private void buildMenu() {
         setBorder(BorderFactory.createTitledBorder("Map Property"));
         setPreferredSize(new Dimension(170, 300));
@@ -74,7 +75,7 @@ public final class JHexPanelTab extends JPanelTab {
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
         addComp(separator);
 
-        add(new JCursorPositionPanel(editorMain.getStateManager().getState(MouseControlSystem.class)));
+        add(new JCursorPositionPanel(mouseSystem));
 
         JCheckBox box = new JCheckBox(new AbstractAction("Show ghost") {
             @Override

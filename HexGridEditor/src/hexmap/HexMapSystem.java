@@ -167,7 +167,7 @@ public class HexMapSystem extends AbstractHexGridAppState {
         if (selectionControl.getSelectedList().isEmpty()) {
             HexTile t = getTile();
             if (t != null) {
-                t.cloneChangedTextureKey(0);
+                t.cloneChangedTextureKey(mapData.getTextureKey(MapData.DefaultTextureValue.EMPTY_TEXTURE_KEY));
             } else {
                 t = new HexTile();
             }
@@ -280,7 +280,7 @@ public class HexMapSystem extends AbstractHexGridAppState {
     public boolean tileExist() {
         HexTile t = getTile();
         if (t != null) {
-            return mapData.getTextureValue(t.getTextureKey()).equals("NO_TILE") ? false : true;
+            return mapData.getTextureValue(t.getTextureKey()).equals(MapData.DefaultTextureValue.NO_TILE.toString()) ? false : true;
         } else {
             return false;
         }
