@@ -10,14 +10,14 @@ import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.List;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.control.buffercontrol.ChunkBuffer;
+import org.hexgridapi.core.control.buffercontrol.BufferBuilder;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
  * 
  * @author roah
  */
-public final class SquareCoordinate extends ChunkCoordinate implements ChunkBuffer {
+public final class SquareCoordinate extends ChunkCoordinate implements BufferBuilder {
 
     private Vector2Int chunkPos;
     

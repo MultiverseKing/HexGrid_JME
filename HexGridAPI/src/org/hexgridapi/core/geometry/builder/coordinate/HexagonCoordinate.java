@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.control.buffercontrol.ChunkBuffer;
+import org.hexgridapi.core.control.buffercontrol.BufferBuilder;
 import org.hexgridapi.utility.Vector2Int;
 import org.hexgridapi.utility.Vector3Int;
 
@@ -17,7 +17,7 @@ import org.hexgridapi.utility.Vector3Int;
  *
  * @author roah
  */
-public class HexagonCoordinate extends ChunkCoordinate implements ChunkBuffer {
+public class HexagonCoordinate extends ChunkCoordinate implements BufferBuilder {
 
     private Vector3Int chunkPos;
 

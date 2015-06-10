@@ -8,10 +8,10 @@ import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
  *
  * @author roah
  */
-public interface ChunkBuffer {
+public interface BufferBuilder {
 
     /**
-     * Used by the ChunkBuffer to get all chunk it need to render.
+     * Used by the BufferBuilder to get all chunk it need to render.
      * 
      * @param bufferCoord position where the buffer is currently.
      * @param bufferRadius radius of the buffer from the center.

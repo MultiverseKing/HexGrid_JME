@@ -1,8 +1,12 @@
 package org.hexgridapi.core.data.procedural;
 
 import com.jme3.math.FastMath;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import libnoiseforjava.NoiseGen;
+import libnoiseforjava.exception.ExceptionInvalidParam;
 import libnoiseforjava.module.Perlin;
+import org.hexgridapi.core.HexSetting;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
@@ -19,7 +23,7 @@ public final class ProceduralHexGrid extends Generator {
     /**
      * Used to know the minimum/maximum Heigth when generating the map.
      */
-    private int heightMin = 0; // is always count as < 0 (ex: 2 mean -2)
+    private int heightMin = HexSetting.WATER_LEVEL; // is always count as < 0 (ex: 2 mean -2)
     private int heightMax = 12; // is always count as > 0
     private int textureCount; // todo
 

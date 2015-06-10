@@ -8,6 +8,7 @@ import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
@@ -42,6 +43,11 @@ public class TileSelectionControl implements TileInputListener {
     private boolean isSelectionGroup = false;
     private HexCoordinate selectedTile = new HexCoordinate();
     private CursorControl cursorControl;
+    private final Mesh mesh;
+
+    public TileSelectionControl() {
+        mesh = MeshGenerator.getInstance().getSingleMesh(0);
+    }
 
     public void initialise(Application app) {
         if (mat == null) {
@@ -50,7 +56,7 @@ public class TileSelectionControl implements TileInputListener {
 //            mat.setColor("Diffuse", new ColorRGBA(1, 0, 0, 0.3f));
             mat.setTexture("ColorMap", app.getAssetManager().loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false)));
             mat.setColor("Color", new ColorRGBA(1, 0, 0, 0.3f));
-            mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Additive);
+//            mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Color);
         }
         /**
          * Activate the input to interact with the grid.
@@ -90,20 +96,23 @@ public class TileSelectionControl implements TileInputListener {
             }
         }
     };
+    //@todo require a look, it change the mesh of a tile by a new generated on
     private final TileChangeListener tileChangeListener = new TileChangeListener() {
         @Override
         public void onTileChange(TileChangeEvent... events) {
             for (int i = 0; i < events.length; i++) {
                 if (coords.contains(events[i].getTilePos())) {
-                    Spatial tile = TileSelectionNode.getChild(events[i].getTilePos().toOffset().toString());
+                    Geometry tile = (Geometry) TileSelectionNode.getChild(events[i].getTilePos().toOffset().toString());
                     if (events[i].getNewTile() != null) {
-                        ((Geometry) tile).setMesh(getMesh(events[i].getNewTile().getHeight()));
+//                        ((Geometry) tile).setMesh(getMesh(events[i].getNewTile().getHeight()));
+                        setPosition(tile, events[i].getTilePos().toWorldPosition(events[i].getNewTile().getHeight()));
                         cursorControl.setHeight(events[i].getNewTile().getHeight());
                         //                    tile.setLocalTranslation(event.getTilePos().toWorldPosition());
                         //                    coord.put(event.getTilePos(), event.getNewTile().getHeight());
                     } else {
                         //                    coord.put(event.getTilePos(), 0);
-                        ((Geometry) tile).setMesh(getMesh(0));
+//                        ((Geometry) tile).setMesh(getMesh(0));
+                        setPosition(tile, events[i].getTilePos().toWorldPosition());
                         cursorControl.setHeight(0);
                         //                    tile.setLocalTranslation(event.getTilePos().toWorldPosition());
                     }
@@ -161,12 +170,17 @@ public class TileSelectionControl implements TileInputListener {
         updateListeners();
     }
 
+    // @todo require opti
     private void addGeo(HexCoordinate pos, int height) {
-        Geometry geo = new Geometry(pos.toOffset().toString(), getMesh(height));
+        Geometry geo = new Geometry(pos.toOffset().toString(), mesh);
         geo.setMaterial(mat);
-        geo.setLocalTranslation(pos.toWorldPosition());
+        setPosition(geo, pos.toWorldPosition(height));
         TileSelectionNode.attachChild(geo);
+    }
 
+    private void setPosition(Geometry geo, Vector3f worldPos) {
+        worldPos.y += 0.01f;
+        geo.setLocalTranslation(worldPos);
     }
 
     private void updateListeners() {

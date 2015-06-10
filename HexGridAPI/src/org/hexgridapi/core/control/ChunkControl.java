@@ -71,7 +71,7 @@ public class ChunkControl extends AbstractControl {
          * 1 geometry by texture if not using texture Array.
          */
         builder.addChunkTo((Node) ((Node) spatial).getChild("TILES."
-                + ChunkCoordinate.getNewInstance()), chunkPosition);
+                + ChunkCoordinate.getNewInstance()), chunkPosition, this);
     }
 
     /**
@@ -101,7 +101,7 @@ public class ChunkControl extends AbstractControl {
      * aka: if (tile == null) tile = ghostTile.
      * /!\ does not work when using GhostMode.Procedural
      */
-    public void hideGhostTile(boolean hide) {
+    public void hideVoidTile(boolean hide) {
         Spatial geo = ((Node) ((Node) spatial).getChild("TILES." + ChunkCoordinate.getNewInstance())).getChild("NO_TILE");
         if (geo != null && hide) {
             geo.setCullHint(Spatial.CullHint.Always);

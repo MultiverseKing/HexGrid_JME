@@ -30,9 +30,9 @@ public final class GreddyMesher {
     /**
      * The Depth
      *
-     * @see {@link org.hexgridapi.core.HexSetting#CHUNK_DEPTH}
+     * @see {@link org.hexgridapi.core.HexSetting#WATER_LEVEL}
      */
-    private int groundHeight = HexSetting.CHUNK_DEPTH;
+    private int groundHeight = HexSetting.WATER_LEVEL;
     private boolean onlyGround;
     private String inspectedTexture;
     private ChunkCoordinate chunkCoordinate;
@@ -84,7 +84,7 @@ public final class GreddyMesher {
                         meshData.get(textValue).add(new Vector2Int(x, y), tileHeight);
                     }
 
-                    if (tileHeight != null && tileHeight < groundHeight + HexSetting.CHUNK_DEPTH) {
+                    if (tileHeight != null && tileHeight < groundHeight + HexSetting.WATER_LEVEL) {
                         groundHeight = tileHeight;
                     }
 
@@ -331,7 +331,7 @@ public final class GreddyMesher {
     }
 
     public int getGroundHeight() {
-        return groundHeight + HexSetting.CHUNK_DEPTH;
+        return groundHeight + HexSetting.WATER_LEVEL;
     }
 
     /**

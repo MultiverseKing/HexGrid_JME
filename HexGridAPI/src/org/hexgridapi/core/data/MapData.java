@@ -6,6 +6,7 @@ import org.hexgridapi.events.TileChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.hexgridapi.core.HexSetting;
 import org.hexgridapi.core.data.procedural.ProceduralHexGrid;
 import org.hexgridapi.core.geometry.builder.GridParam;
 import org.hexgridapi.events.TileChangeEvent;
@@ -148,6 +149,9 @@ public final class MapData {
         HexTile[] result = new HexTile[tilePos.length];
         for (int i = 0; i < tilePos.length; i++) {
             result[i] = chunkData.getTile(tilePos[i]);
+            if(result[i] != null && result[i].textureKey == getTextureKey(DefaultTextureValue.NO_TILE)){
+                result[i] = null;
+            }
             if (result[i] == null && gridParameters.getGenerator() != null) {
                 result[i] = gridParameters.getGenerator().getTileValue(tilePos[i]);
             }
@@ -218,10 +222,14 @@ public final class MapData {
     private TileChangeEvent updateTileData(HexCoordinate tilePos, HexTile tile) {
         HexTile oldTile;
         if (tile != null) {
-            oldTile = chunkData.add(tilePos, tile);
+            oldTile = chunkData.add(tilePos, 
+                    tile.height > HexSetting.WATER_LEVEL 
+                    ? tile : new HexTile(0, getTextureKey(DefaultTextureValue.NO_TILE)));
             if (oldTile != null && gridParameters.getGenerator() != null
                     && oldTile.getTextureKey() == getTextureKey(DefaultTextureValue.NO_TILE)) {
                 chunkData.remove(tilePos);
+                tile = gridParameters.getGenerator().getTileValue(tilePos);
+                oldTile = null;
             }
         } else if (chunkData.contain(tilePos)) {
             oldTile = chunkData.remove(tilePos);

@@ -19,8 +19,8 @@ import java.util.logging.Logger;
 import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.HexSetting;
 import org.hexgridapi.core.control.ChunkControl;
-import org.hexgridapi.core.control.buffercontrol.ChunkBuffer;
-import org.hexgridapi.core.control.buffercontrol.ChunkBufferControl;
+import org.hexgridapi.core.control.buffercontrol.BufferBuilder;
+import org.hexgridapi.core.control.buffercontrol.BufferControl;
 import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.geometry.mesh.GreddyMesher;
 import org.hexgridapi.events.TileChangeEvent;
@@ -35,6 +35,8 @@ import org.hexgridapi.events.TileChangeListener;
  */
 public class ChunkBuilder {
 
+    protected final boolean buildVoidTile;
+    protected boolean showVoidTile;
     private Node builderNode;
     private MapData mapData;
     private Material hexMaterial;
@@ -42,20 +44,21 @@ public class ChunkBuilder {
     private AssetManager assetManager;
     private boolean useBuffer;
     protected HashMap<ChunkCoordinate, ChunkControl> chunksNodes = new HashMap<ChunkCoordinate, ChunkControl>();
-    protected boolean showVoidTile;
     protected boolean onlyGround;
+    private BufferControl bufferControl;
 
     /**
      * Return the proper builderNode to use for generating chunk.
      *
      * @param app
      * @param mapData
-     * @param showVoidTile
+     * @param buildVoidTile
      * @param onlyGround
      */
     public ChunkBuilder(MapData mapData) {
         this.useBuffer = mapData.getGridParameters().isUseBuffer();
-        this.showVoidTile = mapData.getGridParameters().isUseVoidTile();
+        this.buildVoidTile = mapData.getGridParameters().isBuildVoidTile();
+        this.showVoidTile = buildVoidTile;
         this.onlyGround = mapData.getGridParameters().isOnlyGround();
         this.mapData = mapData;
         this.builderNode = new Node("BuilderNode");
@@ -93,8 +96,8 @@ public class ChunkBuilder {
         greddyMesher = mesher;
         
         
-        if (useBuffer && ChunkCoordinate.getBuilderCoordinateType().getClass().isInstance(ChunkBuffer.class)) {
-            ChunkBufferControl bufferControl = new ChunkBufferControl(app, mapData, system, this);
+        if (useBuffer && ChunkCoordinate.getBuilderCoordinateType().getClass().isInstance(BufferBuilder.class)) {
+            bufferControl = new BufferControl(app, mapData, system, this);
         } else if (useBuffer) {
             throw new UnsupportedOperationException(ChunkCoordinate.getBuilderCoordinateType().getSimpleName()
                     + " does not Implements BufferControl.");
@@ -107,60 +110,15 @@ public class ChunkBuilder {
      * @param parent node to attach the geometry.
      * @param chunkPosition on the map.
      */
-    public void addChunkTo(Node parent, ChunkCoordinate chunkPosition) {
-        HashMap<String, Mesh> mesh = greddyMesher.getMesh(onlyGround, showVoidTile, chunkPosition);
+    public void addChunkTo(Node parent, ChunkCoordinate chunkPosition, ChunkControl control) {
+        HashMap<String, Mesh> mesh = greddyMesher.getMesh(onlyGround, buildVoidTile, chunkPosition);
         for (String value : mesh.keySet()) {
             parent.attachChild(getGeometry(value, mesh.get(value)));
         }
         
-        
-//        if (!hexMaterial.getName().equals("arrayTextureMaterial")) {
-//            for (String value : mesh.keySet()) {
-//                Material mat = hexMaterial.clone();
-//                Geometry tile = new Geometry(value != null ? value : "debug", mesh.get(value));
-//                Texture text;
-//                /**
-//                 * Debuging purpose
-//                 * if (value == null && (mode.equals(MapData.GhostMode.GHOST)
-//                 * || mode.equals(MapData.GhostMode.GHOST_PROCEDURAL))) {
-//                 * TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH +
-//                 * "EMPTY_TEXTURE_KEY.png", false);
-//                 * k.setGenerateMips(true);
-//                 * text = assetManager.loadTexture(k);
-//                 * mat.setColor("Color", ColorRGBA.Red);
-//                 * } else
-//                 */
-//                if (value != null && value.equals("NO_TILE") && showVoidTile) {
-//                    TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false);
-//                    k.setGenerateMips(true);
-//                    text = assetManager.loadTexture(k);
-//                    mat.setColor("Color", ColorRGBA.Blue);
-//                } else {
-//                    TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false);
-//                    k.setGenerateMips(true);
-//                    text = assetManager.loadTexture(k);
-//                }
-//                text.setWrap(Texture.WrapMode.Repeat);
-//
-//                mat.setTexture("ColorMap", text);
-////            mat.setTexture("DiffuseMap", text);
-////            mat.getAdditionalRenderState().setWireframe(true);
-////            tile.getMesh().setMode(Mesh.Mode.Points);
-//                tile.setMaterial(mat);
-////                if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.HEXAGON)) { // @todo
-////                    tile.setLocalTranslation(new Vector3f(
-////                            -(HexSetting.HEX_WIDTH * HexSetting.CHUNK_SIZE
-////                            - ((HexSetting.CHUNK_SIZE & 1) == 0 ? 0 : -HexSetting.HEX_WIDTH / 2)), 0,
-////                            -(HexSetting.HEX_RADIUS * 1.5f * HexSetting.CHUNK_SIZE)));
-////                }
-//                parent.attachChild(tile);
-//            }
-//        } else {
-//            Geometry tile = new Geometry("Geometry.ArrayTexture.TILES.0|0", mesh.get("ArrayTextureMesh")); //@todo
-//            tile.setMaterial(hexMaterial);
-//            tile.setShadowMode(RenderQueue.ShadowMode.Inherit);
-//            parent.attachChild(tile);
-//        }
+        if(buildVoidTile && !showVoidTile){
+            control.hideVoidTile(true);
+        }
     }
 
     public void addVoidChunkTo(Node parent) {
@@ -184,7 +142,7 @@ public class ChunkBuilder {
              * mat.setColor("Color", ColorRGBA.Red);
              * } else
              */
-            if (value != null && value.equals("NO_TILE") && showVoidTile) {
+            if (value != null && value.equals("NO_TILE") && buildVoidTile) {
                 TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false);
                 k.setGenerateMips(true);
                 text = assetManager.loadTexture(k);
@@ -279,8 +237,12 @@ public class ChunkBuilder {
     };
 
     public final void hideGhostTile(boolean setVisible) {
+        this.showVoidTile = !setVisible;
         for (ChunkControl chunk : chunksNodes.values()) {
-            chunk.hideGhostTile(setVisible);
+            chunk.hideVoidTile(setVisible);
+        }
+        if(bufferControl != null){
+            bufferControl.hideVoidTile(setVisible);
         }
     }
 
@@ -306,5 +268,8 @@ public class ChunkBuilder {
 
     public boolean showVoidTile() {
         return showVoidTile;
+    }
+    public boolean buildVoidTile() {
+        return buildVoidTile;
     }
 }

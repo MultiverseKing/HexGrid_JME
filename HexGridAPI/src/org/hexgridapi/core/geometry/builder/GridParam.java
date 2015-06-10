@@ -10,7 +10,7 @@ import org.hexgridapi.core.data.procedural.ProceduralHexGrid;
  */
 public class GridParam {
     private final boolean onlyGround;
-    private final boolean useVoidTile;
+    private final boolean buildVoidTile;
     private final ArrayList<String> textureKeys = new ArrayList<String>();
     private final ProceduralHexGrid generator;
     private final boolean useBuffer;
@@ -19,46 +19,46 @@ public class GridParam {
      * Define the parameter to use while the API is running. <br>
      * Does not activate the buffer (aka : infinite map). <br>
      * Throws {@link IllegalArgumentException} if : <br>
-     * ({@param useBuffer} && {@param proceduralGen} == null && !{@param useVoidTile}) <br>
+     * ({@param useBuffer} && {@param proceduralGen} == null && !{@param buildVoidTile}) <br>
      * Throws {@link UnsupportedOperationException} if : <br>
      * ({@param useBuffer} && {@param chunkCoordinateType} !instanceOf {@link org.hexgridapi.core.control.buffercontrol})
      * 
      * @param textureKeys all used texture.
      * @param chunkCoordinateType Coordinate to use for chunk generation.
-     * @param useVoidTile Generate or not Tile being null.
+     * @param buildVoidTile Generate or not Tile being null.
      * @param onlyGround Generate Chunk/Tile with depth.
      * @param useDefaultProcedural Use the API provided Procedural algorithm.
      */
     public GridParam(Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
-            boolean useVoidTile, boolean onlyGround, boolean useDefaultProcedural) {
-        this(textureKeys, chunkCoordinateType, false, useVoidTile, onlyGround, 
+            boolean buildVoidTile, boolean onlyGround, boolean useDefaultProcedural) {
+        this(textureKeys, chunkCoordinateType, false, buildVoidTile, onlyGround, 
                 useDefaultProcedural ? new ProceduralHexGrid(textureKeys.length) : null);
     }
     
     /**
      * Define the parameter to use while the API is running. <br>
      * Throws {@link IllegalArgumentException} if : <br>
-     * ({@param useBuffer} && {@param proceduralGen} == null && !{@param useVoidTile}) <br>
+     * ({@param useBuffer} && {@param proceduralGen} == null && !{@param buildVoidTile}) <br>
      * Throws {@link UnsupportedOperationException} if : <br>
      * ({@param useBuffer} && {@param chunkCoordinateType} !instanceOf {@link org.hexgridapi.core.control.buffercontrol})
      * 
      * @param textureKeys all used texture.
      * @param chunkCoordinateType Coordinate to use for chunk generation.
      * @param useBuffer Activate the buffer for the specifiate coordinate. (aka : infinite map)
-     * @param useVoidTile Generate or not Tile being null.
+     * @param buildVoidTile Generate or not Tile being null.
      * @param onlyGround Generate Chunk/Tile with depth.
      * @param useDefaultProcedural Use the API provided Procedural algorithm.
      */
     public GridParam(Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
-            boolean useBuffer, boolean useVoidTile, boolean onlyGround, boolean useDefaultProcedural) {
-        this(textureKeys, chunkCoordinateType, useBuffer, useVoidTile , onlyGround, 
+            boolean useBuffer, boolean buildVoidTile, boolean onlyGround, boolean useDefaultProcedural) {
+        this(textureKeys, chunkCoordinateType, useBuffer, buildVoidTile , onlyGround, 
                 useDefaultProcedural ? new ProceduralHexGrid(textureKeys.length) : null);
     }
     
     /**
      * Define the parameter to use while the API is running. <br>
      * Throws {@link IllegalArgumentException} if : <br>
-     * ({@param useBuffer} && {@param proceduralGen} == null && !{@param useVoidTile}) <br>
+     * ({@param useBuffer} && {@param proceduralGen} == null && !{@param buildVoidTile}) <br>
      * Throws {@link UnsupportedOperationException} if : <br>
      * ({@param useBuffer} && {@param chunkCoordinateType} !instanceOf {@link org.hexgridapi.core.control.buffercontrol})
      * 
@@ -66,18 +66,18 @@ public class GridParam {
      * @param textureKeys all used texture.
      * @param chunkCoordinateType Coordinate to use for chunk generation.
      * @param useBuffer Activate the buffer for the specifiate coordinate. (aka : infinite map)
-     * @param useVoidTile Generate or not Tile being null.
+     * @param buildVoidTile Generate or not Tile being null.
      * @param onlyGround Generate Chunk/Tile with depth.
      * @param proceduralGen custom procedural algorithm to use.
      */
     public GridParam(Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
-            boolean useBuffer, boolean useVoidTile, boolean onlyGround, ProceduralHexGrid proceduralGen) {
-        if(useBuffer && proceduralGen == null && !useVoidTile) {
+            boolean useBuffer, boolean buildVoidTile, boolean onlyGround, ProceduralHexGrid proceduralGen) {
+        if(useBuffer && proceduralGen == null && !buildVoidTile) {
             throw new IllegalArgumentException("Buffer cannot work without voidTile or ProceduralGen");
         }
         ChunkCoordinate.setCoordType(chunkCoordinateType);
         this.useBuffer = useBuffer;
-        this.useVoidTile = useVoidTile;
+        this.buildVoidTile = buildVoidTile;
         this.onlyGround = onlyGround;
         this.generator = proceduralGen;
         genTextureKeys(textureKeys);
@@ -97,15 +97,15 @@ public class GridParam {
         }
     }
 
-    boolean isOnlyGround() {
+    public boolean isOnlyGround() {
         return onlyGround;
     }
 
-    boolean isUseVoidTile() {
-        return useVoidTile;
+    public boolean isBuildVoidTile() {
+        return buildVoidTile;
     }
 
-    boolean isUseBuffer() {
+    public boolean isUseBuffer() {
         return useBuffer;
     }
 

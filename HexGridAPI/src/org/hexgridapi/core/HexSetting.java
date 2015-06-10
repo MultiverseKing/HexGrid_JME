@@ -30,7 +30,7 @@ public final class HexSetting {
      * if(GreddyMesher.ShapeType.HEXAGON) (this is the radius)
      * if(GreddyMesher.ShapeType.SQUARE)
      */
-    public final static int CHUNK_SIZE = 12;
+    public final static int CHUNK_SIZE = 18;
     /**
      * Ghost control size.
      */
@@ -38,7 +38,7 @@ public final class HexSetting {
     /**
      * The initial depth given to any generated chunk.
      */
-    public final static int CHUNK_DEPTH = -5; //must lesser than 0
+    public final static int WATER_LEVEL = 0; //must lesser than 0 if not 0
     /**
      * WU distance between two hex of different height.
      */
