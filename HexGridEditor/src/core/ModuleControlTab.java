@@ -74,7 +74,7 @@ public final class ModuleControlTab implements JPanelTabListener {
             if (currentModule != null) {
                 currentModule.onContextLostFocus();
                 currentModule.remove(canvas);
-                currentModule.getModuleNode().removeFromParent();
+                rootNode.detachAllChildren();
             }
             rootNode.attachChild(((Base3DModuleTab) tab).getModuleNode());
             ((Base3DModuleTab) tab).onContextGainFocus(app, canvas);

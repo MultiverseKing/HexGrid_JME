@@ -29,6 +29,9 @@ public abstract class Base3DModuleTab extends JPanelTab {
     }
     
     public abstract void onContextGainFocus(SimpleApplication app, Canvas canvas);
+    /**
+     * Detach the module node from the RootNode (detach everything from the rootNode)
+     */
     public abstract void onContextLostFocus();
     public abstract Node getModuleNode();
 }

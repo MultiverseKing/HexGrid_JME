@@ -32,9 +32,7 @@ import org.hexgridapi.events.TileChangeListener;
 import org.hexgridapi.events.TileSelectionListener;
 import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 import core.HexGridEditorMain;
-import hexmap.HexMapSystem;
 import hexmap.gui.JCursorPositionPanel;
-import org.hexgridapi.core.data.MapData;
 
 /**
  * @todo in short : Add a dropBox to chose the kind of replacement to set when
@@ -65,10 +63,10 @@ public final class HexMapPanelTab extends JPanelTab {
         this.mouseSystem.getSelectionControl().registerTileListener(selectionListener);
         mapDataState.getMapData().registerTileChangeListener(tileListener);
 
-        buildMenu();
+        buildMenu(mapDataState.getMapData().getGridParameters().isBuildVoidTile());
     }
     
-    private void buildMenu() {
+    private void buildMenu(boolean useVoidTile) {
         setBorder(BorderFactory.createTitledBorder("Map Property"));
         setPreferredSize(new Dimension(170, 300));
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
@@ -77,16 +75,18 @@ public final class HexMapPanelTab extends JPanelTab {
 
         add(new JCursorPositionPanel(mouseSystem));
 
-        JCheckBox box = new JCheckBox(new AbstractAction("Show ghost") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onAction(e);
-            }
-        });
-        box.setSelected(ghostIsVisible);
-        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-        box.setAlignmentX(0);
-        addComp(box);
+        if(useVoidTile){
+            JCheckBox box = new JCheckBox(new AbstractAction("Show ghost") {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    onAction(e);
+                }
+            });
+            box.setSelected(ghostIsVisible);
+            box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+            box.setAlignmentX(0);
+            addComp(box);
+        }
 
         JLabel mapNameLabel = new JLabel("Map Name : ");
         mapNameLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 18));
@@ -207,7 +207,8 @@ public final class HexMapPanelTab extends JPanelTab {
                 editorMain.enqueue(new Callable<Void>() {
                     @Override
                     public Void call() throws Exception {
-                        hexSystem.setNewTile();
+//                        hexSystem.setNewTile();
+                        hexSystem.setTilePropertiesUp();
                         return null;
                     }
                 });
@@ -287,6 +288,7 @@ public final class HexMapPanelTab extends JPanelTab {
         revalidate();
     }
 
+    // @todo does not work properly
     private void buildMultiTileMenu(ArrayList<HexCoordinate> selectedList) {
         buildTileMenu();
         currentIsGroup = !selectedList.isEmpty();

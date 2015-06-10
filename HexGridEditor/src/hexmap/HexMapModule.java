@@ -43,10 +43,10 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.Save);
         menu.add(editorMenu);
         
-        MapData mapData = new MapData(app.getAssetManager(), 
-                new GridParam(new String[]{"EARTH", "ICE", "NATURE", "VOLT"}, 
-//                SquareCoordinate.class, true, true, false, true));
-                SquareCoordinate.class, true, false, false, true));
+        GridParam param = new GridParam(new String[]{"EARTH", "ICE", "NATURE", "VOLT"}, 
+                          SquareCoordinate.class, true, true, false, true);
+//                SquareCoordinate.class, true, false, false, true)); //useWater
+        MapData mapData = new MapData(app.getAssetManager(), param);
         mapDataState = new MapDataAppState(mapData);
         hexMapSystem = new HexMapSystem(mapData);
         
