@@ -116,7 +116,7 @@ public final class BufferControl extends ChunkControl {
      */
     private void usewater() {
         bufferFXNode.attachChild(SkyFactory.createSky(
-                app.getAssetManager(), "Textures/BrightSky.dds", false));
+                app.getAssetManager(), "org/hexgridapi/assets/Textures/BrightSky.dds", false));
 
         // we create a water processor
         SimpleWaterProcessor waterProcessor = new SimpleWaterProcessor(app.getAssetManager());

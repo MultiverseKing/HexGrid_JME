@@ -1,6 +1,6 @@
-Material My Material : MatDefs/ShaderBlow_SimpleSpirit.j3md {
+Material My Material : org/hexgridapi/assets/MatDefs/ShaderBlow_SimpleSpirit.j3md {
      MaterialParameters {
-        AniTexMap : Flip Repeat Textures/hex_void_anim.png
+        AniTexMap : Flip Repeat org/hexgridapi/assets/Textures/hex_void_anim.png
         Speed : 16
         numTilesV : 1
         numTilesU : 8

@@ -15,8 +15,8 @@ MaterialDef SimpleSprite {
     }
 
     Technique {
-        VertexShader GLSL100: Shaders/ShaderBlow_SimpleSpirit.vert
-        FragmentShader GLSL100: Shaders/ShaderBlow_SimpleSpirit.frag
+        VertexShader GLSL100: org/hexgridapi/assets/Shaders/ShaderBlow_SimpleSpirit.vert
+        FragmentShader GLSL100: org/hexgridapi/assets/Shaders/ShaderBlow_SimpleSpirit.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

@@ -36,6 +36,7 @@ import org.hexgridapi.events.TileChangeListener;
 public class ChunkBuilder {
 
     protected final boolean buildVoidTile;
+    protected final String texturePath;
     protected boolean showVoidTile;
     private Node builderNode;
     private MapData mapData;
@@ -58,6 +59,7 @@ public class ChunkBuilder {
     public ChunkBuilder(MapData mapData) {
         this.useBuffer = mapData.getGridParameters().isUseBuffer();
         this.buildVoidTile = mapData.getGridParameters().isBuildVoidTile();
+        this.texturePath = mapData.getGridParameters().getTexturePath();
         this.showVoidTile = buildVoidTile;
         this.onlyGround = mapData.getGridParameters().isOnlyGround();
         this.mapData = mapData;
@@ -75,7 +77,7 @@ public class ChunkBuilder {
             Logger.getLogger(ChunkBuilder.class.getName()).log(Level.WARNING,
                     "The hardware does not support TextureArray");
             mesher = new GreddyMesher(mapData, false);
-            mat = assetManager.loadMaterial("Materials/hexMat.j3m");
+            mat = assetManager.loadMaterial("org/hexgridapi/assets/Materials/hexMat.j3m");
             mat.setName("hexMaterial");
         } else {
 //            mesher = new GreddyMesher(mapData, true);
@@ -94,8 +96,8 @@ public class ChunkBuilder {
         }
         hexMaterial = mat;
         greddyMesher = mesher;
-        
-        
+
+
         if (useBuffer && ChunkCoordinate.getBuilderCoordinateType().getClass().isInstance(BufferBuilder.class)) {
             bufferControl = new BufferControl(app, mapData, system, this);
         } else if (useBuffer) {
@@ -103,7 +105,7 @@ public class ChunkBuilder {
                     + " does not Implements BufferControl.");
         }
     }
-    
+
     /**
      * Generate a chunk and attach it to the specifiate Node.
      *
@@ -115,8 +117,8 @@ public class ChunkBuilder {
         for (String value : mesh.keySet()) {
             parent.attachChild(getGeometry(value, mesh.get(value)));
         }
-        
-        if(buildVoidTile && !showVoidTile){
+
+        if (buildVoidTile && !showVoidTile) {
             control.hideVoidTile(true);
         }
     }
@@ -143,12 +145,13 @@ public class ChunkBuilder {
              * } else
              */
             if (value != null && value.equals("NO_TILE") && buildVoidTile) {
-                TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false);
+                TextureKey k = new TextureKey("org/hexgridapi/assets/Textures/HexField/EMPTY_TEXTURE_KEY.png", false);
                 k.setGenerateMips(true);
                 text = assetManager.loadTexture(k);
                 mat.setColor("Color", ColorRGBA.Blue);
             } else {
-                TextureKey k = new TextureKey(HexSetting.TEXTURE_PATH + value + ".png", false);
+                TextureKey k = new TextureKey((value.equals("EMPTY_TEXTURE_KEY") ? "org/hexgridapi/assets/Textures/HexField/" : 
+                        texturePath) + value + ".png", false);
                 k.setGenerateMips(true);
                 text = assetManager.loadTexture(k);
             }
@@ -241,7 +244,7 @@ public class ChunkBuilder {
         for (ChunkControl chunk : chunksNodes.values()) {
             chunk.hideVoidTile(setVisible);
         }
-        if(bufferControl != null){
+        if (bufferControl != null) {
             bufferControl.hideVoidTile(setVisible);
         }
     }
@@ -269,6 +272,7 @@ public class ChunkBuilder {
     public boolean showVoidTile() {
         return showVoidTile;
     }
+
     public boolean buildVoidTile() {
         return buildVoidTile;
     }

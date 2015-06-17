@@ -14,24 +14,26 @@ public class GridParam {
     private final ArrayList<String> textureKeys = new ArrayList<String>();
     private final ProceduralHexGrid generator;
     private final boolean useBuffer;
+    private final String texturePath;
 
     /**
      * Define the parameter to use while the API is running. <br>
-     * Does not activate the buffer (aka : infinite map). <br>
+     * Does not activate the infinite map. <br>
      * Throws {@link IllegalArgumentException} if : <br>
      * ({@param useBuffer} && {@param proceduralGen} == null && !{@param buildVoidTile}) <br>
      * Throws {@link UnsupportedOperationException} if : <br>
      * ({@param useBuffer} && {@param chunkCoordinateType} !instanceOf {@link org.hexgridapi.core.control.buffercontrol})
      * 
+     * @param texturePath location of the texture folder. (by default it's Textures/Hexfield/)
      * @param textureKeys all used texture.
      * @param chunkCoordinateType Coordinate to use for chunk generation.
      * @param buildVoidTile Generate or not Tile being null.
      * @param onlyGround Generate Chunk/Tile with depth.
      * @param useDefaultProcedural Use the API provided Procedural algorithm.
      */
-    public GridParam(Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
+    public GridParam(String texturePath, Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
             boolean buildVoidTile, boolean onlyGround, boolean useDefaultProcedural) {
-        this(textureKeys, chunkCoordinateType, false, buildVoidTile, onlyGround, 
+        this(null, textureKeys, chunkCoordinateType, false, buildVoidTile, onlyGround, 
                 useDefaultProcedural ? new ProceduralHexGrid(textureKeys.length) : null);
     }
     
@@ -42,16 +44,17 @@ public class GridParam {
      * Throws {@link UnsupportedOperationException} if : <br>
      * ({@param useBuffer} && {@param chunkCoordinateType} !instanceOf {@link org.hexgridapi.core.control.buffercontrol})
      * 
+     * @param texturePath location of the texture folder. (by default it's Textures/Hexfield/)
      * @param textureKeys all used texture.
      * @param chunkCoordinateType Coordinate to use for chunk generation.
-     * @param useBuffer Activate the buffer for the specifiate coordinate. (aka : infinite map)
+     * @param useBuffer Activate the infinite map for the specifiate coordinate.
      * @param buildVoidTile Generate or not Tile being null.
      * @param onlyGround Generate Chunk/Tile with depth.
      * @param useDefaultProcedural Use the API provided Procedural algorithm.
      */
-    public GridParam(Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
+    public GridParam(String texturePath, Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
             boolean useBuffer, boolean buildVoidTile, boolean onlyGround, boolean useDefaultProcedural) {
-        this(textureKeys, chunkCoordinateType, useBuffer, buildVoidTile , onlyGround, 
+        this(texturePath, textureKeys, chunkCoordinateType, useBuffer, buildVoidTile , onlyGround, 
                 useDefaultProcedural ? new ProceduralHexGrid(textureKeys.length) : null);
     }
     
@@ -70,7 +73,7 @@ public class GridParam {
      * @param onlyGround Generate Chunk/Tile with depth.
      * @param proceduralGen custom procedural algorithm to use.
      */
-    public GridParam(Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
+    public GridParam(String texturePath, Object[] textureKeys, Class<? extends ChunkCoordinate> chunkCoordinateType, 
             boolean useBuffer, boolean buildVoidTile, boolean onlyGround, ProceduralHexGrid proceduralGen) {
         if(useBuffer && proceduralGen == null && !buildVoidTile) {
             throw new IllegalArgumentException("Buffer cannot work without voidTile or ProceduralGen");
@@ -79,6 +82,7 @@ public class GridParam {
         this.useBuffer = useBuffer;
         this.buildVoidTile = buildVoidTile;
         this.onlyGround = onlyGround;
+        this.texturePath = texturePath != null ? texturePath : "Textures/HexField/";
         this.generator = proceduralGen;
         genTextureKeys(textureKeys);
     }
@@ -115,5 +119,9 @@ public class GridParam {
 
     public ProceduralHexGrid getGenerator() {
         return generator;
+    }
+
+    public String getTexturePath() {
+        return texturePath;
     }
 }

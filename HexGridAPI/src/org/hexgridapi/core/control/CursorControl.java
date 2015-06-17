@@ -18,8 +18,8 @@ public class CursorControl {
     private final float cursorOffset = -0.15f;           //Got an offset issue with hex_void_anim.png this will solve it temporary
 
     public CursorControl(Application app, Node holderNode) {
-        cursor = app.getAssetManager().loadModel("Models/animPlane.j3o");
-        Material animShader = app.getAssetManager().loadMaterial("Materials/animatedTexture.j3m");
+        cursor = app.getAssetManager().loadModel("org/hexgridapi/assets/Models/AnimPlane.j3o");
+        Material animShader = app.getAssetManager().loadMaterial("org/hexgridapi/assets/Materials/animatedTexture.j3m");
         animShader.setInt("Speed", 16);
         cursor.setMaterial(animShader);
         holderNode.attachChild(cursor);

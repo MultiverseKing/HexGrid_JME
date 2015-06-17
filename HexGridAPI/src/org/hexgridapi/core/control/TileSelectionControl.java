@@ -13,6 +13,7 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.jme3.texture.Texture;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.hexgridapi.core.HexSetting;
@@ -51,11 +52,12 @@ public class TileSelectionControl implements TileInputListener {
 
     public void initialise(Application app) {
         if (mat == null) {
-            mat = app.getAssetManager().loadMaterial("Materials/hexMat.j3m");
-//            mat.setTexture("DiffuseMap", app.getAssetManager().loadTexture(new TextureKey("Textures/EMPTY_TEXTURE_KEY.png", false)));
-//            mat.setColor("Diffuse", new ColorRGBA(1, 0, 0, 0.3f));
-            mat.setTexture("ColorMap", app.getAssetManager().loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false)));
-            mat.setColor("Color", new ColorRGBA(1, 0, 0, 0.3f));
+            mat = app.getAssetManager().loadMaterial("org/hexgridapi/assets/Materials/hexMat.j3m");
+            //            mat.setTexture("DiffuseMap", app.getAssetManager().loadTexture(new TextureKey("Textures/EMPTY_TEXTURE_KEY.png", false)));
+            //            mat.setColor("Diffuse", new ColorRGBA(1, 0, 0, 0.3f));
+//            Texture text = app.getAssetManager().loadTexture(new TextureKey(HexSetting.TEXTURE_PATH + "EMPTY_TEXTURE_KEY.png", false));
+//            mat.setTexture("ColorMap", text);
+//            mat.setColor("Color", new ColorRGBA(1, 0, 0, 0.3f));
 //            mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Color);
         }
         /**
