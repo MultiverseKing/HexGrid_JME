@@ -5,6 +5,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JMenu;
 import org.hexgridapi.editor.hexmap.HexMapModule;
 import java.awt.Frame;
+import org.hexgridapi.core.geometry.builder.GridParam;
 
 /**
  *
@@ -12,11 +13,11 @@ import java.awt.Frame;
  */
 public final class JHexEditorMenu extends JMenu {
 
-    private final HexMapModule module;
+    private final HexMapModule hexmap;
     
-    public JHexEditorMenu(HexMapModule module) {
+    public JHexEditorMenu(HexMapModule hexMap) {
         super("HexGrid");
-        this.module = module;
+        this.hexmap = hexMap;
     }
 
     public void setAction(HexMenuAction action) {
@@ -32,33 +33,34 @@ public final class JHexEditorMenu extends JMenu {
     public void onAction(ActionEvent e) {
         switch (e.getActionCommand()) {
             case "New Map":
-                module.generateNewMap();
-                if (!module.isStart()) {
+                JNewMapDialog newMapDialog = new JNewMapDialog((Frame) getTopLevelAncestor());
+                newMapDialog.setVisible(true);
+                
+                GridParam param = newMapDialog.getValidatedParam();
+                if(param != null) {
+                    hexmap.generateNewMap(param);
+                }
+                if (!hexmap.isStart()) { //@todo
                     setAction(HexMenuAction.Save);
                 }
                 break;
             case "Load Map":
-                JLoaderDialog loadDialog = new JLoaderDialog((Frame) module.getTopLevelAncestor(), false);
-                loadDialog.setLocationRelativeTo((Frame) module.getTopLevelAncestor());
+                JLoaderDialog loadDialog = new JLoaderDialog((Frame) getTopLevelAncestor(), false);
                 loadDialog.setVisible(true);
 
                 String loadName = loadDialog.getValidatedText();
                 if (loadName != null) {
-                    //The text is valid.
-                    System.err.println("@todo Load Map " + loadName);
+                    hexmap.LoadMap(loadName);
                 }
                 loadDialog.dispose();
                 break;
             case "Save Map":
-                JLoaderDialog saveDialog = new JLoaderDialog((Frame) module.getTopLevelAncestor(),
-                        module.getMapName());
-                saveDialog.setLocationRelativeTo((Frame) module.getTopLevelAncestor());
-                saveDialog.setModal(true);
+                JLoaderDialog saveDialog = new JLoaderDialog((Frame) getTopLevelAncestor(),
+                        hexmap.getMapName());
                 saveDialog.setVisible(true);
                 String saveName = saveDialog.getValidatedText();
                 if (saveName != null) {
-                    //The text is valid.
-                    module.saveMap();
+                    hexmap.saveMap(saveName);
                 }
                 saveDialog.dispose();
                 break;

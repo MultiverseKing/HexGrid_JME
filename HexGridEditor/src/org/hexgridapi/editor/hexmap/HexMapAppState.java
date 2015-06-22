@@ -4,7 +4,7 @@ import com.jme3.app.Application;
 import com.jme3.app.state.AppStateManager;
 import java.util.List;
 import org.hexgridapi.core.appstate.AbstractHexGridAppState;
-import org.hexgridapi.core.appstate.MouseControlSystem;
+import org.hexgridapi.core.appstate.GridMouseControlAppState;
 import org.hexgridapi.core.control.TileSelectionControl;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.data.MapData;
@@ -15,19 +15,19 @@ import org.hexgridapi.utility.Vector2Int;
  *
  * @author roah
  */
-public class HexMapSystem extends AbstractHexGridAppState {
+public class HexMapAppState extends AbstractHexGridAppState {
 
     private TileSelectionControl selectionControl;
     private MapData mapData;
 
-    HexMapSystem(MapData mapData) {
+    HexMapAppState(MapData mapData) {
         super(mapData);
         this.mapData = mapData;
     }
 
     @Override
     public void initializeSystem(AppStateManager stateManager, Application app) {
-        selectionControl = app.getStateManager().getState(MouseControlSystem.class).getSelectionControl();
+        selectionControl = app.getStateManager().getState(GridMouseControlAppState.class).getSelectionControl();
         if (mapData.getGenerator() == null && !builder.useBuffer()) {
             //<editor-fold defaultstate="collapsed" desc="Initialise some tile to show something">
             mapData.setTile(new HexCoordinate[]{

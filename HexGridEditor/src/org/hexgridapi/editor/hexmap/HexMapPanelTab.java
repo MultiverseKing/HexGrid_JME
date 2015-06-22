@@ -1,7 +1,7 @@
 package org.hexgridapi.editor.hexmap;
 
-import org.hexgridapi.editor.gui.ComboBoxRenderer;
-import org.hexgridapi.editor.gui.JPanelTab;
+import org.hexgridapi.editor.utility.gui.ComboBoxRenderer;
+import org.hexgridapi.editor.utility.gui.JPanelTab;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -26,7 +26,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicArrowButton;
 import org.hexgridapi.core.appstate.MapDataAppState;
-import org.hexgridapi.core.appstate.MouseControlSystem;
+import org.hexgridapi.core.appstate.GridMouseControlAppState;
 import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 import org.hexgridapi.editor.core.HexGridEditorMain;
 import org.hexgridapi.editor.hexmap.gui.JCursorPositionPanel;
@@ -44,8 +44,8 @@ import org.hexgridapi.events.TileSelectionListener;
 public final class HexMapPanelTab extends JPanelTab {
 
     private final HexGridEditorMain editorMain;
-    private HexMapSystem hexSystem;
-    private MouseControlSystem mouseSystem;
+    private HexMapAppState hexSystem;
+    private GridMouseControlAppState mouseSystem;
     private Boolean currentIsGhost;
     private boolean currentIsGroup = false;
     private JPanel tileProperties;
@@ -53,7 +53,7 @@ public final class HexMapPanelTab extends JPanelTab {
     private boolean update = true;
     private boolean ghostIsVisible = true;
 
-    public HexMapPanelTab(HexGridEditorMain editorMain, MapDataAppState mapDataState, HexMapSystem hexMapSystem, MouseControlSystem mouseSystem) {
+    public HexMapPanelTab(HexGridEditorMain editorMain, MapDataAppState mapDataState, HexMapAppState hexMapSystem, GridMouseControlAppState mouseSystem) {
         super(editorMain.getAssetManager().loadTexture(
                 "org/hexgridapi/assets/Textures/Icons/Buttons/configKey.png").getImage(), "HexMapConfig");
         this.editorMain = editorMain;
@@ -408,6 +408,7 @@ public final class HexMapPanelTab extends JPanelTab {
     }
 
     // </editor-fold>
+    
     private void updateSingleTileMenu() {
         currentIsGhost = !hexSystem.tileExist();
         if (!currentIsGhost) {
@@ -431,10 +432,6 @@ public final class HexMapPanelTab extends JPanelTab {
 //        hexMapPanel.validate();
     }
 
-    public JComponent getComponent(String UID) {
-        return comps.get(UID);
-    }
-
     @Override
     public void isShow() {
     }
@@ -442,4 +439,12 @@ public final class HexMapPanelTab extends JPanelTab {
     @Override
     public void isHidden() {
     }
+    
+    // <editor-fold defaultstate="collapsed" desc="Getters">
+
+    public String getMapName(){
+        return ((JTextField)comps.get("mapName")).getText();
+    }
+    
+    // </editor-fold>
 }

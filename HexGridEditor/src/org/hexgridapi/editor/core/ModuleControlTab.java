@@ -1,11 +1,11 @@
 package org.hexgridapi.editor.core;
 
-import org.hexgridapi.editor.gui.Base3DModuleTab;
+import org.hexgridapi.editor.utility.gui.Base3DModuleTab;
 import com.jme3.scene.Node;
 import com.jme3.system.JmeCanvasContext;
-import org.hexgridapi.editor.gui.JPanelTab;
-import org.hexgridapi.editor.gui.JPanelTabController;
-import org.hexgridapi.editor.gui.JPanelTabListener;
+import org.hexgridapi.editor.utility.gui.JPanelTab;
+import org.hexgridapi.editor.utility.gui.JPanelTabController;
+import org.hexgridapi.editor.utility.gui.JPanelTabListener;
 import java.awt.Canvas;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;

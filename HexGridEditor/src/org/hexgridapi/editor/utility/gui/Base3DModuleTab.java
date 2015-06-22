@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.gui;
+package org.hexgridapi.editor.utility.gui;
 
 import com.jme3.app.SimpleApplication;
 import com.jme3.scene.Node;

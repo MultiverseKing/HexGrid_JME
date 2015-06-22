@@ -6,16 +6,17 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.scene.Node;
 import org.hexgridapi.editor.core.HexGridEditorMain;
-import org.hexgridapi.editor.gui.Base3DModuleTab;
-import org.hexgridapi.editor.gui.JPanelTab;
-import org.hexgridapi.editor.gui.JPanelTabController;
-import org.hexgridapi.editor.gui.JPanelTabListener;
+import org.hexgridapi.editor.utility.gui.Base3DModuleTab;
+import org.hexgridapi.editor.utility.gui.JPanelTab;
+import org.hexgridapi.editor.utility.gui.JPanelTabController;
+import org.hexgridapi.editor.utility.gui.JPanelTabListener;
 import org.hexgridapi.editor.hexmap.gui.JHexEditorMenu;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import org.hexgridapi.core.appstate.MapDataAppState;
-import org.hexgridapi.core.appstate.MouseControlSystem;
+import org.hexgridapi.core.appstate.GridMouseControlAppState;
 import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.geometry.builder.GridParam;
 import org.hexgridapi.core.geometry.builder.coordinate.SquareCoordinate;
@@ -27,11 +28,12 @@ import org.hexgridapi.core.geometry.builder.coordinate.SquareCoordinate;
 public final class HexMapModule extends Base3DModuleTab implements JPanelTabListener {
 
     private static JPanelTabController panelController = new JPanelTabController("HexMapPanelControl");
-    private final MouseControlSystem mouseSystem = new MouseControlSystem();
+    private final GridMouseControlAppState mouseSystem = new GridMouseControlAppState();
     private MapDataAppState mapDataState;
-    private HexMapSystem hexMapSystem;
+    private HexMapAppState hexMapSystem;
     private SimpleApplication app;
     private boolean isStart = true;
+    private final HexMapPanelTab hexPanel;
 
     public HexMapModule(Application app, JMenuBar menu) {
         super(app.getAssetManager().loadTexture("org/hexgridapi/assets/Textures/Icons/Buttons/hexIconBW.png").getImage(), "HexGrid Module");
@@ -39,7 +41,7 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         JHexEditorMenu editorMenu = new JHexEditorMenu(this);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.New);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.Load);
-        editorMenu.setAction(JHexEditorMenu.HexMenuAction.Save);
+        editorMenu.setAction(JHexEditorMenu.HexMenuAction.Save); //@todo add when a map is loaded
         menu.add(editorMenu);
         
         GridParam param = new GridParam("org/hexgridapi/assets/Textures/HexField/", new String[]{"EARTH", "ICE", "NATURE", "VOLT"}, 
@@ -47,12 +49,13 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
 //                SquareCoordinate.class, true, false, false, true)); //useWater
         MapData mapData = new MapData(app.getAssetManager(), param);
         mapDataState = new MapDataAppState(mapData);
-        hexMapSystem = new HexMapSystem(mapData);
+        hexMapSystem = new HexMapAppState(mapData);
         
         setLayout(new BorderLayout());
         
 //        panelController.add(new HexMapPropertiesPanel(getIcon(), new JCursorPositionPanel(mouseSystem)));
-        panelController.add(new HexMapPanelTab((HexGridEditorMain) app, mapDataState, hexMapSystem, mouseSystem));
+        hexPanel = new HexMapPanelTab((HexGridEditorMain) app, mapDataState, hexMapSystem, mouseSystem);
+        panelController.add(hexPanel);
         panelController.registerTabChangeListener(this);
         validate();
     }
@@ -89,11 +92,6 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public void generateNewMap() {
-//        mapDataState.getMapData().generateNewSeed();
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     public boolean isStart() {
         return isStart;
     }
@@ -103,7 +101,7 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         return hexMapSystem.getGridNode();
     }
 
-    public MouseControlSystem getMouseSystem() {
+    public GridMouseControlAppState getMouseSystem() {
         return mouseSystem;
     }
 
@@ -111,15 +109,23 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         return mapDataState.getMapData();
     }
 
-    public HexMapSystem getHexMapSystem() {
+    public HexMapAppState getHexMapSystem() {
         return hexMapSystem;
     }
 
     public String getMapName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return hexPanel.getMapName();
     }
 
-    public void saveMap() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void generateNewMap(GridParam param) {
+        JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO...");
+    }
+
+    public void LoadMap(String loadName) {
+        JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO... Load " + loadName);
+    }
+
+    public void saveMap(String saveName) {
+        JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO... Save " + saveName);
     }
 }

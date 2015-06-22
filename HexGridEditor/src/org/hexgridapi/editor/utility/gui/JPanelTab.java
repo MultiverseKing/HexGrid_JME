@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.gui;
+package org.hexgridapi.editor.utility.gui;
 
 import com.jme3.texture.Image;
 import java.awt.Component;

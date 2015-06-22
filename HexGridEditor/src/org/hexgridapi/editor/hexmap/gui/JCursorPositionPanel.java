@@ -7,7 +7,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.hexgridapi.core.appstate.MouseControlSystem;
+import org.hexgridapi.core.appstate.GridMouseControlAppState;
 import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
 import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 import org.hexgridapi.events.TileSelectionListener;
@@ -22,7 +22,7 @@ public class JCursorPositionPanel extends JPanel {
     private JLabel cursorPosition = new JLabel("Hex pos : null");
     private JLabel chunkPosition = new JLabel("Chunk pos: null");
 
-    public JCursorPositionPanel(MouseControlSystem system) {
+    public JCursorPositionPanel(GridMouseControlAppState system) {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         setAlignmentX(0);
         setBorder(BorderFactory.createTitledBorder("Cursor Property"));
