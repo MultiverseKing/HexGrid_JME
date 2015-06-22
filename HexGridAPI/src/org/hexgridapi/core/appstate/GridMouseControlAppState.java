@@ -24,7 +24,7 @@ import org.hexgridapi.events.MouseRayListener;
  *
  * @author Eike Foede, roah
  */
-public class MouseControlSystem extends AbstractAppState {
+public class GridMouseControlAppState extends AbstractAppState {
 
     private GridRayCastControl rayCastControl;
     private Application app;

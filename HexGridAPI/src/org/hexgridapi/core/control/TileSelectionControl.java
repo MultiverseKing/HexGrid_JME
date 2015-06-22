@@ -19,7 +19,7 @@ import java.util.HashMap;
 import org.hexgridapi.core.HexSetting;
 import org.hexgridapi.core.appstate.AbstractHexGridAppState;
 import org.hexgridapi.core.appstate.MapDataAppState;
-import org.hexgridapi.core.appstate.MouseControlSystem;
+import org.hexgridapi.core.appstate.GridMouseControlAppState;
 import org.hexgridapi.core.geometry.mesh.MeshGenerator;
 import org.hexgridapi.events.MouseInputEvent;
 import org.hexgridapi.events.TileInputListener;
@@ -30,7 +30,7 @@ import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
 
 /**
  * Generate tile on the field to be used as selection control. <br>
- * Used by {@link MouseControlSystem} by default.
+ * Used by {@link GridMouseControlAppState} by default.
  *
  * @author roah
  */
@@ -69,7 +69,7 @@ public class TileSelectionControl implements TileInputListener {
         /**
          * Register listener.
          */
-        app.getStateManager().getState(MouseControlSystem.class).registerTileInputListener(this);
+        app.getStateManager().getState(GridMouseControlAppState.class).registerTileInputListener(this);
         app.getStateManager().getState(MapDataAppState.class).getMapData().registerTileChangeListener(tileChangeListener);
         cursorControl = new CursorControl(app, TileSelectionNode);
         /**
