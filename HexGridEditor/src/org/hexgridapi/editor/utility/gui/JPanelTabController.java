@@ -6,6 +6,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -135,5 +137,9 @@ public class JPanelTabController extends JPanel {
         for (JPanelTabListener l : listeners) {
             l.onPanelChange(tab);
         }
+    }
+
+    public Collection<JPanelTab> getPanels() {
+        return Collections.unmodifiableCollection(panels.values());
     }
 }

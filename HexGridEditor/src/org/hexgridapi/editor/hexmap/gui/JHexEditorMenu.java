@@ -3,9 +3,9 @@ package org.hexgridapi.editor.hexmap.gui;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
-import org.hexgridapi.editor.hexmap.HexMapModule;
+import org.hexgridapi.editor.hexmap.HexGridModule;
 import java.awt.Frame;
-import org.hexgridapi.core.geometry.builder.GridParam;
+import org.hexgridapi.core.MapParam;
 
 /**
  *
@@ -13,9 +13,9 @@ import org.hexgridapi.core.geometry.builder.GridParam;
  */
 public final class JHexEditorMenu extends JMenu {
 
-    private final HexMapModule hexmap;
+    private final HexGridModule hexmap;
     
-    public JHexEditorMenu(HexMapModule hexMap) {
+    public JHexEditorMenu(HexGridModule hexMap) {
         super("HexGrid");
         this.hexmap = hexMap;
     }
@@ -36,12 +36,9 @@ public final class JHexEditorMenu extends JMenu {
                 JNewMapDialog newMapDialog = new JNewMapDialog((Frame) getTopLevelAncestor());
                 newMapDialog.setVisible(true);
                 
-                GridParam param = newMapDialog.getValidatedParam();
+                MapParam param = newMapDialog.getValidatedParam();
                 if(param != null) {
                     hexmap.generateNewMap(param);
-                }
-                if (!hexmap.isStart()) { //@todo
-                    setAction(HexMenuAction.Save);
                 }
                 break;
             case "Load Map":
@@ -56,7 +53,7 @@ public final class JHexEditorMenu extends JMenu {
                 break;
             case "Save Map":
                 JLoaderDialog saveDialog = new JLoaderDialog((Frame) getTopLevelAncestor(),
-                        hexmap.getMapName());
+                        hexmap.getHexGridSystem().getMapName());
                 saveDialog.setVisible(true);
                 String saveName = saveDialog.getValidatedText();
                 if (saveName != null) {

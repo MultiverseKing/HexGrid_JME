@@ -1,7 +1,7 @@
 package org.hexgridapi.editor.hexmap.gui;
 
 import java.awt.event.ItemEvent;
-import javax.swing.JCheckBox;
+import org.hexgridapi.utility.Vector2Int;
 
 /**
  *
@@ -16,12 +16,12 @@ public class NewMapPan extends javax.swing.JPanel {
         initComponents();
     }
 
-    public boolean getUseBuffer() {
-        return useBufferBox.isSelected();
+    public boolean useInfiniteMap() {
+        return useInfiniteMapBox.isSelected();
     }
 
     public int getBufferRadius() {
-        return chunkSizeSlider.getValue();
+        return bufferRadius.getValue();
     }
 
     public boolean getUseProcedural() {
@@ -35,6 +35,22 @@ public class NewMapPan extends javax.swing.JPanel {
     public boolean getUseOnlyGround() {
         return onlyGroundBox.isSelected();
     }
+    
+    public int getChunkSize() {
+        return chunkSizeSlider.getValue();
+    }
+    public Vector2Int getMapSize() {
+        if(useInfiniteMapBox.isSelected()) {
+            return new Vector2Int();
+        } else {
+            return Vector2Int.fromString(mapSizeX.getText() + "|" + mapSizeY.getText());
+        }
+    }
+    
+    private void setTileCount() {
+        tileCountX.setText("X : " + chunkSizeSlider.getValue() * Integer.parseInt(mapSizeX.getText()));
+        tileCountY.setText("Y : " + chunkSizeSlider.getValue() * Integer.parseInt(mapSizeY.getText()));
+    }
 
     /**
      * This method is called from within the constructor to
@@ -47,8 +63,6 @@ public class NewMapPan extends javax.swing.JPanel {
     private void initComponents() {
         bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
-        jFileChooser1 = new javax.swing.JFileChooser();
-        jToggleButton1 = new javax.swing.JToggleButton();
         javax.swing.JLabel mapNameLabel = new javax.swing.JLabel();
         mapNameField = new javax.swing.JTextField();
         coordinateChooser = new javax.swing.JComboBox();
@@ -59,7 +73,7 @@ public class NewMapPan extends javax.swing.JPanel {
         bufferRadius = new javax.swing.JSlider();
         javax.swing.JLabel bufferRadiusLabel = new javax.swing.JLabel();
         javax.swing.JLabel radiusValue = new javax.swing.JLabel();
-        useBufferBox = new javax.swing.JCheckBox();
+        useInfiniteMapBox = new javax.swing.JCheckBox();
         onlyGroundBox = new javax.swing.JCheckBox();
         javax.swing.JLabel chunkCoordinateLabel = new javax.swing.JLabel();
         javax.swing.JPanel jPanel2 = new javax.swing.JPanel();
@@ -70,8 +84,17 @@ public class NewMapPan extends javax.swing.JPanel {
         buildVoidBox = new javax.swing.JCheckBox();
         jComboBox1 = new javax.swing.JComboBox();
         javax.swing.JLabel jLabel1 = new javax.swing.JLabel();
-
-        jToggleButton1.setText("jToggleButton1");
+        javax.swing.JPanel jPanel3 = new javax.swing.JPanel();
+        useSizedMap = new javax.swing.JCheckBox();
+        javax.swing.JLabel jLabel2 = new javax.swing.JLabel();
+        javax.swing.JPanel jPanel4 = new javax.swing.JPanel();
+        mapSizeY = new javax.swing.JTextField();
+        mapSizeX = new javax.swing.JTextField();
+        javax.swing.JLabel jLabel5 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel4 = new javax.swing.JLabel();
+        javax.swing.JLabel jLabel7 = new javax.swing.JLabel();
+        tileCountX = new javax.swing.JLabel();
+        tileCountY = new javax.swing.JLabel();
 
         setMinimumSize(new java.awt.Dimension(400, 250));
 
@@ -80,6 +103,7 @@ public class NewMapPan extends javax.swing.JPanel {
         mapNameField.setText("NewMap");
 
         coordinateChooser.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "SquareCoordinate", "HexagonCoordinate", "Custom..." }));
+        coordinateChooser.setToolTipText("@todo");
         coordinateChooser.addItemListener(new java.awt.event.ItemListener() {
             public void itemStateChanged(java.awt.event.ItemEvent evt) {
                 chooserItemStateChanged(evt);
@@ -88,14 +112,21 @@ public class NewMapPan extends javax.swing.JPanel {
 
         chunkSizeLabel.setText("Chunk Size : ");
 
-        chunkSizeSlider.setMajorTickSpacing(1);
-        chunkSizeSlider.setMaximum(5);
-        chunkSizeSlider.setMinimum(1);
+        chunkSizeSlider.setMajorTickSpacing(16);
+        chunkSizeSlider.setMaximum(64);
+        chunkSizeSlider.setMinimum(8);
+        chunkSizeSlider.setMinorTickSpacing(8);
         chunkSizeSlider.setPaintTicks(true);
         chunkSizeSlider.setSnapToTicks(true);
-        chunkSizeSlider.setValue(3);
+        chunkSizeSlider.setValue(8);
+        chunkSizeSlider.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                chunkSizeSliderMouseReleased(evt);
+            }
+        });
 
         textureChooser.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "DEFAULT", "EARTH", "ICE", "NATURE", "VOLT" }));
+        textureChooser.setToolTipText("@todo");
 
         jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
@@ -106,7 +137,7 @@ public class NewMapPan extends javax.swing.JPanel {
         bufferRadius.setSnapToTicks(true);
         bufferRadius.setValue(1);
 
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, useBufferBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), bufferRadius, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, useInfiniteMapBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), bufferRadius, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
         bufferRadiusLabel.setFont(new java.awt.Font("Dialog", 1, 10)); // NOI18N
@@ -115,8 +146,14 @@ public class NewMapPan extends javax.swing.JPanel {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, bufferRadius, org.jdesktop.beansbinding.ELProperty.create("${value}"), radiusValue, org.jdesktop.beansbinding.BeanProperty.create("text"));
         bindingGroup.addBinding(binding);
 
-        useBufferBox.setSelected(true);
-        useBufferBox.setText("Use Buffer");
+        useInfiniteMapBox.setSelected(true);
+        useInfiniteMapBox.setText("Use Infinite Map");
+        useInfiniteMapBox.setEnabled(false);
+        useInfiniteMapBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useInfiniteMapBoxActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -132,7 +169,7 @@ public class NewMapPan extends javax.swing.JPanel {
                                 .addComponent(bufferRadiusLabel)
                                 .addGap(18, 18, 18)
                                 .addComponent(radiusValue))
-                            .addComponent(useBufferBox))
+                            .addComponent(useInfiniteMapBox))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -140,14 +177,14 @@ public class NewMapPan extends javax.swing.JPanel {
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(useBufferBox)
+                .addComponent(useInfiniteMapBox)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(bufferRadiusLabel)
                     .addComponent(radiusValue))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bufferRadius, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(27, 27, 27))
+                .addContainerGap())
         );
 
         onlyGroundBox.setText("Only Ground");
@@ -156,6 +193,7 @@ public class NewMapPan extends javax.swing.JPanel {
 
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
+        useProceduralBox.setSelected(true);
         useProceduralBox.setText("Use Procedural");
 
         proceduralChooser.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "DEFAULT", "CUSTOM..." }));
@@ -178,7 +216,7 @@ public class NewMapPan extends javax.swing.JPanel {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(useProceduralBox)
-                        .addGap(0, 41, Short.MAX_VALUE))
+                        .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(proceduralChooser, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -214,6 +252,112 @@ public class NewMapPan extends javax.swing.JPanel {
 
         jLabel1.setText("Void Area Type :");
 
+        jPanel3.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
+        useSizedMap.setText("use Sized Map");
+        useSizedMap.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                useSizedMapActionPerformed(evt);
+            }
+        });
+
+        jLabel2.setText("Size : (chunk)");
+
+        mapSizeY.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        mapSizeY.setText("8");
+        mapSizeY.setMinimumSize(new java.awt.Dimension(28, 19));
+        mapSizeY.setPreferredSize(new java.awt.Dimension(28, 19));
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, useSizedMap, org.jdesktop.beansbinding.ELProperty.create("${selected}"), mapSizeY, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
+        mapSizeY.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mapSizeYActionPerformed(evt);
+            }
+        });
+
+        mapSizeX.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        mapSizeX.setText("12");
+        mapSizeX.setMinimumSize(new java.awt.Dimension(28, 19));
+        mapSizeX.setPreferredSize(new java.awt.Dimension(28, 19));
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, useSizedMap, org.jdesktop.beansbinding.ELProperty.create("${selected}"), mapSizeX, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
+        mapSizeX.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mapSizeXActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setText("X");
+
+        jLabel4.setText("Y");
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel5)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(mapSizeX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(14, 14, 14)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(mapSizeY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addComponent(jLabel4)
+                .addComponent(mapSizeY, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jLabel5)
+                .addComponent(mapSizeX, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        jLabel7.setText("Tile Count : ");
+
+        setTileCount();
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel7)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(tileCountX)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tileCountY))
+                    .addComponent(useSizedMap))
+                .addContainerGap(39, Short.MAX_VALUE))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(useSizedMap)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel7)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tileCountX)
+                    .addComponent(tileCountY))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -221,64 +365,73 @@ public class NewMapPan extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(mapNameLabel)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(textureChooser, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(mapNameField)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(mapNameLabel)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(textureChooser, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(mapNameField)
                     .addComponent(jLabel1)
-                    .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jComboBox1, 0, 188, Short.MAX_VALUE)
                     .addComponent(buildVoidBox))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(chunkSizeLabel)
-                        .addGap(18, 18, 18)
-                        .addComponent(chunkSizeValue))
-                    .addComponent(chunkCoordinateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(onlyGroundBox)
-                    .addComponent(chunkSizeSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(coordinateChooser, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createSequentialGroup()
+                            .addComponent(chunkSizeLabel)
+                            .addGap(18, 18, 18)
+                            .addComponent(chunkSizeValue))
+                        .addComponent(chunkCoordinateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(chunkSizeSlider, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(coordinateChooser, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(onlyGroundBox))
+                .addGap(24, 24, 24))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(mapNameLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(mapNameField, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(textureChooser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(buildVoidBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(mapNameField, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(chunkCoordinateLabel)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(coordinateChooser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(onlyGroundBox)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(coordinateChooser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(chunkSizeLabel)
                             .addComponent(chunkSizeValue))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(chunkSizeSlider, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(29, 29, 29)
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(onlyGroundBox))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(textureChooser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(buildVoidBox)))
+                .addGap(10, 10, 10)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(11, 11, 11)))
+                .addGap(21, 21, 21))
         );
 
         bindingGroup.bind();
@@ -295,20 +448,48 @@ public class NewMapPan extends javax.swing.JPanel {
         // TODO add your handling code here:
     }//GEN-LAST:event_buildVoidBoxActionPerformed
 
+    private void useInfiniteMapBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useInfiniteMapBoxActionPerformed
+        useSizedMap.setSelected(false);
+        useSizedMap.setEnabled(true);
+        useInfiniteMapBox.setEnabled(false);
+    }//GEN-LAST:event_useInfiniteMapBoxActionPerformed
+
+    private void mapSizeXActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mapSizeXActionPerformed
+        setTileCount();
+    }//GEN-LAST:event_mapSizeXActionPerformed
+
+    private void mapSizeYActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mapSizeYActionPerformed
+        setTileCount();
+    }//GEN-LAST:event_mapSizeYActionPerformed
+
+    private void useSizedMapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useSizedMapActionPerformed
+        useInfiniteMapBox.setSelected(false);
+        useSizedMap.setEnabled(false);
+        useInfiniteMapBox.setEnabled(true);
+    }//GEN-LAST:event_useSizedMapActionPerformed
+
+    private void chunkSizeSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_chunkSizeSliderMouseReleased
+        setTileCount();
+    }//GEN-LAST:event_chunkSizeSliderMouseReleased
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JSlider bufferRadius;
     private javax.swing.JCheckBox buildVoidBox;
     private javax.swing.JSlider chunkSizeSlider;
     private javax.swing.JComboBox coordinateChooser;
     private javax.swing.JComboBox jComboBox1;
-    private javax.swing.JFileChooser jFileChooser1;
-    private javax.swing.JToggleButton jToggleButton1;
     private javax.swing.JTextField mapNameField;
+    private javax.swing.JTextField mapSizeX;
+    private javax.swing.JTextField mapSizeY;
     private javax.swing.JCheckBox onlyGroundBox;
     private javax.swing.JComboBox proceduralChooser;
     private javax.swing.JComboBox textureChooser;
-    private javax.swing.JCheckBox useBufferBox;
+    private javax.swing.JLabel tileCountX;
+    private javax.swing.JLabel tileCountY;
+    private javax.swing.JCheckBox useInfiniteMapBox;
     private javax.swing.JCheckBox useProceduralBox;
+    private javax.swing.JCheckBox useSizedMap;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
+
 }

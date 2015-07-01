@@ -7,9 +7,9 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.hexgridapi.core.appstate.GridMouseControlAppState;
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.mousepicking.GridMouseControlAppState;
+import org.hexgridapi.core.ChunkCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 import org.hexgridapi.events.TileSelectionListener;
 
 /**
@@ -31,7 +31,7 @@ public class JCursorPositionPanel extends JPanel {
         add(cursorPosition);
         add(Box.createRigidArea(new Dimension(0, 3)));
         add(chunkPosition);
-        system.getSelectionControl().registerTileListener(selectionListener);
+        system.getSelectionControl().register(selectionListener);
     }
     
     private TileSelectionListener selectionListener = new TileSelectionListener() {

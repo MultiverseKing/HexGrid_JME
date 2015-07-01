@@ -1,7 +1,6 @@
 package org.hexgridapi.editor.hexmap;
 
 import org.hexgridapi.editor.utility.gui.ComboBoxRenderer;
-import org.hexgridapi.editor.utility.gui.JPanelTab;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -25,45 +24,37 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicArrowButton;
-import org.hexgridapi.core.appstate.MapDataAppState;
-import org.hexgridapi.core.appstate.GridMouseControlAppState;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.mousepicking.GridMouseControlAppState;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 import org.hexgridapi.editor.core.HexGridEditorMain;
+import org.hexgridapi.editor.hexmap.gui.HexGridPropertiesPan;
 import org.hexgridapi.editor.hexmap.gui.JCursorPositionPanel;
 import org.hexgridapi.events.TileChangeEvent;
-import org.hexgridapi.events.TileChangeListener;
+import org.hexgridapi.events.MapDataListener;
 import org.hexgridapi.events.TileSelectionListener;
 
 /**
- * @todo in short : Add a dropBox to chose the kind of replacement to set when
- * ghost tile isn't visible.
- * @todo extended : When using showGhost all ghost tile got removed but this
- * lead to ugly visual since there is no replacement for it.
+ * 
  * @author roah
  */
-public final class HexMapPanelTab extends JPanelTab {
+public final class RootProperties extends HexGridPropertiesPan {
 
     private final HexGridEditorMain editorMain;
-    private HexMapAppState hexSystem;
-    private GridMouseControlAppState mouseSystem;
-    private Boolean currentIsGhost;
-    private boolean currentIsGroup = false;
-    private JPanel tileProperties;
-    private HashMap<String, JComponent> comps = new HashMap<>();
+    private final HexGridAppState hexSystem;
+    private final GridMouseControlAppState mouseSystem;
     private boolean update = true;
     private boolean ghostIsVisible = true;
+    private boolean currentIsGroup = false;
+    private Boolean currentIsGhost;
+    private JPanel tileProperties;
+    private HashMap<String, JComponent> comps = new HashMap<>();
 
-    public HexMapPanelTab(HexGridEditorMain editorMain, MapDataAppState mapDataState, HexMapAppState hexMapSystem, GridMouseControlAppState mouseSystem) {
+    public RootProperties(HexGridEditorMain editorMain, HexGridAppState hexMapSystem, GridMouseControlAppState mouseSystem) {
         super(editorMain.getAssetManager().loadTexture(
                 "org/hexgridapi/assets/Textures/Icons/Buttons/configKey.png").getImage(), "HexMapConfig");
         this.editorMain = editorMain;
         this.mouseSystem = mouseSystem;
         hexSystem = hexMapSystem;
-
-        this.mouseSystem.getSelectionControl().registerTileListener(selectionListener);
-        mapDataState.getMapData().registerTileChangeListener(tileListener);
-
-        buildMenu(mapDataState.getMapData().getGridParameters().isBuildVoidTile());
     }
     
     private void buildMenu(boolean useVoidTile) {
@@ -72,22 +63,23 @@ public final class HexMapPanelTab extends JPanelTab {
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
         addComp(separator);
-
         add(new JCursorPositionPanel(mouseSystem));
+        
+        /*-------       Show/Hide Void Tile       ------*/
+        JCheckBox hideVoidTile = new JCheckBox(new AbstractAction("Hide Void Tile") {
+                      @Override
+                      public void actionPerformed(ActionEvent e) {
+                          onAction(e);
+                      }
+                  });
+        hideVoidTile.setSelected(ghostIsVisible);
+        hideVoidTile.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+        hideVoidTile.setAlignmentX(0);
+        addComp(hideVoidTile);
+        hideVoidTile.setEnabled(useVoidTile);
+        comps.put("voidBtn", hideVoidTile);
 
-        if(useVoidTile){
-            JCheckBox box = new JCheckBox(new AbstractAction("Show ghost") {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    onAction(e);
-                }
-            });
-            box.setSelected(ghostIsVisible);
-            box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
-            box.setAlignmentX(0);
-            addComp(box);
-        }
-
+        /*-------       Map Name       ------*/
         JLabel mapNameLabel = new JLabel("Map Name : ");
         mapNameLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 18));
         add(mapNameLabel);
@@ -124,12 +116,15 @@ public final class HexMapPanelTab extends JPanelTab {
         seedPan.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25));
         seedPan.setAlignmentX(0);
 
-        if (hexSystem.isUsingProcedural()) {
-            JLabel currentSeed = new JLabel("Seed : " + String.valueOf(hexSystem.getSeed()));
-            comps.put("currentSeed", currentSeed);
-            seedPan.add(currentSeed);
-            seedPan.add(Box.createRigidArea(new Dimension(5, 0)));
-            add(seedPan);
+        JLabel currentSeed = new JLabel();
+        comps.put("currentSeed", currentSeed);
+        seedPan.add(currentSeed);
+        seedPan.add(Box.createRigidArea(new Dimension(5, 0)));
+        add(seedPan);
+        if (hexSystem.useProceduralGen()) {
+            currentSeed.setText("Seed : " + String.valueOf(hexSystem.getSeed()));
+        } else {
+            currentSeed.setText("Seed : Undefined");
         }
 
         /*-------*/
@@ -137,125 +132,7 @@ public final class HexMapPanelTab extends JPanelTab {
         separator.setMaximumSize(
                 new Dimension(Integer.MAX_VALUE, 2));
         add(separator);
-
-//        /* Test */
-//        JButton generate = new JButton(new AbstractAction("Add Chunk") {
-//            @Override
-//            public void actionPerformed(ActionEvent e) {
-//                onAction(e);
-//            }
-//        });
-//        add(generate);
-//        comps.put("generate", generate);
-
     }
-
-    private void onAction(ActionEvent e) {
-        if (e.getActionCommand().contains("comboBox") && update) {
-            final int value = Integer.valueOf(e.getActionCommand().split("\\.")[1]);
-            editorMain.enqueue(new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                    hexSystem.setTilePropertiesTexTure(hexSystem.getTextureValueFromKey(value));
-                    return null;
-                }
-            });
-            return;
-        } else if (e.getActionCommand().contains("comboBox")) {
-            update = true;
-            return;
-        }
-        switch (e.getActionCommand()) {
-            case "Show ghost":
-                editorMain.enqueue(new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        hexSystem.hideGhost(ghostIsVisible);
-                        ghostIsVisible = !ghostIsVisible;
-                        return null;
-                    }
-                });
-                break;
-            case "Destroy":
-                editorMain.enqueue(new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        hexSystem.removeTile();
-                        return null;
-                    }
-                });
-                break;
-            case "btnUp":
-                editorMain.enqueue(new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        hexSystem.setTilePropertiesUp();
-                        return null;
-                    }
-                });
-                break;
-            case "btnDown":
-                editorMain.enqueue(new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-                        hexSystem.setTilePropertiesDown();
-                        return null;
-                    }
-                });
-                break;
-            case "Generate/Reset":
-                editorMain.enqueue(new Callable<Void>() {
-                    @Override
-                    public Void call() throws Exception {
-//                        hexSystem.setNewTile();
-                        hexSystem.setTilePropertiesUp();
-                        return null;
-                    }
-                });
-                break;
-            default:
-                System.err.println("No associated action for : " + e.getActionCommand());
-        }
-    }
-    private TileSelectionListener selectionListener = new TileSelectionListener() {
-        @Override
-        public void onTileSelectionUpdate(HexCoordinate currentSelection, ArrayList<HexCoordinate> selectedList) {
-            if (currentIsGhost == null || !selectedList.isEmpty() != currentIsGroup
-                    || !hexSystem.tileExist() != currentIsGhost) {
-                if (!selectedList.isEmpty()) {
-                    buildMultiTileMenu(selectedList);
-                } else {
-                    buildSingleTileMenu();
-                }
-            } else {
-                if (!selectedList.isEmpty()) {
-//                    updateMultiTileMenu(selectedList);
-                } else {
-                    updateSingleTileMenu();
-                }
-            }
-        }
-    };
-    private TileChangeListener tileListener = new TileChangeListener() {
-        @Override
-        public void onTileChange(TileChangeEvent... events) {
-            if (currentIsGhost != null) {
-                if (!currentIsGroup && events.length == 1
-                        && events[0].getTilePos().equals(mouseSystem.getSelectionControl().getSelectedPos())) {
-                    if (!hexSystem.tileExist() != currentIsGhost) {
-                        buildSingleTileMenu();
-                    } else {
-                        updateSingleTileMenu();
-                    }
-                }
-            }
-        }
-        
-        @Override
-        public void onGridReload(){
-            
-        }
-    };
 
     private void buildTileMenu() {
 
@@ -408,6 +285,108 @@ public final class HexMapPanelTab extends JPanelTab {
     }
 
     // </editor-fold>
+
+    private void onAction(ActionEvent e) {
+        if (e.getActionCommand().contains("comboBox") && update) {
+            final int value = Integer.valueOf(e.getActionCommand().split("\\.")[1]);
+            editorMain.enqueue(new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                    hexSystem.setTilePropertiesTexTure(hexSystem.getTextureValueFromKey(value));
+                    return null;
+                }
+            });
+            return;
+        } else if (e.getActionCommand().contains("comboBox")) {
+            update = true;
+            return;
+        }
+        switch (e.getActionCommand()) {
+            case "Hide Void Tile":
+                editorMain.enqueue(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        hexSystem.hideVoidTile(ghostIsVisible);
+                        ghostIsVisible = !ghostIsVisible;
+                        return null;
+                    }
+                });
+                break;
+            case "Destroy":
+                editorMain.enqueue(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        hexSystem.removeTile();
+                        return null;
+                    }
+                });
+                break;
+            case "btnUp":
+                editorMain.enqueue(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        hexSystem.setTilePropertiesUp();
+                        return null;
+                    }
+                });
+                break;
+            case "btnDown":
+                editorMain.enqueue(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        hexSystem.setTilePropertiesDown();
+                        return null;
+                    }
+                });
+                break;
+            case "Generate/Reset":
+                editorMain.enqueue(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+//                        hexSystem.setNewTile();
+                        hexSystem.setTilePropertiesUp();
+                        return null;
+                    }
+                });
+                break;
+            default:
+                System.err.println("No associated action for : " + e.getActionCommand());
+        }
+    }
+    private TileSelectionListener selectionListener = new TileSelectionListener() {
+        @Override
+        public void onTileSelectionUpdate(HexCoordinate currentSelection, ArrayList<HexCoordinate> selectedList) {
+            if (currentIsGhost == null || !selectedList.isEmpty() != currentIsGroup
+                    || !hexSystem.tileExist() != currentIsGhost) {
+                if (!selectedList.isEmpty()) {
+                    buildMultiTileMenu(selectedList);
+                } else {
+                    buildSingleTileMenu();
+                }
+            } else {
+                if (!selectedList.isEmpty()) {
+//                    updateMultiTileMenu(selectedList);
+                } else {
+                    updateSingleTileMenu();
+                }
+            }
+        }
+    };
+    private MapDataListener dataListener = new MapDataListener() {
+        @Override
+        public void onTileChange(TileChangeEvent... events) {
+            if (currentIsGhost != null) {
+                if (!currentIsGroup && events.length == 1
+                        && events[0].getTilePos().equals(mouseSystem.getSelectionControl().getSelectedPos())) {
+                    if (!hexSystem.tileExist() != currentIsGhost) {
+                        buildSingleTileMenu();
+                    } else {
+                        updateSingleTileMenu();
+                    }
+                }
+            }
+        }
+    };
     
     private void updateSingleTileMenu() {
         currentIsGhost = !hexSystem.tileExist();
@@ -440,11 +419,33 @@ public final class HexMapPanelTab extends JPanelTab {
     public void isHidden() {
     }
     
-    // <editor-fold defaultstate="collapsed" desc="Getters">
+    @Override
+    public void onMapLoaded() {
+        mouseSystem.getSelectionControl().register(selectionListener);
+        hexSystem.getMapData().register(dataListener);
+        
+        buildMenu(hexSystem.buildVoidTile());
+    }
+
+    @Override
+    public void onMapReset() {
+        comps.get("voidBtn").setEnabled(hexSystem.buildVoidTile());
+        ((JCheckBox)comps.get("voidBtn")).setSelected(hexSystem.showVoidTile());
+        if (hexSystem.useProceduralGen()) {
+            ((JLabel)comps.get("currentSeed")).setText("Seed : " + String.valueOf(hexSystem.getSeed()));
+        } else {
+            ((JLabel)comps.get("currentSeed")).setText("Seed : Undefined");
+        }
+    }
+
+    @Override
+    public void onMapRemoved() {
+        hexSystem.getMapData().unregister(dataListener);
+        mouseSystem.getSelectionControl().unregister(selectionListener);
+//        clearMenu();
+    }
 
     public String getMapName(){
         return ((JTextField)comps.get("mapName")).getText();
     }
-    
-    // </editor-fold>
 }

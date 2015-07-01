@@ -4,6 +4,7 @@ import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import org.hexgridapi.editor.core.HexGridEditorMain;
 import org.hexgridapi.editor.utility.gui.Base3DModuleTab;
@@ -13,53 +14,55 @@ import org.hexgridapi.editor.utility.gui.JPanelTabListener;
 import org.hexgridapi.editor.hexmap.gui.JHexEditorMenu;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
-import org.hexgridapi.core.appstate.MapDataAppState;
-import org.hexgridapi.core.appstate.GridMouseControlAppState;
+import org.hexgridapi.core.mousepicking.GridMouseControlAppState;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.geometry.builder.GridParam;
-import org.hexgridapi.core.geometry.builder.coordinate.SquareCoordinate;
+import org.hexgridapi.core.MapParam;
+import org.hexgridapi.core.camera.RTSCamera;
+import org.hexgridapi.editor.hexmap.gui.HexGridPropertiesPan;
 
 /**
  *
  * @author roah
  */
-public final class HexMapModule extends Base3DModuleTab implements JPanelTabListener {
+public final class HexGridModule extends Base3DModuleTab implements JPanelTabListener {
 
-    private static JPanelTabController panelController = new JPanelTabController("HexMapPanelControl");
+    private final JPanelTabController panelController = new JPanelTabController("HexMapPanelControl");
     private final GridMouseControlAppState mouseSystem = new GridMouseControlAppState();
-    private MapDataAppState mapDataState;
-    private HexMapAppState hexMapSystem;
+    private final JHexEditorMenu editorMenu;
+    private final ArrayList<HexGridPropertiesPan> propertiesPans = new ArrayList<>(5);
+    private final HexGridAppState hexGridState;
     private SimpleApplication app;
-    private boolean isStart = true;
-    private final HexMapPanelTab hexPanel;
+    private RTSCamera rtsCam;
+    private Vector3f camPos;
 
-    public HexMapModule(Application app, JMenuBar menu) {
+    public HexGridModule(Application app, JMenuBar menu) {
         super(app.getAssetManager().loadTexture("org/hexgridapi/assets/Textures/Icons/Buttons/hexIconBW.png").getImage(), "HexGrid Module");
-        
-        JHexEditorMenu editorMenu = new JHexEditorMenu(this);
+
+        editorMenu = new JHexEditorMenu(this);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.New);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.Load);
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.Save); //@todo add when a map is loaded
         menu.add(editorMenu);
+
         
-        GridParam param = new GridParam("org/hexgridapi/assets/Textures/HexField/", new String[]{"EARTH", "ICE", "NATURE", "VOLT"}, 
-                          SquareCoordinate.class, true, true, false, true);
-//                SquareCoordinate.class, true, false, false, true)); //useWater
-        MapData mapData = new MapData(app.getAssetManager(), param);
-        mapDataState = new MapDataAppState(mapData);
-        hexMapSystem = new HexMapAppState(mapData);
-        
+        MapData mapData = new MapData(app.getAssetManager(), new String[]{"EARTH", "ICE", "NATURE", "VOLT"});
+        rtsCam = new RTSCamera(RTSCamera.KeyMapping.col);
+        camPos = rtsCam.getCenter();
+        hexGridState = new HexGridAppState(mapData, rtsCam, "org/hexgridapi/assets/Textures/HexField/");
+
         setLayout(new BorderLayout());
+        RootProperties hexPanel = new RootProperties((HexGridEditorMain) app, hexGridState, mouseSystem);
+        addPropertiesTab(hexPanel);
         
-//        panelController.add(new HexMapPropertiesPanel(getIcon(), new JCursorPositionPanel(mouseSystem)));
-        hexPanel = new HexMapPanelTab((HexGridEditorMain) app, mapDataState, hexMapSystem, mouseSystem);
-        panelController.add(hexPanel);
+        //----------------------------
         panelController.registerTabChangeListener(this);
         validate();
     }
-
+    
     @Override
     public void onContextGainFocus(SimpleApplication app, Canvas canvas) {
         add(canvas, BorderLayout.CENTER);
@@ -67,10 +70,15 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         this.app = app;
         app.getInputManager().addMapping("Confirm", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         app.getInputManager().addMapping("Cancel", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+
         
-        app.getStateManager().attachAll(mapDataState, hexMapSystem, mouseSystem);
+        app.getFlyByCamera().setEnabled(false);
+        rtsCam.setCenter(camPos);
+        app.getStateManager().attachAll(rtsCam, hexGridState, mouseSystem);
+        for (HexGridPropertiesPan pan : propertiesPans) {
+            pan.onMapLoaded();
+        }
         revalidate();
-        isStart = true;
     }
 
     @Override
@@ -79,46 +87,47 @@ public final class HexMapModule extends Base3DModuleTab implements JPanelTabList
         app.getInputManager().deleteMapping("Cancel");
 
         app.getStateManager().detach(mouseSystem);
-        app.getStateManager().detach(mapDataState);
-        app.getStateManager().detach(hexMapSystem);
-        isStart = false;
+        app.getStateManager().detach(hexGridState);
+        app.getStateManager().detach(rtsCam);
+        camPos = rtsCam.getCenter();
+        app.getFlyByCamera().setEnabled(true);
     }
-    public void addPropertiesTab(JPanelTab tab){
+
+    public void addPropertiesTab(HexGridPropertiesPan tab) {
+        propertiesPans.add(tab);
         panelController.add(tab);
     }
 
     @Override
     public void onPanelChange(JPanelTab tab) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public boolean isStart() {
-        return isStart;
+        JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO... Panel Switch To " + tab.getName());
     }
 
     @Override
     public Node getModuleNode() {
-        return hexMapSystem.getGridNode();
+        return hexGridState.getGridNode();
     }
 
     public GridMouseControlAppState getMouseSystem() {
         return mouseSystem;
     }
 
-    public MapData getMapDataState() {
-        return mapDataState.getMapData();
+    public HexGridAppState getHexGridSystem() {
+        return hexGridState;
     }
 
-    public HexMapAppState getHexMapSystem() {
-        return hexMapSystem;
-    }
-
-    public String getMapName() {
-        return hexPanel.getMapName();
-    }
-
-    public void generateNewMap(GridParam param) {
-        JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO...");
+    public void generateNewMap(final MapParam param) {
+        app.enqueue(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                hexGridState.setParam(param);
+                rtsCam.setHeightProvider(hexGridState.getMapData());
+                for (HexGridPropertiesPan pan : propertiesPans) {
+                    pan.onMapReset();
+                }
+                return null;
+            }
+        });
     }
 
     public void LoadMap(String loadName) {
