@@ -92,6 +92,10 @@ public class HexGridBuffer implements Register<BufferListener> {
         water.setMaterial(waterProcessor.getMaterial());
     }
 
+    public void setPositionProvider(BufferPositionProvider positionProvider) {
+        this.positionProvider = positionProvider;
+    }
+    
     public void setParam(int bufferRadius) {
         bufferPosition = ChunkCoordinate.getNewInstance();
         positionProvider.resetToOriginPosition(bufferPosition.getChunkCenter().toWorldPosition());

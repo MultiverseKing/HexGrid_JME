@@ -72,6 +72,10 @@ public class HexGrid {
         builder.setParam(param, mapData);
         gridBuffer.setParam(param.getBufferRadius());
     }
+    
+    public void setBufferPositionProvider(BufferPositionProvider provider){
+        gridBuffer.setPositionProvider(provider);
+    }
 
     /**
      * @return the node containing all the API Node. (include tileNode)
