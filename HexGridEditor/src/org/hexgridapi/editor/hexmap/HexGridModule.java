@@ -23,6 +23,7 @@ import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.MapParam;
 import org.hexgridapi.core.camera.RTSCamera;
 import org.hexgridapi.editor.hexmap.gui.HexGridPropertiesPan;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -100,7 +101,7 @@ public final class HexGridModule extends Base3DModuleTab implements JPanelTabLis
 
     @Override
     public void onPanelChange(JPanelTab tab) {
-        JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO... Panel Switch To " + tab.getName());
+        LoggerFactory.getLogger(HexGridModule.class).info("Panel Switch To {}", tab.getName());
     }
 
     @Override

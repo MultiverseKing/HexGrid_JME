@@ -32,7 +32,7 @@ public abstract class JPanelTab extends JPanel {
         setPreferredSize(new Dimension(170, 300));
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-        addComp(separator);
+        addWithSpace(separator);
         
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
 //        setMinimumSize(new Dimension(15, 15));
@@ -43,7 +43,7 @@ public abstract class JPanelTab extends JPanel {
         return imgIcon;
     }
 
-    protected final void addComp(Component comp) {
+    protected final void addWithSpace(Component comp) {
         addComp(null, comp);
     }
 

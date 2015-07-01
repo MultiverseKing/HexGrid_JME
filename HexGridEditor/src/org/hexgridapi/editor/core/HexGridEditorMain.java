@@ -19,7 +19,6 @@ import org.hexgridapi.core.AbstractHexGridApplication;
 public class HexGridEditorMain extends AbstractHexGridApplication {
 
     public static void main(String[] args) {
-
         java.util.logging.Logger.getLogger("com.jme3").setLevel(Level.WARNING);
 //        final org.slf4j.Logger logger =
 //                org.slf4j.LoggerFactory.getLogger("org.hexgridapi");

@@ -62,7 +62,7 @@ public final class RootProperties extends HexGridPropertiesPan {
         setPreferredSize(new Dimension(170, 300));
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 2));
-        addComp(separator);
+        addWithSpace(separator);
         add(new JCursorPositionPanel(mouseSystem));
         
         /*-------       Show/Hide Void Tile       ------*/
@@ -75,7 +75,7 @@ public final class RootProperties extends HexGridPropertiesPan {
         hideVoidTile.setSelected(ghostIsVisible);
         hideVoidTile.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
         hideVoidTile.setAlignmentX(0);
-        addComp(hideVoidTile);
+        addWithSpace(hideVoidTile);
         hideVoidTile.setEnabled(useVoidTile);
         comps.put("voidBtn", hideVoidTile);
 
@@ -142,7 +142,7 @@ public final class RootProperties extends HexGridPropertiesPan {
             tileProperties.setLayout(new BoxLayout(tileProperties, BoxLayout.PAGE_AXIS));
             tileProperties.setAlignmentX(0);
             tileProperties.setBorder(BorderFactory.createTitledBorder("Tile Property"));
-            addComp(tileProperties);
+            addWithSpace(tileProperties);
         } else {
             tileProperties.removeAll();
         }
