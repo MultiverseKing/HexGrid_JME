@@ -83,8 +83,7 @@ public class ChunkDataLoader implements Savable, AssetLoader, AssetLocator {
         tiles = new HexTile[sTile.length][sTile.length];
         for (int y = 0; y < sTile.length; y++) {
             for (int x = 0; x < sTile[y].length; x++) {
-                HexTile tile = (HexTile) sTile[x][y];
-                tiles[x][y] = new HexTile(tile.getHeight(), tile.getTextureKey());
+                tiles[x][y] = (HexTile) sTile[x][y];
             }
         }
     }

@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  * A* algorithm, should be faster than Dijkstra.

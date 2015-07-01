@@ -1,5 +1,6 @@
-package org.hexgridapi.core.control.buffercontrol;
+package org.hexgridapi.core.geometry.buffer;
 
+import org.hexgridapi.core.coordinate.BufferBuilder;
 import org.hexgridapi.events.BufferListener;
 import com.jme3.app.Application;
 import com.jme3.math.ColorRGBA;
@@ -18,17 +19,17 @@ import com.jme3.water.SimpleWaterProcessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.hexgridapi.core.geometry.ChunkControl;
+import org.hexgridapi.core.mousepicking.GridRayCastControl;
+import org.hexgridapi.core.ChunkCoordinate;
 import org.hexgridapi.core.HexGrid;
-import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.control.ChunkControl;
-import org.hexgridapi.core.control.GridRayCastControl;
-import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
-import org.hexgridapi.core.geometry.builder.ChunkBuilder;
+import org.hexgridapi.core.AbstractHexGridAppState;
+import org.hexgridapi.core.geometry.ChunkBuilder;
 import org.hexgridapi.events.MouseInputEvent;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.data.procedural.Generator;
 import org.hexgridapi.events.TileChangeEvent;
-import org.hexgridapi.events.TileChangeListener;
+import org.hexgridapi.events.MapDataListener;
 
 /**
  * Chunk handling by himself and follow the camera.
@@ -38,7 +39,7 @@ import org.hexgridapi.events.TileChangeListener;
  * @todo if chunk position is > 1 from center remove shadow !?
  * @author roah
  */
-public final class BufferControl extends ChunkControl {
+public final class BufferedChunk_old extends ChunkControl {
 
     private final Node collisionNode = new Node("HexGridcollisionNode@" + getClass().getSimpleName());
     private final Node bufferFXNode = new Node("HexGridFXNode@" + getClass().getSimpleName());
@@ -50,28 +51,28 @@ public final class BufferControl extends ChunkControl {
     private ArrayList<BufferListener> listeners = new ArrayList<BufferListener>();
     private boolean initialise;
     private final Application app;
+    private final boolean useProcedural;
 
-    public BufferControl(Application app, MapData mapData, HexGrid system, ChunkBuilder builder) {
+    public BufferedChunk_old(Application app, ChunkBuilder builder) {
         super(builder, ChunkCoordinate.getNewInstance());
         this.app = app;
         this.cam = app.getCamera();
-        system.getGridNode().attachChild(collisionNode);
-
-        this.rayControl = new GridRayCastControl(app, system, collisionNode, ColorRGBA.Green);
+        this.rayControl = new GridRayCastControl(app, collisionNode, ColorRGBA.Green);
+        
         Node bufferNode = new Node("ControlNode@" + getClass().getSimpleName());
         builder.getBuilderNode().attachChild(bufferNode);
         persistantBufferList = getBufferedChunk(bufferRadius);
+        
+        HexGrid hexGrid = app.getStateManager().getState(AbstractHexGridAppState.class);
+        useProcedural = hexGrid.getMapData().getGenerator() != null ? true : false;
 
-        mapData.registerTileChangeListener(tileChangeListener);
+        hexGrid.getGridNode().attachChild(collisionNode);
+        hexGrid.getMapData().register(dataListener);
         bufferNode.addControl(this);
     }
-    private final TileChangeListener tileChangeListener = new TileChangeListener() {
+    private final MapDataListener dataListener = new MapDataListener() {
         public final void onTileChange(TileChangeEvent... events) {
             updateCulling();
-        }
-
-        @Override
-        public void onGridReload() {
         }
     };
 
@@ -85,7 +86,7 @@ public final class BufferControl extends ChunkControl {
     @Override
     public void setSpatial(Spatial spatial) {
         //@todo
-        if (builder.useProcedural()) {
+        if (useProcedural) {
             super.setSpatial(spatial);
         } else {
             super.setSpatial(spatial, false);
@@ -98,7 +99,7 @@ public final class BufferControl extends ChunkControl {
             collisionPlane.setCullHint(Spatial.CullHint.Always);
 
             oldCamPosition = cam.getLocation().clone();
-            if (!builder.useProcedural()) {
+            if (!useProcedural) {
                 generateBufferedChunk();
             } else if (!builder.buildVoidTile()) {
                 usewater();
@@ -192,7 +193,7 @@ public final class BufferControl extends ChunkControl {
         collisionNode.setLocalTranslation(pos);
 //        bufferFXNode.setLocalTranslation(pos);
         spatial.setLocalTranslation(pos);
-        if (builder.useProcedural()) {
+        if (useProcedural) {
             updateChunk();
             generateBufferedChunk();
         }
@@ -202,7 +203,7 @@ public final class BufferControl extends ChunkControl {
 
     private void updateListeners() {
         for (BufferListener l : listeners) {
-            l.positionUpdate(chunkPosition);
+            l.onPositionUpdate(chunkPosition);
         }
     }
 
@@ -224,15 +225,15 @@ public final class BufferControl extends ChunkControl {
     }
 
     private void updateCulling(ChunkCoordinate coord, boolean isCull) {
-        if (builder.useProcedural() && isCull) {
+        if (useProcedural && isCull) {
             try {
                 ((Node) ((Node) spatial).getChild("TILES." + coord)).detachAllChildren();
             } catch (NullPointerException ex) {
                 throw new NullPointerException("TILES." + coord + " is not found");
             }
-        } else if (!builder.useProcedural() && isCull) {
+        } else if (!useProcedural && isCull) {
             ((Node) spatial).getChild("TILES." + coord).setCullHint(Spatial.CullHint.Always);
-        } else if (!builder.useProcedural() && !isCull) {
+        } else if (!useProcedural && !isCull) {
             ((Node) spatial).getChild("TILES." + coord).setCullHint(Spatial.CullHint.Inherit);
         }
     }
@@ -242,7 +243,7 @@ public final class BufferControl extends ChunkControl {
      */
     private void generateBufferedChunk() {
         Geometry tmpVoidChunk = null;
-        if (!builder.useProcedural()) {
+        if (!useProcedural) {
             Node node = ((Node) ((Node) spatial).getChild("TILES." + ChunkCoordinate.getNewInstance()));
             builder.addVoidChunkTo(node);
             tmpVoidChunk = ((Geometry) node.getChild(0)).clone(true);
@@ -256,10 +257,10 @@ public final class BufferControl extends ChunkControl {
                     node = new Node("TILES." + c);
                     ((Node) spatial).attachChild(node);
                     node.setLocalTranslation(c.getChunkOrigin().toWorldPosition());
-                } else if (builder.useProcedural()) {
+                } else if (useProcedural) {
                     node.detachAllChildren();
                 }
-                if (!builder.useProcedural()) {
+                if (!useProcedural) {
                     node.attachChild(tmpVoidChunk.clone(false)); // Dereferencing possible null pointer...
                 } else {
                     builder.addChunkTo(node, chunkPosition.add(c), this);

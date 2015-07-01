@@ -10,7 +10,7 @@ import org.hexgridapi.utility.Vector2Int;
  */
 public class ProceduralChunkData {
 
-    private final HashMap<Integer, HashMap<Vector2Int, Float>> chunkData;// = new HashMap<Integer, HashMap<Vector2Int, Integer>>();
+    private final HashMap<Integer, HashMap<Vector2Int, Float>> chunkData;
 
     public ProceduralChunkData(HashMap<Integer, HashMap<Vector2Int, Float>> chunkData) {
         this.chunkData = chunkData;

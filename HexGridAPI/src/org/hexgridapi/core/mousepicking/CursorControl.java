@@ -1,12 +1,12 @@
-package org.hexgridapi.core.control;
+package org.hexgridapi.core.mousepicking;
 
 import com.jme3.app.Application;
 import com.jme3.material.Material;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.geometry.HexSetting;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  *

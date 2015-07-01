@@ -1,6 +1,6 @@
-package org.hexgridapi.core.geometry.builder.coordinate;
+package org.hexgridapi.core.coordinate;
 
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
+import org.hexgridapi.core.ChunkCoordinate;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
@@ -9,15 +9,15 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.List;
-import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.control.buffercontrol.BufferBuilder;
+import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
+ * Coordinate used to shape chunk as Square.
  * 
  * @author roah
  */
-public final class SquareCoordinate extends ChunkCoordinate implements BufferBuilder {
+public final class SquareCoordinate extends ChunkCoordinate {
 
     private Vector2Int chunkPos;
     
@@ -35,8 +35,8 @@ public final class SquareCoordinate extends ChunkCoordinate implements BufferBui
     
     public SquareCoordinate(HexCoordinate hexCoord) {
         Vector2Int pos = hexCoord.toOffset();
-        int x = ((int) FastMath.abs(pos.x) + (pos.x < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
-        int y = ((int) FastMath.abs(pos.y) + (pos.y < 0 ? -1 : 0)) / HexSetting.CHUNK_SIZE;
+        int x = ((int) FastMath.abs(pos.x) + (pos.x < 0 ? -1 : 0)) / chunkSize;
+        int y = ((int) FastMath.abs(pos.y) + (pos.y < 0 ? -1 : 0)) / chunkSize;
         this.chunkPos = new Vector2Int(pos.x < 0 ? (x+1) * -1 : x, pos.y < 0 ? (y+1) * -1 : y);
     }
 
@@ -60,8 +60,14 @@ public final class SquareCoordinate extends ChunkCoordinate implements BufferBui
 
     public HexCoordinate getChunkOrigin() {
         Vector2Int pos = new Vector2Int(
-                chunkPos.x * HexSetting.CHUNK_SIZE,
-                chunkPos.y * HexSetting.CHUNK_SIZE);
+                chunkPos.x * chunkSize,
+                chunkPos.y * chunkSize);
+        return new HexCoordinate(HexCoordinate.Coordinate.OFFSET, pos);
+    }
+
+    @Override
+    public HexCoordinate getChunkCenter() {
+        Vector2Int pos = getChunkOrigin().toOffset().add(chunkSize/2);
         return new HexCoordinate(HexCoordinate.Coordinate.OFFSET, pos);
     }
 
@@ -81,7 +87,7 @@ public final class SquareCoordinate extends ChunkCoordinate implements BufferBui
 
     private boolean isInside(int tile, int chunk) {
         if (FastMath.abs(tile) >= FastMath.abs(chunk)
-                && FastMath.abs(tile) < FastMath.abs(chunk) + HexSetting.CHUNK_SIZE) {
+                && FastMath.abs(tile) < FastMath.abs(chunk) + chunkSize) {
             return true;
         }
         return false;
@@ -139,18 +145,18 @@ public final class SquareCoordinate extends ChunkCoordinate implements BufferBui
      */
     @Override
     public Mesh genCollisionPlane(int bufferRadius) {
-        float sizeX = HexSetting.CHUNK_SIZE * HexSetting.HEX_WIDTH * (bufferRadius + 1);
-        float sizeY = HexSetting.CHUNK_SIZE * (HexSetting.HEX_RADIUS * 1.5f) - HexSetting.HEX_RADIUS / 2;
+        float sizeX = chunkSize * HexSetting.HEX_WIDTH * (bufferRadius + 1);
+        float sizeY = chunkSize * (HexSetting.HEX_RADIUS * 1.5f) - HexSetting.HEX_RADIUS / 2;
         float posY = 0;
         Vector3f[] vertices = new Vector3f[]{
             new Vector3f(-(sizeX), posY, -(HexSetting.HEX_RADIUS + sizeY * (bufferRadius + 1))), // top left
 
-            new Vector3f(sizeX + HexSetting.CHUNK_SIZE * HexSetting.HEX_WIDTH, posY,
+            new Vector3f(sizeX + chunkSize * HexSetting.HEX_WIDTH, posY,
             -(HexSetting.HEX_RADIUS + sizeY * (bufferRadius + 1))), // top right
 
             new Vector3f(-(sizeX), posY, sizeY * (bufferRadius + 2)), // bot left
 
-            new Vector3f(sizeX + HexSetting.CHUNK_SIZE * HexSetting.HEX_WIDTH, posY, sizeY * (bufferRadius + 2)) // bot right
+            new Vector3f(sizeX + chunkSize * HexSetting.HEX_WIDTH, posY, sizeY * (bufferRadius + 2)) // bot right
         };
         Vector2f[] texCoord = new Vector2f[]{new Vector2f(), new Vector2f(1, 0), new Vector2f(0, 1), new Vector2f(1, 1)};
         int[] index = new int[]{0, 2, 1, 1, 2, 3};

@@ -1,12 +1,13 @@
-package org.hexgridapi.core.control;
+package org.hexgridapi.core.geometry;
 
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
-import org.hexgridapi.core.geometry.builder.ChunkBuilder;
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
+import java.util.List;
+import org.hexgridapi.core.geometry.ChunkBuilder;
+import org.hexgridapi.core.ChunkCoordinate;
 
 /**
  * Directly control the chunk geometry. aka : all geometry tiles.
@@ -27,7 +28,7 @@ public class ChunkControl extends AbstractControl {
     public void setSpatial(Spatial spatial) {
         setSpatial(spatial, true);
     }
-
+    
     protected final void setSpatial(Spatial spatial, boolean update) {
         if (spatial != null && spatial instanceof Node) {
             // initialize
@@ -59,9 +60,9 @@ public class ChunkControl extends AbstractControl {
      * /!\ internal use.
      */
     public void updateChunk() {
-//        if (spatial == null) {
-//            throw new RuntimeException("There is no Spatial to work with.");
-//        }
+        if (spatial == null) {
+            throw new RuntimeException("There is no Spatial to work with.");
+        }
         /**
          * remove the old tile from the chunk.
          */
@@ -72,6 +73,10 @@ public class ChunkControl extends AbstractControl {
          */
         builder.addChunkTo((Node) ((Node) spatial).getChild("TILES."
                 + ChunkCoordinate.getNewInstance()), chunkPosition, this);
+    }
+
+    public final List<Spatial> getTiles() {
+        return ((Node) ((Node) spatial).getChild("TILES." + ChunkCoordinate.getNewInstance())).getChildren();
     }
 
     /**
@@ -108,5 +113,18 @@ public class ChunkControl extends AbstractControl {
         } else if (geo != null) {
             geo.setCullHint(Spatial.CullHint.Inherit);
         }
+    }
+    
+    /**
+     * 
+     * @return true if the chunk contain no tiles or only contain void tile.
+     */
+    public boolean isEmpty() {
+        return (builder.buildVoidTile() && ((Node) ((Node) spatial)
+                .getChild("TILES." + ChunkCoordinate.getNewInstance()))
+                .getChildren().size() < 2
+                || !builder.buildVoidTile() && ((Node) ((Node) spatial)
+                .getChild("TILES." + ChunkCoordinate.getNewInstance()))
+                .getChildren().isEmpty());
     }
 }

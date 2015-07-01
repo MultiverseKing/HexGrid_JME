@@ -1,9 +1,10 @@
-package org.hexgridapi.core.geometry.builder;
+package org.hexgridapi.core;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.BufferBuilder;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  * @todo must be a better way for {@link #fromHexCoordinate(java.lang.Class, org.hexgridapi.utility.HexCoordinate)
@@ -11,12 +12,19 @@ import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
  * @
  * author roah
  */
-public abstract class ChunkCoordinate {
+public abstract class ChunkCoordinate implements BufferBuilder {
 
     private static Class<? extends ChunkCoordinate> coordType;
+    protected static int chunkSize;
 
-    static void setCoordType(Class<? extends ChunkCoordinate> chunkCoordinateType) {
+    static void setCoordType(Class<? extends ChunkCoordinate> chunkCoordinateType, int chunkSize_) {
         coordType = chunkCoordinateType;
+        chunkSize = chunkSize_;
+//        if(coordType == null) {
+//        } else {
+//            Logger.getLogger(ChunkCoordinate.class.getName()).log(Level.WARNING, 
+//                    "Coordinate already defined as : {0}", new Object[]{coordType.getName()});
+//        }
     }
 
     public static Class<? extends ChunkCoordinate> getBuilderCoordinateType() {
@@ -100,6 +108,10 @@ public abstract class ChunkCoordinate {
         }
     }
 
+    public static int getChunkSize() {
+        return chunkSize;
+    }
+
     @Override
     public final String toString() {
         return convertToString();
@@ -108,6 +120,8 @@ public abstract class ChunkCoordinate {
     public abstract ChunkCoordinate add(ChunkCoordinate coord);
 
     public abstract HexCoordinate getChunkOrigin();
+    
+    public abstract HexCoordinate getChunkCenter();
 
     public abstract boolean containTile(HexCoordinate tile);
 

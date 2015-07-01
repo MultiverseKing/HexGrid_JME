@@ -1,14 +1,11 @@
 package org.hexgridapi.core.data.procedural;
 
 import com.jme3.math.FastMath;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import libnoiseforjava.NoiseGen;
-import libnoiseforjava.exception.ExceptionInvalidParam;
 import libnoiseforjava.module.Perlin;
-import org.hexgridapi.core.HexSetting;
+import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.core.data.HexTile;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  *

@@ -1,6 +1,6 @@
-package org.hexgridapi.core.geometry.builder.coordinate;
+package org.hexgridapi.core.coordinate;
 
-import org.hexgridapi.core.HexSetting;
+import org.hexgridapi.core.geometry.HexSetting;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import java.util.ArrayList;

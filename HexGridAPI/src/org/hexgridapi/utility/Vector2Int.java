@@ -52,7 +52,15 @@ public class Vector2Int implements Savable, Cloneable {
     }
 
     /**
-     * return a new Vector2Int as x*i and y*i.
+     * return a new Vector2Int as <b>(x * {@param value})</b> and <b>(y * {@param value})</b>.
+     * @param value multiply factor.
+     * @return new Vector2Int
+     */
+    public Vector2Int multiply(int value) {
+        return new Vector2Int(this.x * value, this.y * value);
+    }
+    /**
+     * return a new Vector2Int as <b>(x * {@param value.x})</b> and <b>(y * {@param value.y})</b>.
      * @param value multiply factor.
      * @return new Vector2Int
      */
@@ -108,9 +116,10 @@ public class Vector2Int implements Savable, Cloneable {
     }
 
     /**
-     * String must be split as X|Y.
-     * @param input
-     * @throws NumberFormatException
+     * Convert a String to a Vector2Int if having the correct format.
+     * @param input a string formated as "X|Y".
+     * @throws NumberFormatException if the string cannot be  parsed as Vector2Int.
+     * @see java.lang.Integer#parseInt(java.lang.String)
      */
     public static Vector2Int fromString(String input) throws NumberFormatException {
         String[] strArray = input.split("\\|");

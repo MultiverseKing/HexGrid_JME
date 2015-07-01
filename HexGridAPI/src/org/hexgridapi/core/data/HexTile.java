@@ -8,14 +8,14 @@ import com.jme3.export.Savable;
 import java.io.IOException;
 
 /**
- * tile data used in room grid.
+ * tile data used for the map.
  *
  * @author Eike Foede, Roah
  */
 public class HexTile implements Savable {
 
-    protected int height;
-    protected int textureKey;
+    private int height;
+    private int textureKey;
 
     public HexTile() {
         this.height = 0;
@@ -51,8 +51,6 @@ public class HexTile implements Savable {
 
     public void read(JmeImporter im) throws IOException {
         InputCapsule capsule = im.getCapsule(this);
-//        capsule.readByte("height", height);
-//        capsule.readByte("element", element);
         height = capsule.readInt("height", (byte) 0);
         textureKey = capsule.readInt("textureKey", (byte) 0);
     }

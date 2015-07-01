@@ -2,7 +2,7 @@ package org.hexgridapi.events;
 
 import com.jme3.collision.CollisionResult;
 import com.jme3.math.Ray;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  *

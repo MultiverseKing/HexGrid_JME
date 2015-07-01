@@ -1,4 +1,4 @@
-package org.hexgridapi.core.control;
+package org.hexgridapi.core.mousepicking;
 
 import com.jme3.app.Application;
 import com.jme3.collision.CollisionResult;
@@ -11,76 +11,60 @@ import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
-import com.jme3.scene.Spatial;
 import com.jme3.scene.debug.Arrow;
 import com.jme3.scene.shape.Sphere;
 import java.util.Iterator;
-import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.events.MouseInputEvent;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.AbstractHexGridAppState;
+import org.hexgridapi.core.geometry.buffer.HexGridBuffer;
+import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Slit in two class as Position debud & raycast
  * @author roah
  */
 public class GridRayCastControl {
 
-    private final Application app;
-    private final String apiGridNodeID;
-    private Spatial collisionNode;
+    private static Application APP;
+    private static Node RAY_DEBUG_NODE = new Node(GridRayCastControl.class.getName() + ":Node");
+    private Node collisionNode;
     private Node rayDebug;
 
     /**
      * Handle the mouse picking.
-     * This by default use the
-     * {@link org.hexgridapi.core.HexGrid#getGridNode()}
-     * as collision reference.
+     * Add a debug if {
      *
-     * @param app application running.
-     * @param system internal use.
+     * @param debugColor} != null (/!\ require {@link AbstractHexGridAppState})
+     *
+     * @param application currently running app.
+     * @param collisionObj reference used by the ray to interact with.
      * @param debugColor used to show where the ray collide, if null no debug.
      */
-    public GridRayCastControl(Application app, HexGrid system, ColorRGBA debugColor) {
-        this(app, system, null, debugColor);
-    }
-
-    /**
-     * Handle the mouse picking. no debug.
-     *
-     * @param app currently running app.
-     * @param system internal use.
-     * @param collisionObj reference used by the ray to interact with. if null
-     * {@link org.hexgridapi.core.HexGrid#getGridNode()} is used as collision
-     * reference.
-     */
-    public GridRayCastControl(Application app, HexGrid system, Spatial collisionObj) {
-        this(app, system, collisionObj, null);
-    }
-
-    /**
-     * Handle the mouse picking. taking into account the debug.
-     *
-     * @param app currently running app.
-     * @param system internal use.
-     * @param collisionObj reference used by the ray to interact with. if null
-     * {@link org.hexgridapi.core.HexGrid#getGridNode() ()} is used as collision
-     * reference.
-     * @param debugColor used to show where the ray collide, if null no debug.
-     */
-    public GridRayCastControl(Application app, HexGrid system, Spatial collisionObj, ColorRGBA debugColor) {
-        this.collisionNode = collisionObj != null ? collisionObj : system.getGridNode();
-        this.app = app;
-        this.apiGridNodeID = system.getGridNode().getName();
+    public GridRayCastControl(Application application, Node collisionNode, ColorRGBA debugColor) {
+        init(application, debugColor);
+        this.collisionNode = collisionNode;
         if (debugColor != null) {
             initialiseDebug(debugColor);
         }
     }
 
+    private void init(Application application, ColorRGBA debugColor) {
+        if (APP == null) {
+            APP = application;
+        }
+        if (debugColor != null && RAY_DEBUG_NODE.getParent() == null) {
+            APP.getStateManager().getState(AbstractHexGridAppState.class)
+                    .getGridNode().attachChild(RAY_DEBUG_NODE);
+        }
+    }
+    
     private void initialiseDebug(ColorRGBA debugColor) {
         Sphere sphere = new Sphere(30, 30, 0.2f);
         rayDebug = new Node("DebugRay");
         Geometry geo = new Geometry("SphereDebugRayCast" + debugColor, sphere);
-        Material mark_mat = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+//        geo.setUserData("org.hexgrid.collide", Boolean.TRUE);
+        Material mark_mat = new Material(APP.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         mark_mat.setColor("Color", debugColor);
         geo.setMaterial(mark_mat);
         rayDebug.attachChild(geo);
@@ -104,7 +88,7 @@ public class GridRayCastControl {
 
     private Geometry putShape(Mesh shape, ColorRGBA color) {
         Geometry g = new Geometry("coordinate axis", shape);
-        Material mat = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+        Material mat = new Material(APP.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         mat.getAdditionalRenderState().setWireframe(true);
         mat.setColor("Color", color);
         g.setMaterial(mat);
@@ -126,8 +110,7 @@ public class GridRayCastControl {
         if (results.size() != 0) {
             for (int i = 0; i < results.size(); i++) {
                 CollisionResult closest = results.getCollision(i);
-                if (!closest.getGeometry().getName().contains("SphereDebugRayCast")
-                        && !closest.getGeometry().getParent().getName().contains("HexGridFXNode")) {
+                if (!closest.getGeometry().getParent().getName().equals(HexGridBuffer.class.getName() + ":FX:Node")) {
                     setDebugPosition(closest.getContactPoint());
 //                    HexCoordinate newPos = convertMouseCollision(results);
                     HexCoordinate newPos = new HexCoordinate(closest.getContactPoint());
@@ -137,12 +120,8 @@ public class GridRayCastControl {
             return null;
         } else {
             //Error catching.
-            System.out.println("null raycast");
-            if (collisionNode instanceof Node) {
-                ((Node) collisionNode).detachChild(rayDebug);
-            } else if (collisionNode.getParent() != null) {
-                collisionNode.getParent().detachChild(rayDebug);
-            }
+            LoggerFactory.getLogger(GridRayCastControl.class).debug("Null raycast on {}", collisionNode);
+            rayDebug.removeFromParent();
             return null;
         }
     }
@@ -158,16 +137,16 @@ public class GridRayCastControl {
         Vector2f click2d;
         switch (from) {
             case MOUSE:
-                click2d = app.getInputManager().getCursorPosition();
+                click2d = APP.getInputManager().getCursorPosition();
                 break;
             case SCREEN_CENTER:
-                click2d = new Vector2f(app.getCamera().getWidth() / 2, app.getCamera().getHeight() / 2);
+                click2d = new Vector2f(APP.getCamera().getWidth() / 2, APP.getCamera().getHeight() / 2);
                 break;
             default:
                 throw new UnsupportedOperationException(from + "isn't a valid type.");
         }
-        Vector3f click3d = app.getCamera().getWorldCoordinates(new Vector2f(click2d.x, click2d.y), 0f).clone();
-        Vector3f dir = app.getCamera().getWorldCoordinates(
+        Vector3f click3d = APP.getCamera().getWorldCoordinates(new Vector2f(click2d.x, click2d.y), 0f).clone();
+        Vector3f dir = APP.getCamera().getWorldCoordinates(
                 new Vector2f(click2d.x, click2d.y), 1f).subtractLocal(click3d).normalizeLocal();
         Ray ray = new Ray(click3d, dir);
         return ray;
@@ -182,21 +161,6 @@ public class GridRayCastControl {
         pos = i.next().getContactPoint();
         tilePos = new HexCoordinate(pos);
         return tilePos;
-//        do {
-//            pos = i.next().getContactPoint();
-//            tilePos = new HexCoordinate(pos);
-//            if (mapData.getTile(tilePos) == null) {
-//                break;
-//            } else {
-//                return tilePos;
-//            }
-//            /*}else if (mapData.getTile(tilePos).getHeight() 
-//             * == FastMath.floor(pos.y/mapData.getHexSettings().getFloorHeight())){
-//             return tilePos;
-//             }*/
-//        } while (i.hasNext());
-
-//        return null;
     }
 
     /**
@@ -205,27 +169,15 @@ public class GridRayCastControl {
      *
      * @param collisionNode new reference.
      */
-    public void setCollisionNode(Spatial collisionNode) {
-        clearRayDebug();
+    public void setCollisionNode(Node collisionNode) {
+        removeDebug();
         this.collisionNode = collisionNode;
     }
 
-    private void setDebugPosition(Vector3f pos) {
-        if (rayDebug != null && collisionNode != null) {
-            Node parent = (Node) (collisionNode instanceof Node ? collisionNode : collisionNode.getParent());
-            while (parent != null) {
-                if (parent.getName().equals(apiGridNodeID)) {
-                    if (parent.hasChild(rayDebug)) {
-                        rayDebug.setLocalTranslation(pos);
-                    } else {
-                        parent.attachChild(rayDebug);
-                        rayDebug.setLocalTranslation(pos);
-                    }
-                    return;
-                }
-                parent = parent.getParent();
-            }
-            throw new NullPointerException(apiGridNodeID + " cannot be found.");
+    public void setDebugPosition(Vector3f pos) {
+        if (rayDebug != null) {
+            RAY_DEBUG_NODE.attachChild(rayDebug);
+            rayDebug.setLocalTranslation(pos);
         }
     }
 
@@ -241,7 +193,14 @@ public class GridRayCastControl {
         SCREEN_CENTER;
     }
 
-    public void clearRayDebug() {
+    public void removeDebug() {
         rayDebug.removeFromParent();
+    }
+
+    public void cleanup() {
+        removeDebug();
+        if(collisionNode != null) {
+            collisionNode.detachChild(rayDebug);
+        }
     }
 }

@@ -1,11 +1,12 @@
-package org.hexgridapi.core.control.buffercontrol;
+package org.hexgridapi.core.coordinate;
 
 import com.jme3.scene.Mesh;
 import java.util.List;
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
+import org.hexgridapi.core.ChunkCoordinate;
 
 /**
- *
+ * Interface used to define the behaviors of the buffer.
+ * 
  * @author roah
  */
 public interface BufferBuilder {
@@ -23,6 +24,7 @@ public interface BufferBuilder {
      * The plane used to collide with the camera Raycast.
      * 
      * @param bufferRadius radius of the buffer from the center.
+     * @deprecated unneeded as the raycast always hit at center...
      */
     Mesh genCollisionPlane(int bufferRadius);
 }

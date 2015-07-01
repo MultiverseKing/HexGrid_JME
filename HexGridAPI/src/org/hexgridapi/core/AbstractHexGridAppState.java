@@ -1,10 +1,11 @@
-package org.hexgridapi.core.appstate;
+package org.hexgridapi.core;
 
+import org.hexgridapi.core.HexGrid;
 import com.jme3.app.Application;
 import com.jme3.app.state.AppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.renderer.RenderManager;
-import org.hexgridapi.core.HexGrid;
+import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
 import org.hexgridapi.core.data.MapData;
 
 /**
@@ -27,8 +28,8 @@ public abstract class AbstractHexGridAppState extends HexGrid implements AppStat
      *
      * @param mapData tile dataHandler of the grid.
      */
-    public AbstractHexGridAppState(MapData mapData) {
-        super(mapData);
+    public AbstractHexGridAppState(MapData mapData, BufferPositionProvider positionProvider, String texturePath) {
+        super(mapData, positionProvider, texturePath);
     }
 
     public final void initialize(AppStateManager stateManager, Application app) {
@@ -56,6 +57,7 @@ public abstract class AbstractHexGridAppState extends HexGrid implements AppStat
 
     public final void update(float tpf) {
         if (initialized && enabled) {
+            super.update(tpf);
             updateSystem(tpf);
         }
     }

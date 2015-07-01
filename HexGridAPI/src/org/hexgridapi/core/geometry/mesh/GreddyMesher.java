@@ -3,14 +3,14 @@ package org.hexgridapi.core.geometry.mesh;
 import com.jme3.scene.Mesh;
 import java.util.HashMap;
 import java.util.Iterator;
-import org.hexgridapi.core.HexSetting;
+import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
-import org.hexgridapi.core.geometry.builder.coordinate.HexagonCoordinate;
-import org.hexgridapi.core.geometry.builder.coordinate.SquareCoordinate;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate.Coordinate;
+import org.hexgridapi.core.ChunkCoordinate;
+import org.hexgridapi.core.coordinate.HexagonCoordinate;
+import org.hexgridapi.core.coordinate.SquareCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate.Coordinate;
 import org.hexgridapi.utility.Vector2Int;
 
 /**
@@ -18,11 +18,13 @@ import org.hexgridapi.utility.Vector2Int;
  * mesh contained inside a chunk, mesh are split by Height.
  * /!\ Also mesh can be split by texture if not using texture Array.
  *
+ * @todo update to handle multiCoordinate
  * @author roah
  */
 public final class GreddyMesher {
 
     private final MapData mapData;
+    private final boolean useArrayTexture;
     /**
      * List containing all the chunk data.
      */
@@ -33,12 +35,12 @@ public final class GreddyMesher {
      * @see {@link org.hexgridapi.core.HexSetting#WATER_LEVEL}
      */
     private int groundHeight = HexSetting.WATER_LEVEL;
+    private int chunkSize;
     private boolean onlyGround;
-    private String inspectedTexture;
-    private ChunkCoordinate chunkCoordinate;
-    private final boolean useArrayTexture;
-    private Iterator<String> meshIterator;
     private boolean onlyVoid;
+    private ChunkCoordinate chunkCoordinate;
+    private Iterator<String> meshIterator;
+    private String inspectedTexture;
 
     public GreddyMesher(MapData mapData, boolean useArrayTexture) {
         this.mapData = mapData;
@@ -49,6 +51,7 @@ public final class GreddyMesher {
         clear();
         this.onlyGround = onlyGround;
         this.onlyVoid = onlyVoid;
+        this.chunkSize = ChunkCoordinate.getChunkSize();
         boolean[][] isVisited = getVisitedList();
         /**
          * x && y == coord local
@@ -190,19 +193,18 @@ public final class GreddyMesher {
     }
 
     private boolean hasSameTexture(HexTile currentTile, HexTile nextTile) {
-        if (currentTile != null && nextTile != null) {
-            if (currentTile.getTextureKey() == nextTile.getTextureKey()) {
+        if (currentTile != null && nextTile != null
+                && currentTile.getTextureKey() == nextTile.getTextureKey()) {
                 return true;
-            }
         }
         return false;
     }
 
     private boolean getIsInRange(Vector2Int position, int x, int y) {
-        return new HexCoordinate(Coordinate.OFFSET, HexSetting.CHUNK_SIZE, HexSetting.CHUNK_SIZE)
+        return new HexCoordinate(Coordinate.OFFSET, chunkSize, chunkSize)
                 .hasInRange(new HexCoordinate(Coordinate.OFFSET,
                 (position != null ? position.x : 0) + x,
-                (position != null ? position.y : 0) + y), HexSetting.CHUNK_SIZE);
+                (position != null ? position.y : 0) + y), chunkSize);
     }
 
     /**
@@ -211,12 +213,12 @@ public final class GreddyMesher {
     private HexCoordinate getNextTileCoord(Vector2Int inspectedPos, int x, int y) {
         if (isHexagon()) {
             Vector2Int coord = new Vector2Int(
-                    x + (inspectedPos != null ? inspectedPos.x : 0) - HexSetting.CHUNK_SIZE,
-                    y + (inspectedPos != null ? inspectedPos.y : 0) - HexSetting.CHUNK_SIZE);
+                    x + (inspectedPos != null ? inspectedPos.x : 0) - chunkSize,
+                    y + (inspectedPos != null ? inspectedPos.y : 0) - chunkSize);
             //-----------------------------
-            if ((HexSetting.CHUNK_SIZE & 1) == 0 && (chunkCoordinate.getChunkOrigin().toOffset().y & 1) != 0 && (coord.y & 1) != 0) {
+            if ((chunkSize & 1) == 0 && (chunkCoordinate.getChunkOrigin().toOffset().y & 1) != 0 && (coord.y & 1) != 0) {
                 return chunkCoordinate.getChunkOrigin().add(coord.x + 1, coord.y);
-            } else if ((HexSetting.CHUNK_SIZE & 1) != 0 && (chunkCoordinate.getChunkOrigin().toOffset().y & 1) == 0 && (coord.y & 1) != 0) {
+            } else if ((chunkSize & 1) != 0 && (chunkCoordinate.getChunkOrigin().toOffset().y & 1) == 0 && (coord.y & 1) != 0) {
                 return chunkCoordinate.getChunkOrigin().add(coord.x - 1, coord.y);
             } else {
                 return chunkCoordinate.getChunkOrigin().add(coord);
@@ -227,8 +229,8 @@ public final class GreddyMesher {
     }
 
     private boolean[][] getVisitedList() {
-        int chunkSize = isSquare() ? HexSetting.CHUNK_SIZE : (HexSetting.CHUNK_SIZE * 2) + 1;
-        boolean[][] isVisited = new boolean[chunkSize][chunkSize];
+        int result = isSquare() ? chunkSize : (chunkSize * 2) + 1;
+        boolean[][] isVisited = new boolean[result][result];
         return isVisited;
     }
 
@@ -244,9 +246,8 @@ public final class GreddyMesher {
      * @return
      */
     public Mesh getMesh(boolean onlyGround, boolean onlyvoid) {
-//        this.chunkCoordinate = inspectedChunk;
         initialize(onlyGround, onlyvoid);
-        return generateMesh(true).get("NO_TILE");
+        return generateMesh(true).get(MapData.DefaultTextureValue.NO_TILE.toString());
     }
 
     /**
@@ -278,12 +279,12 @@ public final class GreddyMesher {
         if (useArrayTexture) {
             String value = meshIterator.next();
             inspectedTexture = value; // Send this to the generator
-            mesh.put("ArrayTextureMesh", MeshGenerator.getInstance().getMesh(this));
+            mesh.put("ArrayTextureMesh", MeshGenerator.getArrayTextureMesh(this));
         } else {
             while (meshIterator.hasNext()) {
                 String value = meshIterator.next();
                 inspectedTexture = value; // Send this to the generator
-                mesh.put(value, MeshGenerator.getInstance().getMesh(this));
+                mesh.put(value, MeshGenerator.getMesh(this));
             }
         }
         return mesh;
@@ -392,7 +393,7 @@ public final class GreddyMesher {
             boolean isOddStart = (inspectedMesh.getPosition().y & 1) == 0;
 
             HexCoordinate coord;
-            if(!onlyVoid) {
+            if (!onlyVoid) {
                 Vector2Int chunkInitTile = chunkCoordinate.getChunkOrigin().toOffset();
                 coord = new HexCoordinate(Coordinate.OFFSET,
                         inspectedMesh.getPosition().x + chunkInitTile.x, inspectedMesh.getPosition().y + chunkInitTile.y);
@@ -417,7 +418,7 @@ public final class GreddyMesher {
                             culling[i][j][2] = false;
                         }
                     } else if (i == 1) { //bot chunk = (Z)
-                        if (isSquare() && inspectedMesh.getPosition().y == HexSetting.CHUNK_SIZE - 1) {
+                        if (isSquare() && inspectedMesh.getPosition().y == chunkSize - 1) {
                             culling[i][j][0] = false; // top left
                             culling[i][j][1] = false; // top right
                             culling[i][j][2] = false;
@@ -447,7 +448,7 @@ public final class GreddyMesher {
                             }
                         }
                     } else { // right chunk = (X)
-                        if (isSquare() && inspectedMesh.getPosition().x == HexSetting.CHUNK_SIZE - 1) {
+                        if (isSquare() && inspectedMesh.getPosition().x == chunkSize - 1) {
                             culling[i][j][0] = false; // top left
                             culling[i][j][1] = false; // top right
                             culling[i][j][2] = false;

@@ -1,5 +1,6 @@
-package org.hexgridapi.core.geometry.builder.coordinate;
+package org.hexgridapi.core.coordinate;
 
+import org.hexgridapi.core.ChunkCoordinate;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Mesh;
@@ -7,17 +8,16 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.List;
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
-import org.hexgridapi.core.HexSetting;
-import org.hexgridapi.core.control.buffercontrol.BufferBuilder;
+import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.utility.Vector2Int;
 import org.hexgridapi.utility.Vector3Int;
 
 /**
- *
+ * Coordinate used to shape chunk as hexagon.
+ * 
  * @author roah
  */
-public class HexagonCoordinate extends ChunkCoordinate implements BufferBuilder {
+public class HexagonCoordinate extends ChunkCoordinate {
 
     private Vector3Int chunkPos;
 
@@ -36,9 +36,9 @@ public class HexagonCoordinate extends ChunkCoordinate implements BufferBuilder 
     public HexagonCoordinate(HexCoordinate hexCoord) {
         Vector3Int cub = hexCoord.toCubic();
         chunkPos = new Vector3Int(
-                cub.x + (cub.x < 0 ? -1 : 0) / HexSetting.CHUNK_SIZE * 2,
-                cub.y + (cub.y < 0 ? -1 : 0) / HexSetting.CHUNK_SIZE * 2,
-                cub.z + (cub.z < 0 ? -1 : 0) / HexSetting.CHUNK_SIZE * 2);
+                cub.x + (cub.x < 0 ? -1 : 0) / chunkSize * 2,
+                cub.y + (cub.y < 0 ? -1 : 0) / chunkSize * 2,
+                cub.z + (cub.z < 0 ? -1 : 0) / chunkSize * 2);
     }
 
     @Override
@@ -61,14 +61,19 @@ public class HexagonCoordinate extends ChunkCoordinate implements BufferBuilder 
 
     public HexCoordinate getChunkOrigin() {
         Vector3Int pos = new Vector3Int(
-                chunkPos.x + (chunkPos.x < 0 ? -1 : 0) * HexSetting.CHUNK_SIZE * 2,
-                chunkPos.y + (chunkPos.y < 0 ? -1 : 0) * HexSetting.CHUNK_SIZE * 2,
-                chunkPos.z + (chunkPos.z < 0 ? -1 : 0) * HexSetting.CHUNK_SIZE * 2);
+                chunkPos.x + (chunkPos.x < 0 ? -1 : 0) * chunkSize * 2,
+                chunkPos.y + (chunkPos.y < 0 ? -1 : 0) * chunkSize * 2,
+                chunkPos.z + (chunkPos.z < 0 ? -1 : 0) * chunkSize * 2);
         return new HexCoordinate(pos);
     }
 
+    @Override
+    public HexCoordinate getChunkCenter() {
+        return getChunkOrigin();
+    }
+
     public boolean containTile(HexCoordinate tile) {
-        return getChunkOrigin().hasInRange(tile, HexSetting.CHUNK_SIZE);
+        return getChunkOrigin().hasInRange(tile, chunkSize);
     }
 
     private Vector3Int getValue() {
@@ -126,8 +131,8 @@ public class HexagonCoordinate extends ChunkCoordinate implements BufferBuilder 
     @Override
     public Mesh genCollisionPlane(int bufferRadius) {
         float posY = 0;
-        float dimX = HexSetting.HEX_WIDTH * (HexSetting.CHUNK_SIZE + 1.5f);
-        float dimY = HexSetting.HEX_RADIUS * 1.5f * (HexSetting.CHUNK_SIZE + 1f);
+        float dimX = HexSetting.HEX_WIDTH * (chunkSize + 1.5f);
+        float dimY = HexSetting.HEX_RADIUS * 1.5f * (chunkSize + 1f);
 
         Vector3f[] vertices = new Vector3f[]{
             new Vector3f(-(dimX / 2), posY, -(dimY)), // top left

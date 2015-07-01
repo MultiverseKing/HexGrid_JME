@@ -1,6 +1,6 @@
 package org.hexgridapi.pathfinding;
 
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  *

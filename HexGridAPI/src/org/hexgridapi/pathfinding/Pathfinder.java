@@ -2,7 +2,7 @@ package org.hexgridapi.pathfinding;
 
 import java.util.List;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  *

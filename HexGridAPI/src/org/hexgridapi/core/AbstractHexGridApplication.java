@@ -6,37 +6,38 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.shadow.DirectionalLightShadowFilter;
-import org.hexgridapi.core.geometry.mesh.GreddyMesher;
 import org.hexgridapi.utility.ArrowDebugShape;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author roah
  */
-public class ApplicationParam {
+public abstract class AbstractHexGridApplication extends SimpleApplication {
+    
+    private static Logger apiLogger = LoggerFactory.getLogger("org.hexgridapi");
 
-    private RTSCamera rtsCam;
-
-    public ApplicationParam(SimpleApplication app, boolean debug) {
-        app.setPauseOnLostFocus(false);
-        lightSettup(app);
-        cameraSettup(app);
-        if (debug) {
-            initDebug(app);
-        }
+    @Override
+    public void simpleInitApp() {
+        super.inputManager.clearMappings();
+        setPauseOnLostFocus(false);
+        lightSettup();
+        
+        initApp();
     }
 
-    private void lightSettup(SimpleApplication app) {
+    private void lightSettup() {
         /**
          * A white, directional light source.
          */
         DirectionalLight sun = new DirectionalLight();
         sun.setDirection((new Vector3f(-0.5f, -0.5f, -0.5f)).normalizeLocal());
         sun.setColor(new ColorRGBA(250, 250, 215, 1));
-        app.getRootNode().addLight(sun);
+        getRootNode().addLight(sun);
 
         /* this shadow needs a directional light */
-        FilterPostProcessor fpp = new FilterPostProcessor(app.getAssetManager());
+        FilterPostProcessor fpp = new FilterPostProcessor(getAssetManager());
 //        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), 1024, 1);
 //        dlsf.setLight(sun);
 //        fpp.addFilter(dlsf);
@@ -53,12 +54,12 @@ public class ApplicationParam {
 //        dlsr.setLight(sun);
 //        app.getViewPort().addProcessor(dlsr);
 // 
-        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(app.getAssetManager(), SHADOWMAP_SIZE, 1);
+        DirectionalLightShadowFilter dlsf = new DirectionalLightShadowFilter(getAssetManager(), SHADOWMAP_SIZE, 1);
         dlsf.setLight(sun);
         dlsf.setEnabled(true);
 //        fpp = new FilterPostProcessor(app.getAssetManager());
         fpp.addFilter(dlsf);
-        app.getViewPort().addProcessor(fpp);
+        getViewPort().addProcessor(fpp);
 
         /**
          * A white ambient light source.
@@ -69,23 +70,9 @@ public class ApplicationParam {
 //        app.getRootNode().addLight(ambient);
     }
 
-    private void cameraSettup(SimpleApplication app) {
-        app.getFlyByCamera().setEnabled(false);
-        rtsCam = new RTSCamera(RTSCamera.UpVector.Y_UP, "AZERTY");
-        rtsCam.setCenter(new Vector3f(20, 15, 18));
-//        if (HexSetting.CHUNK_SHAPE_TYPE.equals(GreddyMesher.ShapeType.SQUARE)) {
-//        } else {
-//            rtsCam.setCenter(new Vector3f(11, 15, 15));
-//        }
-        rtsCam.setRot(120);
-        app.getStateManager().attach(rtsCam);
+    private void initDebug() {
+        ArrowDebugShape arrowShape = new ArrowDebugShape(getAssetManager(), getRootNode(), new Vector3f(0f, 0f, 0f));
     }
-
-    private void initDebug(SimpleApplication app) {
-        ArrowDebugShape arrowShape = new ArrowDebugShape(app.getAssetManager(), app.getRootNode(), new Vector3f(0f, 0f, 0f));
-    }
-
-    public RTSCamera getCam() {
-        return rtsCam;
-    }
+    
+    public abstract void initApp();
 }

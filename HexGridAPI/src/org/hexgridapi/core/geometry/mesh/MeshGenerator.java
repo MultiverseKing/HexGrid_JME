@@ -7,7 +7,7 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
-import org.hexgridapi.core.HexSetting;
+import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.core.geometry.mesh.GreddyMesher.CullingData;
 import org.hexgridapi.utility.Vector2Int;
 
@@ -19,22 +19,10 @@ import org.hexgridapi.utility.Vector2Int;
  */
 public final class MeshGenerator {
 
-    private MeshGenerator() {
+    private MeshGenerator(){
     }
-
-    private static class Holder {
-
-        private static final MeshGenerator instance = new MeshGenerator();
-    }
-
-    public static MeshGenerator getInstance() {
-        return Holder.instance;
-    }
-//    private static final float HexSetting.HEX_RADIUS = HexSetting.HEX_RADIUS;
-//    private static float HexSetting.HEX_WIDTH = HexSetting.HEX_WIDTH;
-//    private static float HexSetting.FLOOR_OFFSET = HexSetting.FLOOR_OFFSET;
-
-    public Mesh getSingleMesh(int height) {
+    
+    public static Mesh getSingleMesh(int height) {
         Vector2Int offset = new Vector2Int();
         Vector2Int size = new Vector2Int(1, 1);
 
@@ -69,7 +57,7 @@ public final class MeshGenerator {
      * @param greddyMeshParam parameter to use.
      * @return newly generated Mesh.
      */
-    public Mesh getMesh(GreddyMesher greddyMeshParam) {
+    public static Mesh getMesh(GreddyMesher greddyMeshParam) {
         ArrayList<Vector3f[]> vertices = new ArrayList<Vector3f[]>();
         ArrayList<Vector2f[]> texCoord = new ArrayList<Vector2f[]>();
         ArrayList<int[]> index = new ArrayList<int[]>();
@@ -152,12 +140,12 @@ public final class MeshGenerator {
     }
 
     /**
-     * Generate a mesh accordingly to meshParam.
+     * Generate a mesh accordingly to meshParam. (Use array texture)
      *
      * @param meshParam parameter to use.
      * @return newly generated Mesh.
      */
-    public Mesh getArrayTextureMesh(GreddyMesher meshParam) {
+    public static Mesh getArrayTextureMesh(GreddyMesher meshParam) {
         ArrayList<Vector3f[]> vertices = new ArrayList<Vector3f[]>();
         ArrayList<Vector3f[]> texCoord = new ArrayList<Vector3f[]>();
         ArrayList<int[]> index = new ArrayList<int[]>();
@@ -506,7 +494,7 @@ public final class MeshGenerator {
         return index;
     }
 
-    private Vector3f[] getSideVerticesPosition(Vector3f[] groundVert, int groundHeight) {
+    private static Vector3f[] getSideVerticesPosition(Vector3f[] groundVert, int groundHeight) {
         Vector3f[] sideVert = new Vector3f[groundVert.length * 2];
         System.arraycopy(groundVert, 0, sideVert, 0, groundVert.length);
         for (int i = 0; i < groundVert.length; i++) {
@@ -516,7 +504,7 @@ public final class MeshGenerator {
         return sideVert;
     }
 
-    private Vector2f[] getSideVerticesTextCoord(Vector2Int size, int height, int groundHeight) {
+    private static Vector2f[] getSideVerticesTextCoord(Vector2Int size, int height, int groundHeight) {
         Vector2f[] texCoord = new Vector2f[((size.x * 4 + 2) + (4 * size.y) + ((size.y - 1) * 2)) * 2];
         int offset = (size.x * 4 + 2) + (4 * size.y) + ((size.y - 1) * 2);
         float texHeight = (int) (FastMath.abs(groundHeight) + height) * 0.5f;
@@ -562,7 +550,7 @@ public final class MeshGenerator {
         return texCoord;
     }
 
-    private Vector3f[] getSideArrayVerticesTextCoord(Vector2Int size, int height, int groundHeight, int textureID) {
+    private static Vector3f[] getSideArrayVerticesTextCoord(Vector2Int size, int height, int groundHeight, int textureID) {
         Vector3f[] texCoord = new Vector3f[((size.x * 4 + 2) + (4 * size.y) + ((size.y - 1) * 2)) * 2];
         int offset = (size.x * 4 + 2) + (4 * size.y) + ((size.y - 1) * 2);
         float texHeight = (int) (FastMath.abs(groundHeight) + height) * 0.5f;

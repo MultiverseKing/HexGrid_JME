@@ -1,7 +1,7 @@
 package org.hexgridapi.events;
 
 import org.hexgridapi.core.data.HexTile;
-import org.hexgridapi.core.geometry.builder.coordinate.HexCoordinate;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
  *

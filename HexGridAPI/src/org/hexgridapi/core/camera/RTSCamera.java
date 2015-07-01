@@ -1,7 +1,7 @@
-package org.hexgridapi.appstate;
+package org.hexgridapi.core.camera;
 
+import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
 import com.jme3.app.Application;
-import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.bounding.BoundingVolume;
 import com.jme3.input.InputManager;
@@ -14,8 +14,11 @@ import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
-import com.jme3.renderer.Camera;
-import java.awt.im.InputContext;
+import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.data.MapData;
+import org.hexgridapi.core.geometry.HexSetting;
+import org.hexgridapi.utility.Vector2Int;
 
 /**
  *
@@ -38,7 +41,7 @@ import java.awt.im.InputContext;
  * @author Artur Biesiadowski, Roah
  *
  */
-public final class RTSCamera extends AbstractAppState {
+public final class RTSCamera extends HexGridCamera implements BufferPositionProvider {
 
     /**
      * Degree of Freedom
@@ -64,12 +67,11 @@ public final class RTSCamera extends AbstractAppState {
         }
     }
 
-    interface HeightProvider {
+    public interface HeightProvider {
 
         public float getHeight(Vector2f coord);
     }
     private InputManager inputManager;
-    private Camera cam;
     private BoundingVolume centerBounds;
     private BoundingVolume cameraBounds;
     private final int[] direction = new int[5];
@@ -87,31 +89,24 @@ public final class RTSCamera extends AbstractAppState {
     private final Vector3f oldPosition = new Vector3f();
     private final Vector3f oldCenter = new Vector3f();
     private final Vector2f tempVec2 = new Vector2f();
-//    private float tilt = FastMath.PI / 4;
     private float rot = -FastMath.PI;
     private float distance = 10;
     private HeightProvider heightProvider;
     private boolean wheelEnabled = true;
-//    private String mouseRotationButton = "BUTTON2";
-//    private String mouseDragButton = "BUTTON3XXX";
-//    private boolean mouseRotation;
-//    private boolean mouseDrag;
     private static final int SIDE = DoF.SIDE.ordinal();
     private static final int FWD = DoF.FWD.ordinal();
     private static final int ROTATE = DoF.ROTATE.ordinal();
-//    private static final int TILT = DoF.TILT.ordinal();
     private static final int DISTANCE = DoF.DISTANCE.ordinal();
     private static final float WHEEL_SPEED = 1f / 15;
-//    private static String[] mappings = new String[]{
-//        "+SIDE", "+FWD", "+ROTATE", "+TILT", "+DISTANCE", "-SIDE", "-FWD", "-ROTATE", "-TILT",
-//        "-DISTANCE", "+WHEEL", "-WHEEL", "-MOUSEX", "+MOUSEX", "-MOUSEY", "+MOUSEY",
-//        "BUTTON1", "BUTTON2", "BUTTON3"};
     private static String[] mappings = new String[]{
         "+SIDE", "+FWD", "+ROTATE", "-SIDE", "-FWD", "-ROTATE", "+WHEEL", "-WHEEL"};
     private KeyMapping keyMapping;
-
-    public RTSCamera(UpVector up, KeyMapping keyMapping) {
-        this.up = up;
+    private int camRotOrigin = 120;
+    private int camDistanceOrigin = 25;
+    private MapData mapData;
+        
+    public RTSCamera(KeyMapping keyMapping) {
+        this.up = UpVector.Y_UP;
         this.keyMapping = keyMapping;
 
         setMinMaxValues(DoF.SIDE, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
@@ -125,6 +120,22 @@ public final class RTSCamera extends AbstractAppState {
         setMaxSpeed(DoF.ROTATE, 2f, 0.4f);
         setMaxSpeed(DoF.TILT, 1f, 0.4f);
         setMaxSpeed(DoF.DISTANCE, 15f, 0.4f);
+    }
+
+    public void resetToOriginPosition(Vector3f originPos) {
+        setCenter(originPos);
+        setRot(camRotOrigin);
+        setDistance(camDistanceOrigin);
+
+        float sinRot = FastMath.sin(rot);
+        float cosRot = FastMath.cos(rot);
+        updatePosition(sinRot, cosRot);
+        
+        cam.setLocation(position);
+        cam.lookAt(center, up.upVector);
+
+        oldPosition.set(position);
+        oldCenter.set(center);
     }
 
     /**
@@ -198,6 +209,20 @@ public final class RTSCamera extends AbstractAppState {
     public void setHeightProvider(HeightProvider heightProvider) {
         this.heightProvider = heightProvider;
     }
+    
+    public void setHeightProvider(MapData mapData) {
+        if(mapData != null) {
+            this.mapData = mapData;
+            setHeightProvider(hexGridHeightProvider);
+        }
+    }
+    
+    private HeightProvider hexGridHeightProvider = new HeightProvider() {
+        public float getHeight(Vector2f coord) {
+            HexTile t = mapData.getTile(new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(coord)));
+            return (t != null ? t.getHeight()+10 : 10) * HexSetting.FLOOR_OFFSET;
+        }
+    };
 
     /**
      * Enables/disabled wheel-zoom behaviour Default is enabled
@@ -239,7 +264,6 @@ public final class RTSCamera extends AbstractAppState {
 //    }
     @Override
     public void update(final float tpf) {
-
         for (int i = 0; i < direction.length; i++) {
             int dir = direction[i];
             switch (dir) {
@@ -263,68 +287,14 @@ public final class RTSCamera extends AbstractAppState {
                     accelTime[i] = clamp(accelTime[i], accelTime[i] + tpf, maxAccellPeriod[i]);
                     break;
             }
-
         }
-
-        float distanceChange = maxSpeedPerSecondOfAccell[DISTANCE] * accelTime[DISTANCE] * tpf;
-        distance += distanceChange;
-        distance += offsetMoves[DISTANCE];
-
-//        tilt += maxSpeedPerSecondOfAccell[TILT] * accelTime[TILT] * tpf + offsetMoves[TILT];
-        rot += maxSpeedPerSecondOfAccell[ROTATE] * accelTime[ROTATE] * tpf + offsetMoves[ROTATE];
-
-        distance = clamp(minValue[DISTANCE], distance, maxValue[DISTANCE]);
-        rot = clamp(minValue[ROTATE], rot % (FastMath.PI * 2), maxValue[ROTATE]);
-//        tilt = clamp(minValue[TILT], tilt, maxValue[TILT]);
-
-        double offX = maxSpeedPerSecondOfAccell[SIDE] * accelTime[SIDE] * tpf + offsetMoves[SIDE];
-        double offY = maxSpeedPerSecondOfAccell[FWD] * accelTime[FWD] * tpf + offsetMoves[FWD];
+        updateDistance(tpf);
+        updateRotation(tpf);
 
         float sinRot = FastMath.sin(rot);
         float cosRot = FastMath.cos(rot);
-//        float cosTilt = FastMath.cos(tilt);
-//        float sinTilt = FastMath.sin(tilt);
-
-
-        center.x += offX * cosRot + offY * sinRot;
-        if (up == UpVector.Y_UP) {
-            center.z += offX * -sinRot + offY * cosRot;
-        } else {
-            center.y += offX * -sinRot + offY * cosRot;
-        }
-
-        if (centerBounds != null) {
-            //TODO: clamp center to bounds
-        }
-
-        if (up == UpVector.Y_UP) {
-            position.x = center.x + distance * sinRot;
-            position.y = center.y + distance;
-            position.z = center.z + distance * cosRot;
-//            position.x = center.x + (float) (distance * cosTilt * sinRot);
-//            position.y = center.y + (float) (distance * sinTilt);
-//            position.z = center.z + (float) (distance * cosTilt * cosRot);
-            if (heightProvider != null) {
-                float h = heightProvider.getHeight(tempVec2.set(position.x, position.z));
-                if (position.y < h) {
-                    position.y = h;
-                }
-            }
-        } else {
-            position.x = center.x + distance * sinRot;
-            position.y = center.y + distance * cosRot;
-            position.z = center.z + distance;
-//            position.x = center.x + (float) (distance * cosTilt * sinRot);
-//            position.y = center.y + (float) (distance * cosTilt * cosRot);
-//            position.z = center.z + (float) (distance * sinTilt);
-
-            if (heightProvider != null) {
-                float h = heightProvider.getHeight(tempVec2.set(position.x, position.y));
-                if (position.z < h) {
-                    position.z = h;
-                }
-            }
-        }
+        updateCenter(tpf, sinRot, cosRot);
+        updatePosition(sinRot, cosRot);
 
         for (int i = 0; i < offsetMoves.length; i++) {
             offsetMoves[i] = 0;
@@ -344,6 +314,57 @@ public final class RTSCamera extends AbstractAppState {
         oldPosition.set(position);
         oldCenter.set(center);
 
+    }
+
+    private void updateDistance(float tpf) {
+        float distanceChange = maxSpeedPerSecondOfAccell[DISTANCE] * accelTime[DISTANCE] * tpf;
+        distance += distanceChange;
+        distance += offsetMoves[DISTANCE];
+        distance = clamp(minValue[DISTANCE], distance, maxValue[DISTANCE]);
+    }
+
+    private void updateRotation(float tpf) {
+        rot += maxSpeedPerSecondOfAccell[ROTATE] * accelTime[ROTATE] * tpf + offsetMoves[ROTATE];
+        rot = clamp(minValue[ROTATE], rot % (FastMath.PI * 2), maxValue[ROTATE]);
+    }
+
+    private void updateCenter(float tpf, float sinRot, float cosRot) {
+        double offX = maxSpeedPerSecondOfAccell[SIDE] * accelTime[SIDE] * tpf + offsetMoves[SIDE];
+        double offY = maxSpeedPerSecondOfAccell[FWD] * accelTime[FWD] * tpf + offsetMoves[FWD];
+        center.x += offX * cosRot + offY * sinRot;
+        if (up == UpVector.Y_UP) {
+            center.z += offX * -sinRot + offY * cosRot;
+        } else {
+            center.y += offX * -sinRot + offY * cosRot;
+        }
+        if (centerBounds != null) {
+            //TODO: clamp center to bounds
+        }
+    }
+
+    private void updatePosition(float sinRot, float cosRot) {
+        if (up == UpVector.Y_UP) {
+            position.x = center.x + distance * sinRot;
+            position.y = center.y + distance;
+            position.z = center.z + distance * cosRot;
+            if (heightProvider != null) {
+                float h = heightProvider.getHeight(tempVec2.set(position.x, position.z));
+                if (position.y < h) {
+                    position.y = h;
+                }
+            }
+        } else {
+            position.x = center.x + distance * sinRot;
+            position.y = center.y + distance * cosRot;
+            position.z = center.z + distance;
+
+            if (heightProvider != null) {
+                float h = heightProvider.getHeight(tempVec2.set(position.x, position.y));
+                if (position.z < h) {
+                    position.z = h;
+                }
+            }
+        }
     }
 
     private static float clamp(float min, float value, float max) {
@@ -380,6 +401,10 @@ public final class RTSCamera extends AbstractAppState {
         maxValue[dg.ordinal()] = max;
     }
 
+    public Vector3f getBufferPosition() {
+        return center;
+    }
+
     public Vector3f getPosition() {
         return position;
     }
@@ -400,9 +425,6 @@ public final class RTSCamera extends AbstractAppState {
         return rot;
     }
 
-//    public float getTilt() {
-//        return tilt;
-//    }
     public void setDistance(float distance) {
         this.distance = distance;
     }
@@ -411,32 +433,10 @@ public final class RTSCamera extends AbstractAppState {
         this.rot = rot;
     }
 
-//    public void setTilt(float tilt) {
-//        this.tilt = tilt;
-//    }
-    public Camera getCamera() {
-        return cam;
-    }
-
     private void registerWithInput(InputManager inputManager) {
         this.inputManager = inputManager;
         registerKeys();
         registerMouse();
-
-//        inputManager.addMapping("+TILT", new KeyTrigger(KeyInput.KEY_R));
-//        inputManager.addMapping("-TILT", new KeyTrigger(KeyInput.KEY_F));
-//        inputManager.addMapping("-DISTANCE", negDistance);
-//        inputManager.addMapping("+DISTANCE", new KeyTrigger(KeyInput.KEY_X));
-
-//        inputManager.addMapping("-MOUSEX", new MouseAxisTrigger(MouseInput.AXIS_X, false));
-//        inputManager.addMapping("+MOUSEX", new MouseAxisTrigger(MouseInput.AXIS_X, true));
-//        inputManager.addMapping("-MOUSEY", new MouseAxisTrigger(MouseInput.AXIS_Y, false));
-//        inputManager.addMapping("+MOUSEY", new MouseAxisTrigger(MouseInput.AXIS_Y, true));
-//
-//        inputManager.addMapping("BUTTON1", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-//        inputManager.addMapping("BUTTON2", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
-//        inputManager.addMapping("BUTTON3", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
-
         inputManager.addListener(listener, mappings);
     }
 
@@ -513,18 +513,6 @@ public final class RTSCamera extends AbstractAppState {
                 return;
             }
 
-//            if (name.equals(mouseRotationButton)) {
-//                mouseRotation = isPressed;
-//                inputManager.setCursorVisible(!mouseDrag && !mouseRotation);
-//                return;
-//            }
-//
-//            if (name.equals(mouseDragButton)) {
-//                mouseDrag = isPressed;
-//                inputManager.setCursorVisible(!mouseDrag && !mouseRotation);
-//                return;
-//            }
-
             char sign = name.charAt(0);
             if (sign == '-') {
                 press = -press;
@@ -560,32 +548,6 @@ public final class RTSCamera extends AbstractAppState {
                 float speed = maxSpeedPerSecondOfAccell[DISTANCE] * maxAccellPeriod[DISTANCE] * WHEEL_SPEED;
                 offsetMoves[DISTANCE] += value * speed;
             }
-//            else if (name.contains("MOUSE")) {
-//                if (mouseRotation) {
-//                    int direction;
-//                    if (name.endsWith("X")) {
-//                        direction = ROTATE;
-//                        if (up == UpVector.Z_UP) {
-//                            value = -value;
-//                        }
-//                    } else {
-//                        direction = TILT;
-//                    }
-//                    offsetMoves[direction] += value;
-//                } else if (mouseDrag) {
-//                    int direction;
-//                    if (name.endsWith("X")) {
-//                        direction = SIDE;
-//                        if (up == UpVector.Z_UP) {
-//                            value = -value;
-//                        }
-//                    } else {
-//                        direction = FWD;
-//                        value = -value;
-//                    }
-//                    offsetMoves[direction] += value * maxSpeedPerSecondOfAccell[direction] * maxAccellPeriod[direction];
-//                }
-//            }
 
         }
     }

@@ -1,6 +1,6 @@
 package org.hexgridapi.events;
 
-import org.hexgridapi.core.geometry.builder.ChunkCoordinate;
+import org.hexgridapi.core.ChunkCoordinate;
 
 /**
  * This can be used by any class to get the latest update from Buffer Control.
@@ -15,5 +15,5 @@ public interface BufferListener {
      * 
      * @param newBufferPosition current position of the buffer.
      */
-    void positionUpdate(ChunkCoordinate newBufferPosition);
+    void onPositionUpdate(ChunkCoordinate newBufferPosition);
 }

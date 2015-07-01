@@ -1,4 +1,4 @@
-package org.hexgridapi.core;
+package org.hexgridapi.core.geometry;
 
 import com.jme3.math.FastMath;
 
@@ -30,7 +30,7 @@ public final class HexSetting {
      * if(GreddyMesher.ShapeType.HEXAGON) (this is the radius)
      * if(GreddyMesher.ShapeType.SQUARE)
      */
-    public final static int CHUNK_SIZE = 18;
+//    public final static int CHUNK_SIZE = 18;
     /**
      * Ghost control size.
      */
