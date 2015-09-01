@@ -1,6 +1,7 @@
 package org.hexgridapi.core;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.light.AmbientLight;
 import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
@@ -19,7 +20,7 @@ public abstract class AbstractHexGridApplication extends SimpleApplication {
     private static Logger apiLogger = LoggerFactory.getLogger("org.hexgridapi");
 
     @Override
-    public void simpleInitApp() {
+    public final void simpleInitApp() {
         super.inputManager.clearMappings();
         setPauseOnLostFocus(false);
         lightSettup();
@@ -33,7 +34,8 @@ public abstract class AbstractHexGridApplication extends SimpleApplication {
          */
         DirectionalLight sun = new DirectionalLight();
         sun.setDirection((new Vector3f(-0.5f, -0.5f, -0.5f)).normalizeLocal());
-        sun.setColor(new ColorRGBA(250, 250, 215, 1));
+//        sun.setColor(new ColorRGBA(250, 250, 215, 1));
+        sun.setColor(ColorRGBA.White);
         getRootNode().addLight(sun);
 
         /* this shadow needs a directional light */
@@ -64,10 +66,10 @@ public abstract class AbstractHexGridApplication extends SimpleApplication {
         /**
          * A white ambient light source.
          */
-//        AmbientLight ambient = new AmbientLight();
-////        ambient.setColor(ColorRGBA.White);
+        AmbientLight ambient = new AmbientLight();
+        ambient.setColor(ColorRGBA.White);
 //        ambient.setColor(new ColorRGBA(255, 255, 255, .5f));
-//        app.getRootNode().addLight(ambient);
+        getRootNode().addLight(ambient);
     }
 
     private void initDebug() {

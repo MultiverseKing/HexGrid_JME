@@ -14,9 +14,9 @@ public class MapParam {
     private final boolean buildVoidTile;
     private final int bufferSize;
     private final Vector2Int mapSize;
-    private final boolean useProceduralGen;
+    private final int proceduralSeed;
     private final ProceduralHexGrid proceduralGenerator;
-        
+    
     /**
      * Define the parameter to use while the API is running. <br>
      * Throws {@link IllegalArgumentException} if : <br>
@@ -29,28 +29,28 @@ public class MapParam {
      * @param bufferSize radius the buffer will have. (must be >= 1)
      * @param buildVoidTile Generate or not Tile being null.
      * @param onlyGround Generate Chunk/Tile with depth.
-     * @param useProceduralGen use procedural grid generation.
+     * @param proceduralSeed Must be a 10 digit number && >= 0 (if < 0 : no procedural gen is used)
      * @param proceduralGen custom procedural algorithm to use.
      * @throws ClassCastException if ({@param mapSize} == (0,0))
      * &&  {@param chunkCoordinateType} is not assignable to {@link BufferBuilder}
      * @throws IllegalArgumentException if : ({@param mapSize} == (0,0)) 
-     * && !{@param useProceduralGen} && !{@param buildVoidTile})
+     * && {@param proceduralSeed} < 0 && !{@param buildVoidTile})
      * @throws UnsupportedOperationException if : ({@param mapSize} == (0,0)) 
-     * && {@param chunkCoordinateType} !instanceOf {@link BufferedChunk_old})
+     * && {@param chunkCoordinateType} !instanceOf {@link BufferedChunk})
      */
     public MapParam(Class<? extends ChunkCoordinate> chunkCoordinateType, Vector2Int mapSize,
             int chunkSize, int bufferSize, boolean buildVoidTile, boolean onlyGround, 
-            boolean useProceduralGen, ProceduralHexGrid proceduralGen) {
+            int proceduralSeed, ProceduralHexGrid proceduralGen) {
         if(mapSize.equals(Vector2Int.ZERO) && !chunkCoordinateType.isInstance(BufferBuilder.class)){
             
-        } else if(mapSize.equals(Vector2Int.ZERO) && !useProceduralGen && !buildVoidTile) {
+        } else if(mapSize.equals(Vector2Int.ZERO) && proceduralSeed < 0 && !buildVoidTile) {
             throw new IllegalArgumentException("Map Size cannot be equals to (0.0) "
                     + "without voidTile or ProceduralGen enabled.");
         }
         ChunkCoordinate.setCoordType(chunkCoordinateType, chunkSize);
         this.buildVoidTile = buildVoidTile;
         this.onlyGround = onlyGround;
-        this.useProceduralGen = useProceduralGen;
+        this.proceduralSeed = proceduralSeed;
         this.proceduralGenerator = proceduralGen;
         this.mapSize = mapSize;
         if(bufferSize < 1) {
@@ -78,8 +78,8 @@ public class MapParam {
         return mapSize;
     }
 
-    public boolean isUsingProceduralGen() {
-        return useProceduralGen;
+    public int getProceduralSeed() {
+        return proceduralSeed;
     }
 
     public ProceduralHexGrid getProceduralGenerator() {

@@ -8,5 +8,5 @@ import com.jme3.math.Vector3f;
  */
 public interface BufferPositionProvider {
     Vector3f getBufferPosition();
-    void resetToOriginPosition(Vector3f pos);
+    void resetToOriginPosition(Vector3f originPos);
 }

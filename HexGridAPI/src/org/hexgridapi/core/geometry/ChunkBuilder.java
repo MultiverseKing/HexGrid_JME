@@ -101,7 +101,7 @@ public class ChunkBuilder {
             if (bufferedChunk == null) {
                 bufferedChunk = new BufferedChunk(this);
             }
-            bufferedChunk.setParam(param.isUsingProceduralGen(), param.getBufferRadius());
+            bufferedChunk.setParam(param.getProceduralSeed() >= 0, param.getBufferRadius());
         } else {
             if (bufferedChunk != null) {
                 bufferedChunk.getSpatial().removeControl(bufferedChunk);

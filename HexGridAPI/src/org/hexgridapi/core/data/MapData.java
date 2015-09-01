@@ -85,15 +85,17 @@ public final class MapData implements Register<MapDataListener> {
      * @param enable use or not the newly added {@param generator} if any.
      * @param generator who will replace the current one (can be null )
      */
-    public void setGenerator(boolean enable, ProceduralHexGrid generator) {
-        if (!enable && generator != null) {
+    public void setGenerator(int seed, ProceduralHexGrid generator) {
+        if (seed < 0) {
             this.generator = null;
-        } else if (enable && generator == null) {
+        } else if (generator == null) {
             this.generator = new ProceduralHexGrid(textureKeys.size());
         } else {
             this.generator = generator;
         }
-        if (enable) {
+        if (this.generator != null && String.valueOf(seed).length() == 9) {
+            this.generator.setSeed(seed);
+        } else if (this.generator != null) {
             generateNewSeed();
         }
         updateGeneratorListeners();

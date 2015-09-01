@@ -1,8 +1,8 @@
 package org.hexgridapi.core.camera;
 
+import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
-import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.bounding.BoundingVolume;
 import com.jme3.input.InputManager;
@@ -16,14 +16,17 @@ import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
-import com.jme3.renderer.Camera;
-import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
+import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.data.MapData;
+import org.hexgridapi.core.geometry.HexSetting;
+import org.hexgridapi.utility.Vector2Int;
 
 /**
  *
  * <pre>
  * getStateManager().detach(getStateManager().getState(FlyCamAppState.class));
- * RTSCamera rtsCam = new RTSCamera(UpVector.Y_UP);
+ * RtsCam rtsCam = new RtsCam(UpVector.Y_UP);
  * rtsCam.setCenter(new Vector3f(0, 0, 0));
  * rtsCam.setDistance(200);
  * rtsCam.setMaxSpeed(DoF.FWD, 100, 0.5f);
@@ -37,28 +40,10 @@ import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
  * getStateManager().attach(rtsCam);
  * </pre>
  *
+ * @author Artur Biesiadowski, Roah
+ *
  */
-public final class RTSCamera extends AbstractAppState implements BufferPositionProvider {
-
-    public Vector3f getBufferPosition() {
-        return center;
-    }
-
-    public void resetToOriginPosition(Vector3f originPos) {
-        setCenter(originPos);
-        setRot(camRotOrigin);
-        setDistance(camDistanceOrigin);
-
-        float sinRot = FastMath.sin(rot);
-        float cosRot = FastMath.cos(rot);
-        updatePosition(sinRot, cosRot, FastMath.sin(tilt), FastMath.cos(tilt));
-
-        cam.setLocation(position);
-        cam.lookAt(center, up.upVector);
-
-        oldPosition.set(position);
-        oldCenter.set(center);
-    }
+public final class RTSCamera0 extends HexGridCamera implements BufferPositionProvider {
 
     /**
      * Degree of Freedom
@@ -70,7 +55,7 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         FWD,
         ROTATE,
         TILT,
-        DISTANCE
+        DISTANCE;
     }
 
     public enum UpVector {
@@ -89,7 +74,6 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         public float getHeight(Vector2f coord);
     }
     private InputManager inputManager;
-    private Camera cam;
     private BoundingVolume centerBounds;
     private BoundingVolume cameraBounds;
     private final int[] direction = new int[5];
@@ -107,31 +91,25 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
     private final Vector3f oldPosition = new Vector3f();
     private final Vector3f oldCenter = new Vector3f();
     private final Vector2f tempVec2 = new Vector2f();
-    private float tilt = FastMath.PI / 4;
     private float rot = -FastMath.PI;
     private float distance = 10;
     private HeightProvider heightProvider;
     private boolean wheelEnabled = true;
-    private String mouseRotationButton = "BUTTON2";
-    private String mouseDragButton = "BUTTON3XXX";
-    private boolean mouseRotation;
-    private boolean mouseDrag;
     private static final int SIDE = DoF.SIDE.ordinal();
     private static final int FWD = DoF.FWD.ordinal();
     private static final int ROTATE = DoF.ROTATE.ordinal();
-    private static final int TILT = DoF.TILT.ordinal();
     private static final int DISTANCE = DoF.DISTANCE.ordinal();
     private static final float WHEEL_SPEED = 1f / 15;
     private static String[] mappings = new String[]{
-        "+SIDE", "+FWD", "+ROTATE", "+TILT", "+DISTANCE", "-SIDE", "-FWD", 
-        "-ROTATE", "-TILT", "-DISTANCE", "+WHEEL", "-WHEEL", "-MOUSEX", "+MOUSEX", 
-        "-MOUSEY", "+MOUSEY", "BUTTON1", "BUTTON2", "BUTTON3"};
-    private RTSCamera.KeyMapping keyMapping;
+        "+SIDE", "+FWD", "+ROTATE", "-SIDE", "-FWD", "-ROTATE", "+WHEEL", "-WHEEL", "MOUSE_ROTATE"};
+    private KeyMapping keyMapping;
     private int camRotOrigin = 120;
     private int camDistanceOrigin = 25;
+    private MapData mapData;
+    private boolean rotateFromMouse = false;
 
-    public RTSCamera(KeyMapping keyMapping) {
-        this.up = RTSCamera.UpVector.Y_UP;
+    public RTSCamera0(KeyMapping keyMapping) {
+        this.up = UpVector.Y_UP;
         this.keyMapping = keyMapping;
 
         setMinMaxValues(DoF.SIDE, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY);
@@ -147,48 +125,67 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         setMaxSpeed(DoF.DISTANCE, 15f, 0.4f);
     }
 
+    public void resetToOriginPosition(Vector3f originPos) {
+        setCenter(originPos);
+        setRot(camRotOrigin);
+        setDistance(camDistanceOrigin);
+
+        float sinRot = FastMath.sin(rot);
+        float cosRot = FastMath.cos(rot);
+        updatePosition(sinRot, cosRot);
+
+        cam.setLocation(position);
+        cam.lookAt(center, up.upVector);
+
+        oldPosition.set(position);
+        oldCenter.set(center);
+    }
+
+    /**
+     *
+     * @param stateManager
+     * @param app
+     */
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app);
+        this.cam = app.getCamera();
         if (app instanceof SimpleApplication) {
             ((SimpleApplication) app).getFlyByCamera().setEnabled(false);
         }
-        this.cam = app.getCamera();
         this.inputManager = app.getInputManager();
         registerWithInput(inputManager);
     }
 
     /**
-     * Set the maximum speed for given direction of movement.
-     * For SIDE/FWD/DISTANCE it is in units/second, for ROTATE/TILT it is in
-     * radians/second. Deceleration time is assumed to be the same
-     * as acceleration time.
+     * Set the maximum speed for given direction of movement. For
+     * SIDE/FWD/DISTANCE it is in units/second, for ROTATE/TILT it is in
+     * radians/second. Deceleration time is assumed to be the same as
+     * acceleration time.
      *
      * @param deg degree of freedom for which to set the maximum speed
      * @param maxSpd maximum speed of movement in that direction
-     * @param accelTime
-     * amount of time which is need to accelerate to full speed in seconds (has
-     * to be bigger than zero, values over half second feel very sluggish).
-     * Defaults are 0.4 seconds.
+     * @param accelTime amount of time which is need to accelerate to full speed
+     * in seconds (has to be bigger than zero, values over half second feel very
+     * sluggish). Defaults are 0.4 seconds
      */
     public void setMaxSpeed(DoF deg, float maxSpd, float accelTime) {
         setMaxSpeed(deg, maxSpd, accelTime, accelTime);
     }
 
     /**
-     * Set the maximum speed for given direction of movement.
-     * For SIDE/FWD/DISTANCE it is in units/second, for ROTATE/TILT
-     * it is in radians/second.
+     * Set the maximum speed for given direction of movement. For
+     * SIDE/FWD/DISTANCE it is in units/second, for ROTATE/TILT it is in
+     * radians/second.
      *
      * @param deg degree of freedom for which to set the maximum speed
      * @param maxSpd maximum speed of movement in that direction
-     * @param accelTime
-     * amount of time which is need to accelerate to full speed in seconds
-     * (has to be bigger than zero, values over half second feel very sluggish).
-     * Defaults are 0.4 seconds.
-     * @param decelerationTime
-     * amount of time in seconds which is needed to automatically decelerate
-     * (friction-like stopping) from maxSpd to full stop.
+     * @param accelTime amount of time which is need to accelerate to full speed
+     * in seconds (has to be bigger than zero, values over half second feel very
+     * sluggish). Defaults are 0.4 seconds
+     * @param decelerationTime amount of time in seconds which is needed to
+     * automatically decelerate (friction-like stopping) from maxSpd to full
+     * stop.
      */
     public void setMaxSpeed(DoF deg, float maxSpd, float accelTime, float decelerationTime) {
         maxSpeedPerSecondOfAccell[deg.ordinal()] = maxSpd / accelTime;
@@ -200,10 +197,9 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
     }
 
     /**
-     * Set the terrain following logic for camera.
-     * Camera position will not get under the value returned
-     * by the heightProvider. Please add some extra buffering here,
-     * so camera will not clip the actual terrain - for example
+     * Set the terrain following logic for camera. Camera position will not get
+     * under the value returned by the heightProvider. Please add some extra
+     * buffering here, so camera will not clip the actual terrain - for example
      *
      * <pre>
      * new HeightProvider() {
@@ -220,9 +216,23 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         this.heightProvider = heightProvider;
     }
 
+    public void setHeightProvider(MapData mapData) {
+        if (mapData != null) {
+            this.mapData = mapData;
+            setHeightProvider(hexGridHeightProvider);
+        }
+    }
+    private HeightProvider hexGridHeightProvider = new HeightProvider() {
+        public float getHeight(Vector2f coord) {
+            HexTile t = mapData.getTile(new HexCoordinate(HexCoordinate.Coordinate.OFFSET, new Vector2Int(coord)));
+            return (t != null ? t.getHeight() + 10 : 10) * HexSetting.FLOOR_OFFSET;
+        }
+    };
+
     /**
-     * Enables/disabled wheel-zoom behaviour
-     * Default is enabled
+     * Enables/disabled wheel-zoom behaviour Default is enabled
+     *
+     * @param wheelEnabled
      */
     public void setWheelEnabled(boolean wheelEnabled) {
         this.wheelEnabled = wheelEnabled;
@@ -245,19 +255,18 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
 
     /**
      * Use MouseInput.BUTTON_ constants to indicate which buttons should be used
-     * for rotation and dragging with mouse
-     * Defaults are BUTTON_MIDDLE for rotation and BUTTON_RIGHT for dragging
-     * Use -1 to disable given functionality
+     * for rotation and dragging with mouse Defaults are BUTTON_MIDDLE for
+     * rotation and BUTTON_RIGHT for dragging Use -1 to disable given
+     * functionality
      *
      * @param rotationButton button to hold to control TILT/ROTATION with mouse
      * movements
      * @param dragButton button to hold to drag camera position around
      */
-    public void setMouseDragging(int rotationButton, int dragButton) {
-        mouseDragButton = mouseButtonName(dragButton);
-        mouseRotationButton = mouseButtonName(rotationButton);
-    }
-
+//    public void setMouseDragging(int rotationButton, int dragButton) {
+//        mouseDragButton = mouseButtonName(dragButton);
+//        mouseRotationButton = mouseButtonName(rotationButton);
+//    }
     @Override
     public void update(final float tpf) {
         for (int i = 0; i < direction.length; i++) {
@@ -283,17 +292,14 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
                     accelTime[i] = clamp(accelTime[i], accelTime[i] + tpf, maxAccellPeriod[i]);
                     break;
             }
-
         }
-
         updateDistance(tpf);
         updateRotation(tpf);
-        updateTilt(tpf);
 
         float sinRot = FastMath.sin(rot);
         float cosRot = FastMath.cos(rot);
         updateCenter(tpf, sinRot, cosRot);
-        updatePosition(sinRot, cosRot, FastMath.sin(tilt), FastMath.cos(tilt));
+        updatePosition(sinRot, cosRot);
 
         for (int i = 0; i < offsetMoves.length; i++) {
             offsetMoves[i] = 0;
@@ -327,11 +333,6 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         rot = clamp(minValue[ROTATE], rot % (FastMath.PI * 2), maxValue[ROTATE]);
     }
 
-    private void updateTilt(float tpf) {
-        tilt += maxSpeedPerSecondOfAccell[TILT] * accelTime[TILT] * tpf + offsetMoves[TILT];
-        tilt = clamp(minValue[TILT], tilt, maxValue[TILT]);
-    }
-
     private void updateCenter(float tpf, float sinRot, float cosRot) {
         double offX = maxSpeedPerSecondOfAccell[SIDE] * accelTime[SIDE] * tpf + offsetMoves[SIDE];
         double offY = maxSpeedPerSecondOfAccell[FWD] * accelTime[FWD] * tpf + offsetMoves[FWD];
@@ -346,11 +347,11 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         }
     }
 
-    private void updatePosition(float sinRot, float cosRot, float sinTilt, float cosTilt) {
+    private void updatePosition(float sinRot, float cosRot) {
         if (up == UpVector.Y_UP) {
-            position.x = center.x + (float) (distance * cosTilt * sinRot);
-            position.y = center.y + (float) (distance * sinTilt);
-            position.z = center.z + (float) (distance * cosTilt * cosRot);
+            position.x = center.x + distance * sinRot;
+            position.y = center.y + distance;
+            position.z = center.z + distance * cosRot;
             if (heightProvider != null) {
                 float h = heightProvider.getHeight(tempVec2.set(position.x, position.z));
                 if (position.y < h) {
@@ -358,9 +359,10 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
                 }
             }
         } else {
-            position.x = center.x + (float) (distance * cosTilt * sinRot);
-            position.y = center.y + (float) (distance * cosTilt * cosRot);
-            position.z = center.z + (float) (distance * sinTilt);
+            position.x = center.x + distance * sinRot;
+            position.y = center.y + distance * cosRot;
+            position.z = center.z + distance;
+
             if (heightProvider != null) {
                 float h = heightProvider.getHeight(tempVec2.set(position.x, position.y));
                 if (position.z < h) {
@@ -404,6 +406,10 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         maxValue[dg.ordinal()] = max;
     }
 
+    public Vector3f getBufferPosition() {
+        return center;
+    }
+
     public Vector3f getPosition() {
         return position;
     }
@@ -424,10 +430,6 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         return rot;
     }
 
-    public float getTilt() {
-        return tilt;
-    }
-
     public void setDistance(float distance) {
         this.distance = distance;
     }
@@ -436,108 +438,67 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
         this.rot = rot;
     }
 
-    public void setTilt(float tilt) {
-        this.tilt = tilt;
-    }
-
-    public Camera getCamera() {
-        return cam;
-    }
-
     private void registerWithInput(InputManager inputManager) {
         this.inputManager = inputManager;
-        switch(keyMapping) {
-            case col:
-                registerCOLKeys();
-                break;
-            case fr:
-                registerFRKeys();
-                break;
-            default:
-                registerUSKeys();
-        }
+        registerKeys();
         registerMouse();
         inputManager.addListener(listener, mappings);
-    }
-    
-    private void registerCOLKeys() {
-        if (up == UpVector.Y_UP) {
-            inputManager.addMapping("-SIDE", new KeyTrigger(KeyInput.KEY_A));
-            inputManager.addMapping("+SIDE", new KeyTrigger(KeyInput.KEY_S));
-//            inputManager.addMapping("+ROTATE", new KeyTrigger(KeyInput.KEY_Q));
-//            inputManager.addMapping("-ROTATE", new KeyTrigger(KeyInput.KEY_F));
-        } else {
-            inputManager.addMapping("+SIDE", new KeyTrigger(KeyInput.KEY_A));
-            inputManager.addMapping("-SIDE", new KeyTrigger(KeyInput.KEY_S));
-//            inputManager.addMapping("-ROTATE", new KeyTrigger(KeyInput.KEY_Q));
-//            inputManager.addMapping("+ROTATE", new KeyTrigger(KeyInput.KEY_F));
-        }
-
-        inputManager.addMapping("+FWD", new KeyTrigger(KeyInput.KEY_R));
-        inputManager.addMapping("-FWD", new KeyTrigger(KeyInput.KEY_W));
-
-//        inputManager.addMapping("+TILT", new KeyTrigger(KeyInput.KEY_P));
-//        inputManager.addMapping("-TILT", new KeyTrigger(KeyInput.KEY_T));
-//        inputManager.addMapping("-DISTANCE", new KeyTrigger(KeyInput.KEY_Z));
-//        inputManager.addMapping("+DISTANCE", new KeyTrigger(KeyInput.KEY_X));
-    }
-        
-    private void registerFRKeys() {
-        if (up == UpVector.Y_UP) {
-            inputManager.addMapping("-SIDE", new KeyTrigger(KeyInput.KEY_Q));
-            inputManager.addMapping("+SIDE", new KeyTrigger(KeyInput.KEY_D));
-//            inputManager.addMapping("+ROTATE", new KeyTrigger(KeyInput.KEY_A));
-//            inputManager.addMapping("-ROTATE", new KeyTrigger(KeyInput.KEY_E));
-        } else {
-            inputManager.addMapping("+SIDE", new KeyTrigger(KeyInput.KEY_Q));
-            inputManager.addMapping("-SIDE", new KeyTrigger(KeyInput.KEY_D));
-//            inputManager.addMapping("-ROTATE", new KeyTrigger(KeyInput.KEY_A));
-//            inputManager.addMapping("+ROTATE", new KeyTrigger(KeyInput.KEY_E));
-        }
-
-        inputManager.addMapping("+FWD", new KeyTrigger(KeyInput.KEY_S));
-        inputManager.addMapping("-FWD", new KeyTrigger(KeyInput.KEY_Z));
-
-        inputManager.addMapping("+TILT", new KeyTrigger(KeyInput.KEY_R));
-        inputManager.addMapping("-TILT", new KeyTrigger(KeyInput.KEY_F));
-//        inputManager.addMapping("-DISTANCE", new KeyTrigger(KeyInput.KEY_W));
-//        inputManager.addMapping("+DISTANCE", new KeyTrigger(KeyInput.KEY_X));
-        
-    }
-    private void registerUSKeys() {
-        if (up == UpVector.Y_UP) {
-            inputManager.addMapping("-SIDE", new KeyTrigger(KeyInput.KEY_A));
-            inputManager.addMapping("+SIDE", new KeyTrigger(KeyInput.KEY_D));
-//            inputManager.addMapping("+ROTATE", new KeyTrigger(KeyInput.KEY_Q));
-//            inputManager.addMapping("-ROTATE", new KeyTrigger(KeyInput.KEY_E));
-        } else {
-            inputManager.addMapping("+SIDE", new KeyTrigger(KeyInput.KEY_A));
-            inputManager.addMapping("-SIDE", new KeyTrigger(KeyInput.KEY_D));
-//            inputManager.addMapping("-ROTATE", new KeyTrigger(KeyInput.KEY_Q));
-//            inputManager.addMapping("+ROTATE", new KeyTrigger(KeyInput.KEY_E));
-        }
-
-        inputManager.addMapping("+FWD", new KeyTrigger(KeyInput.KEY_S));
-        inputManager.addMapping("-FWD", new KeyTrigger(KeyInput.KEY_W));
-
-        inputManager.addMapping("+TILT", new KeyTrigger(KeyInput.KEY_R));
-        inputManager.addMapping("-TILT", new KeyTrigger(KeyInput.KEY_F));
-//        inputManager.addMapping("-DISTANCE", new KeyTrigger(KeyInput.KEY_Z));
-//        inputManager.addMapping("+DISTANCE", new KeyTrigger(KeyInput.KEY_X));
     }
 
     private void registerMouse() {
         inputManager.addMapping("-WHEEL", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
         inputManager.addMapping("+WHEEL", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true));
+        inputManager.addMapping("MOUSE_ROTATE", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
+    }
+        
+    private void registerMouseRotation() {
+        inputManager.addMapping("-ROTATE", new MouseAxisTrigger(MouseInput.AXIS_X, false));
+        inputManager.addMapping("+ROTATE", new MouseAxisTrigger(MouseInput.AXIS_X, true));
+    }
+    private void unRegisterMouseRotation() {
+        inputManager.deleteMapping("-ROTATE");
+        inputManager.deleteMapping("+ROTATE");
+    }
 
-        inputManager.addMapping("-MOUSEX", new MouseAxisTrigger(MouseInput.AXIS_X, false));
-        inputManager.addMapping("+MOUSEX", new MouseAxisTrigger(MouseInput.AXIS_X, true));
-        inputManager.addMapping("-MOUSEY", new MouseAxisTrigger(MouseInput.AXIS_Y, false));
-        inputManager.addMapping("+MOUSEY", new MouseAxisTrigger(MouseInput.AXIS_Y, true));
+    private void registerKeys() {
+        KeyTrigger negSide, posSide, negRot, posRot, negFWD, posFWD;
+        if (keyMapping.equals(KeyMapping.fr)) {
+            negSide = new KeyTrigger(KeyInput.KEY_Q);
+            posSide = new KeyTrigger(KeyInput.KEY_D);
+//            negRot = new KeyTrigger(KeyInput.KEY_E);
+//            posRot = new KeyTrigger(KeyInput.KEY_A);
+            negFWD = new KeyTrigger(KeyInput.KEY_Z);
+            posFWD = new KeyTrigger(KeyInput.KEY_S);
+        } else if (keyMapping.equals(KeyMapping.col)) {
+            negSide = new KeyTrigger(KeyInput.KEY_A);
+            posSide = new KeyTrigger(KeyInput.KEY_S);
+//            negRot = new KeyTrigger(KeyInput.KEY_F);
+//            posRot = new KeyTrigger(KeyInput.KEY_Q);
+            negFWD = new KeyTrigger(KeyInput.KEY_W);
+            posFWD = new KeyTrigger(KeyInput.KEY_R);
+        } else {// (keyMapping.equals(KeyMapping.us)) {
+            negSide = new KeyTrigger(KeyInput.KEY_A);
+            posSide = new KeyTrigger(KeyInput.KEY_D);
+//            negRot = new KeyTrigger(KeyInput.KEY_E);
+//            posRot = new KeyTrigger(KeyInput.KEY_Q);
+            negFWD = new KeyTrigger(KeyInput.KEY_W);
+            posFWD = new KeyTrigger(KeyInput.KEY_S);
+        }
 
-        inputManager.addMapping("BUTTON1", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-        inputManager.addMapping("BUTTON2", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
-        inputManager.addMapping("BUTTON3", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        if (up == UpVector.Y_UP) {
+            inputManager.addMapping("-SIDE", negSide);
+            inputManager.addMapping("+SIDE", posSide);
+//            inputManager.addMapping("+ROTATE", posRot);
+//            inputManager.addMapping("-ROTATE", negRot);
+        } else {
+            inputManager.addMapping("-SIDE", posSide);
+            inputManager.addMapping("+SIDE", negSide);
+//            inputManager.addMapping("+ROTATE", negRot);
+//            inputManager.addMapping("-ROTATE", posRot);
+        }
+
+        inputManager.addMapping("+FWD", posFWD);
+        inputManager.addMapping("-FWD", negFWD);
     }
 
     @Override
@@ -554,26 +515,23 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
 
     private class InternalListener implements ActionListener, AnalogListener {
 
+        @Override
         public void onAction(String name, boolean isPressed, float tpf) {
             if (!isEnabled()) {
                 return;
             }
 
             int press = isPressed ? 1 : 0;
-
-            if (name.contains("WHEEL") || name.contains("MOUSE")) {
+            
+            if (name.contains("WHEEL")) {
                 return;
-            }
-
-            if (name.equals(mouseRotationButton)) {
-                mouseRotation = isPressed;
-                inputManager.setCursorVisible(!mouseDrag && !mouseRotation);
-                return;
-            }
-
-            if (name.equals(mouseDragButton)) {
-                mouseDrag = isPressed;
-                inputManager.setCursorVisible(!mouseDrag && !mouseRotation);
+            } else if (name.contains("MOUSE")) {
+                rotateFromMouse = !rotateFromMouse;
+                if(rotateFromMouse) {
+                    registerMouseRotation();
+                } else {
+                    unRegisterMouseRotation();
+                }
                 return;
             }
 
@@ -597,6 +555,8 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
             if (!name.contains("WHEEL") && !name.contains("MOUSE")) {
                 return;
             }
+            
+            System.err.println(name);
 
             char sign = name.charAt(0);
             if (sign == '-') {
@@ -611,31 +571,6 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
                 }
                 float speed = maxSpeedPerSecondOfAccell[DISTANCE] * maxAccellPeriod[DISTANCE] * WHEEL_SPEED;
                 offsetMoves[DISTANCE] += value * speed;
-            } else if (name.contains("MOUSE")) {
-                if (mouseRotation) {
-                    int direction;
-                    if (name.endsWith("X")) {
-                        direction = ROTATE;
-                        if (up == UpVector.Z_UP) {
-                            value = -value;
-                        }
-                    } else {
-                        direction = TILT;
-                    }
-                    offsetMoves[direction] += value;
-                } else if (mouseDrag) {
-                    int direction;
-                    if (name.endsWith("X")) {
-                        direction = SIDE;
-                        if (up == UpVector.Z_UP) {
-                            value = -value;
-                        }
-                    } else {
-                        direction = FWD;
-                        value = -value;
-                    }
-                    offsetMoves[direction] += value * maxSpeedPerSecondOfAccell[direction] * maxAccellPeriod[direction];
-                }
             }
 
         }

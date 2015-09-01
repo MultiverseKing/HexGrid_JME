@@ -16,6 +16,7 @@ import org.hexgridapi.core.geometry.ChunkBuilder;
 public class HexGrid {
 
     private Application app;
+    private MapParam param;
     /**
      * Node Containing all Api visual data.
      */
@@ -61,6 +62,9 @@ public class HexGrid {
         this.app = app;
         builder.initialize(app, gridBuffer);
         gridBuffer.initialize(app);
+        if(param != null){
+            setParam(param);
+        }
     }
     
     public void update(float tpf){
@@ -68,7 +72,11 @@ public class HexGrid {
     }
 
     public void setParam(MapParam param) {
-        mapData.setGenerator(param.isUsingProceduralGen(), param.getProceduralGenerator());
+        if(app == null) {
+            this.param = param;
+            return;
+        }
+        mapData.setGenerator(param.getProceduralSeed(), param.getProceduralGenerator());
         builder.setParam(param, mapData);
         gridBuffer.setParam(param.getBufferRadius());
     }
