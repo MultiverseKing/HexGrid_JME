@@ -31,13 +31,11 @@ public class JPanelTabController extends JPanel {
     private HashMap<String, JPanelTab> panels = new HashMap<>();
     private ArrayList<JPanelTabListener> listeners = new ArrayList<>();
     private boolean initialized = false;
+    private String currentName;
 
     public JPanelTabController(String name) {
-//        setName("HexPropertiesPanelHolder");
         setName(name);
-//        setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         setLayout(new BorderLayout());
-//        setAlignmentX(0);
         setPreferredSize(new Dimension(170, Integer.MAX_VALUE));
         
         iconPan = new JPanel();
@@ -62,7 +60,7 @@ public class JPanelTabController extends JPanel {
         northHolder.add(Box.createRigidArea(new Dimension(0, 1)));
         northHolder.add(separator);
         
-        add(northHolder, BorderLayout.NORTH);
+        add(iconPan, BorderLayout.NORTH);
     }
 
     public void add(JPanelTab panel) {
@@ -85,29 +83,29 @@ public class JPanelTabController extends JPanel {
             iconGrp.add(buttonIco);
             panels.put(panel.getName(), panel);
             if (!initialized) {
+                this.currentName = panel.getName();
                 super.add(panel, BorderLayout.CENTER);
                 iconGrp.setSelected(buttonIco.getModel(), true);
                 buttonIco.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                 panel.isShow();
                 validate();
-//                iconPan.validate();
                 initialized = true;
                 updateListeners(panel);
             } else {
                 iconPan.revalidate();
-//                iconPan.repaint();
             }
         }
     }
 
     private void updatePanel(String newPan) {
-        for (Component c : this.getComponents()) {
-            if (c instanceof JPanelTab && !((JPanel) c).equals(iconPan)) {
-                panels.get(c.getName()).isHidden();
-                this.remove(panels.get(c.getName()));
-                break;
-            }
+        if(currentName != null && newPan.equals(currentName)) {
+            System.err.println(this.getClass().getSimpleName() + " return old name = new name");
+            return;
+        } else if(currentName != null) {
+            panels.get(currentName).isHidden();
+            super.remove(panels.get(currentName));
         }
+        
         super.add(panels.get(newPan));
         panels.get(newPan).isShow();
         updateListeners(panels.get(newPan));
@@ -120,6 +118,7 @@ public class JPanelTabController extends JPanel {
                 ((JButton) b).setBorder(BorderFactory.createEmptyBorder());
             }
         }
+        currentName = newPan;
 
         revalidate();
         repaint();
@@ -141,5 +140,21 @@ public class JPanelTabController extends JPanel {
 
     public Collection<JPanelTab> getPanels() {
         return Collections.unmodifiableCollection(panels.values());
+    }
+
+    public void collapse(boolean collapse) {
+        if(collapse) {
+            remove(iconPan);
+            panels.get(currentName).isHidden();
+            super.remove(panels.get(currentName));
+            setPreferredSize(new Dimension(1, Integer.MAX_VALUE));
+        } else {
+            add(iconPan);
+            super.add(panels.get(currentName));
+            panels.get(currentName).isShow();
+            setPreferredSize(new Dimension(170, Integer.MAX_VALUE));
+        }
+        repaint();
+        revalidate();
     }
 }

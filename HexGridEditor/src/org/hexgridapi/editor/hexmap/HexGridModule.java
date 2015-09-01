@@ -4,6 +4,7 @@ import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 import org.hexgridapi.editor.core.HexGridEditorMain;
@@ -22,7 +23,12 @@ import org.hexgridapi.core.mousepicking.GridMouseControlAppState;
 import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.MapParam;
 import org.hexgridapi.core.camera.RTSCamera;
+import org.hexgridapi.core.camera.RTSCamera0;
+import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.editor.hexmap.gui.HexGridPropertiesPan;
+import org.hexgridapi.utility.Vector2Int;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -49,7 +55,7 @@ public final class HexGridModule extends Base3DModuleTab implements JPanelTabLis
         editorMenu.setAction(JHexEditorMenu.HexMenuAction.Save); //@todo add when a map is loaded
         menu.add(editorMenu);
 
-        
+
         MapData mapData = new MapData(app.getAssetManager(), new String[]{"EARTH", "ICE", "NATURE", "VOLT"});
         rtsCam = new RTSCamera(RTSCamera.KeyMapping.col);
         camPos = rtsCam.getCenter();
@@ -58,12 +64,12 @@ public final class HexGridModule extends Base3DModuleTab implements JPanelTabLis
         setLayout(new BorderLayout());
         RootProperties hexPanel = new RootProperties((HexGridEditorMain) app, hexGridState, mouseSystem);
         addPropertiesTab(hexPanel);
-        
+
         //----------------------------
         panelController.registerTabChangeListener(this);
         validate();
     }
-    
+
     @Override
     public void onContextGainFocus(SimpleApplication app, Canvas canvas) {
         add(canvas, BorderLayout.CENTER);
@@ -72,7 +78,7 @@ public final class HexGridModule extends Base3DModuleTab implements JPanelTabLis
         app.getInputManager().addMapping("Confirm", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         app.getInputManager().addMapping("Cancel", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
 
-        
+
         app.getFlyByCamera().setEnabled(false);
         rtsCam.setCenter(camPos);
         app.getStateManager().attachAll(rtsCam, hexGridState, mouseSystem);
@@ -122,7 +128,17 @@ public final class HexGridModule extends Base3DModuleTab implements JPanelTabLis
             @Override
             public Void call() throws Exception {
                 hexGridState.setParam(param);
-                rtsCam.setHeightProvider(hexGridState.getMapData());
+//                rtsCam.setHeightProvider(hexGridState.getMapData());
+                rtsCam.setHeightProvider(new RTSCamera.HeightProvider() {
+                    @Override
+                    public float getHeight(Vector2f coord) {
+                        HexTile t = hexGridState.getMapData().getTile(
+                                new HexCoordinate(HexCoordinate.Coordinate.OFFSET, 
+                                new Vector2Int(coord)));
+                        return (t != null ? t.getHeight() + 10 : 10) 
+                                * HexSetting.FLOOR_OFFSET;
+                    }
+                });
                 for (HexGridPropertiesPan pan : propertiesPans) {
                     pan.onMapReset();
                 }
@@ -137,5 +153,9 @@ public final class HexGridModule extends Base3DModuleTab implements JPanelTabLis
 
     public void saveMap(String saveName) {
         JOptionPane.showMessageDialog(getTopLevelAncestor(), "TODO... Save " + saveName);
+    }
+
+    public void collapseProperties(boolean collapse) {
+        panelController.collapse(collapse);
     }
 }

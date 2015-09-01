@@ -82,7 +82,7 @@ public class HexGridEditorMain extends AbstractHexGridApplication {
         return moduleControl;
     }
 
-    public HexGridModule getHexMapModule() {
+    public HexGridModule getHexGridModule() {
         return hexMapModule;
     }
 

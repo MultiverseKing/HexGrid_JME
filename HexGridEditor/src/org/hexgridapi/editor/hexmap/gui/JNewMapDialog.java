@@ -28,7 +28,7 @@ public class JNewMapDialog extends ExtendedJDialog {
     protected boolean userValidated() {
         param = new MapParam(SquareCoordinate.class, innerPan.getMapSize(),
                 innerPan.getChunkSize(), innerPan.getBufferRadius(), innerPan.getBuildVoid(),
-                innerPan.getUseOnlyGround(), innerPan.getUseProcedural(), null);
+                innerPan.getUseOnlyGround(), innerPan.getUseProcedural() ? 0 : -1, null);
         return true;
     }
 
