@@ -14,8 +14,8 @@ MaterialDef Unshaded {
     }
 
     Technique {
-        VertexShader GLSL100:   org/hexgridapi/assets/MatDefs/UnshadedArray.vert
-        FragmentShader GLSL100: org/hexgridapi/assets/MatDefs/UnshadedArray.frag
+        VertexShader GLSL100:   org/hexgridapi/assets/Shaders/UnshadedArray.vert
+        FragmentShader GLSL100: org/hexgridapi/assets/Shaders/UnshadedArray.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

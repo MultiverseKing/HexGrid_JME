@@ -1,12 +1,12 @@
 package org.hexgridapi.core.mousepicking;
 
 import com.jme3.app.Application;
-import com.jme3.material.Material;
 import com.jme3.math.Vector3f;
+import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
-import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.geometry.HexSetting;
 
 /**
  *
@@ -19,9 +19,10 @@ public class CursorControl {
 
     public CursorControl(Application app, Node holderNode) {
         cursor = app.getAssetManager().loadModel("org/hexgridapi/assets/Models/AnimPlane.j3o");
-        Material animShader = app.getAssetManager().loadMaterial("org/hexgridapi/assets/Materials/animatedTexture.j3m");
-        animShader.setInt("Speed", 16);
-        cursor.setMaterial(animShader);
+//        Material animShader = app.getAssetManager().loadMaterial("org/hexgridapi/assets/Materials/animatedTexture.j3m");
+//        animShader.setInt("Speed", 16);
+//        cursor.setMaterial(animShader);
+        ((Geometry)((Node)cursor).getChild("plane")).getMaterial().setInt("Speed", 16);
         holderNode.attachChild(cursor);
         cursor.setCullHint(Spatial.CullHint.Always);
     }
