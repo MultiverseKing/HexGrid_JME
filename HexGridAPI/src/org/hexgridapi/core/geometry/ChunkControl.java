@@ -87,17 +87,15 @@ public class ChunkControl extends AbstractControl {
     }
 
     /**
-     * Culling set to Inherit.
+     * Culling set to Inherit or Always.
+     * @param show
      */
-    public void show() {
-        spatial.setCullHint(Spatial.CullHint.Inherit);
-    }
-
-    /**
-     * Culling set to Always.
-     */
-    public void hide() {
-        spatial.setCullHint(Spatial.CullHint.Always);
+    public void show(boolean show) {
+        if(show) {
+            spatial.setCullHint(Spatial.CullHint.Inherit);
+        } else {
+            spatial.setCullHint(Spatial.CullHint.Always);
+        }
     }
 
     /**

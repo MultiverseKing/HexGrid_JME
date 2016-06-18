@@ -89,11 +89,7 @@ public final class BufferedChunk extends ChunkControl {
             Set<ChunkCoordinate> builderList = builder.getChunkList();
             persistantBufferList.add(ChunkCoordinate.getNewInstance());
             for (ChunkCoordinate c : persistantBufferList) {
-                if (builderList.contains(c.add(chunkPosition))) {
-                    updateCulling(c, true);
-                } else {
-                    updateCulling(c, false);
-                }
+                updateCulling(c, builderList.contains(c.add(chunkPosition)));
             }
             persistantBufferList.remove(ChunkCoordinate.getNewInstance());
         }

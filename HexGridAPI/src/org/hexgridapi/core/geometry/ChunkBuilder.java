@@ -223,12 +223,9 @@ public class ChunkBuilder {
                 Iterator<ChunkCoordinate> it = chunkNodes.keySet().iterator();
                 while (it.hasNext()) {
                     ChunkCoordinate next = it.next();
-                    if (next.getChunkOrigin().distanceTo(newBufferPosition.getChunkOrigin())
-                            >= (bufferRadius + 1) * ChunkCoordinate.getChunkSize()) {
-                        chunkNodes.get(next).hide();
-                    } else {
-                        chunkNodes.get(next).show();
-                    }
+                    chunkNodes.get(next).show(!(next.getChunkOrigin()
+                            .distanceTo(newBufferPosition.getChunkOrigin())
+                        >= (bufferRadius + 1) * ChunkCoordinate.getChunkSize()));
                 }
                 bufferedChunk.onPositionUpdate(newBufferPosition);
             }

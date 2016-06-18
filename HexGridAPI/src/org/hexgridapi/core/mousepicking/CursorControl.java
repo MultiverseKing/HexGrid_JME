@@ -14,7 +14,7 @@ import org.hexgridapi.core.geometry.HexSetting;
  */
 public class CursorControl {
 
-    private Spatial cursor;
+    private final Spatial cursor;
     private final float cursorOffset = -0.15f;           //Got an offset issue with hex_void_anim.png this will solve it temporary
 
     public CursorControl(Application app, Node holderNode) {

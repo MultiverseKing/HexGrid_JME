@@ -1,6 +1,5 @@
 package org.hexgridapi.core.coordinate;
 
-import org.hexgridapi.core.ChunkCoordinate;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Mesh;
@@ -8,6 +7,7 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.List;
+import org.hexgridapi.core.ChunkCoordinate;
 import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.utility.Vector2Int;
 import org.hexgridapi.utility.Vector3Int;
@@ -106,10 +106,7 @@ public class HexagonCoordinate extends ChunkCoordinate {
             return false;
         }
         final HexagonCoordinate other = (HexagonCoordinate) obj;
-        if (this.chunkPos != other.chunkPos && (this.chunkPos == null || !this.chunkPos.equals(other.chunkPos))) {
-            return false;
-        }
-        return true;
+        return !(this.chunkPos != other.chunkPos && (this.chunkPos == null || !this.chunkPos.equals(other.chunkPos)));
     }
 
     /**

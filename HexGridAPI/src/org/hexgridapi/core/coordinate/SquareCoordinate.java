@@ -1,6 +1,5 @@
 package org.hexgridapi.core.coordinate;
 
-import org.hexgridapi.core.ChunkCoordinate;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
@@ -9,6 +8,7 @@ import com.jme3.scene.VertexBuffer;
 import com.jme3.util.BufferUtils;
 import java.util.ArrayList;
 import java.util.List;
+import org.hexgridapi.core.ChunkCoordinate;
 import org.hexgridapi.core.geometry.HexSetting;
 import org.hexgridapi.utility.Vector2Int;
 
@@ -58,6 +58,7 @@ public final class SquareCoordinate extends ChunkCoordinate {
         return new SquareCoordinate(chunkPos.add(x, y));
     }
 
+    @Override
     public HexCoordinate getChunkOrigin() {
         Vector2Int pos = new Vector2Int(
                 chunkPos.x * chunkSize,
@@ -71,26 +72,18 @@ public final class SquareCoordinate extends ChunkCoordinate {
         return new HexCoordinate(HexCoordinate.Coordinate.OFFSET, pos);
     }
 
+    @Override
     public boolean containTile(HexCoordinate tile) {
-        if (isInside(tile.toOffset(), getChunkOrigin().toOffset())) {
-            return true;
-        }
-        return false;
+        return isInside(tile.toOffset(), getChunkOrigin().toOffset());
     }
 
     private boolean isInside(Vector2Int tile, Vector2Int chunk) {
-        if (isInside(tile.x, chunk.x) && isInside(tile.y, chunk.y)) {
-            return true;
-        }
-        return false;
+        return isInside(tile.x, chunk.x) && isInside(tile.y, chunk.y);
     }
 
     private boolean isInside(int tile, int chunk) {
-        if (FastMath.abs(tile) >= FastMath.abs(chunk)
-                && FastMath.abs(tile) < FastMath.abs(chunk) + chunkSize) {
-            return true;
-        }
-        return false;
+        return FastMath.abs(tile) >= FastMath.abs(chunk)
+                && FastMath.abs(tile) < FastMath.abs(chunk) + chunkSize;
     }
 
     private Vector2Int getValue() {
@@ -113,10 +106,7 @@ public final class SquareCoordinate extends ChunkCoordinate {
             return false;
         }
         final SquareCoordinate other = (SquareCoordinate) obj;
-        if (this.chunkPos != other.chunkPos && (this.chunkPos == null || !this.chunkPos.equals(other.chunkPos))) {
-            return false;
-        }
-        return true;
+        return !(this.chunkPos != other.chunkPos && (this.chunkPos == null || !this.chunkPos.equals(other.chunkPos)));
     }
 
     @Override

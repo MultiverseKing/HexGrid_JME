@@ -8,14 +8,14 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector2f;
 import java.util.ArrayList;
+import org.hexgridapi.core.AbstractHexGridAppState;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.AbstractHexGridAppState;
-import org.hexgridapi.events.Register;
 import org.hexgridapi.events.MouseInputEvent;
 import org.hexgridapi.events.MouseInputEvent.MouseInputEventType;
-import org.hexgridapi.events.TileInputListener;
 import org.hexgridapi.events.MouseRayListener;
+import org.hexgridapi.events.Register;
+import org.hexgridapi.events.TileInputListener;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -43,7 +43,9 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
         /**
          * Activate the input to interact with the grid.
          */
-        app.getInputManager().addListener(tileActionListener, new String[]{"Confirm", "Cancel"});
+        app.getInputManager().addListener(tileActionListener, 
+                new String[]{MouseInputEventType.LMB.toString(), MouseInputEventType.RMB.toString()});
+//        app.getInputManager().addListener(tileActionListener, new String[]{"Confirm", "Cancel"});
         /**
          * Activate the RaycastDebug.
          */
@@ -85,6 +87,7 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
      *
      * @param listener
      */
+    @Override
     public void register(MouseRayListener listener) {
         rayListeners.add(listener);
         inputListeners.add(listener);
@@ -95,6 +98,7 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
      *
      * @param listener
      */
+    @Override
     public void unregister(MouseRayListener listener) {
         rayListeners.remove(listener);
         inputListeners.remove(listener);
@@ -120,11 +124,12 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
     }
     // </editor-fold>
     private final ActionListener tileActionListener = new ActionListener() {
+        @Override
         public void onAction(String name, boolean isPressed, float tpf) {
             if (listenerPulseIndex == -1) {
-                if (name.equals("Confirm") && !isPressed) {
+                if (name.equals(MouseInputEventType.LMB.toString()) && !isPressed) {
                     castRay(MouseInputEventType.LMB);
-                } else if (name.equals("Cancel") && !isPressed) {
+                } else if (name.equals(MouseInputEventType.RMB.toString()) && !isPressed) {
                     castRay(MouseInputEventType.RMB);
                 }
             } else {
@@ -203,6 +208,7 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
                             tile != null ? tile.getHeight() : 0));
                 }
             } else {// if (!event.getEventPosition().equals(lastHexPos)) {
+                rayCastControl.setDebugPosition(event.getCollisionResult().getContactPoint());
                 callMouseInputActionListeners(event);
             }
         } else {
@@ -220,5 +226,6 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
         rayCastControl.removeDebug();
         listenerPulseIndex = -1;
         app.getInputManager().removeListener(tileActionListener);
+        tileSelectionControl.cleanup();
     }
 }

@@ -14,14 +14,14 @@ import com.jme3.scene.Node;
 import com.jme3.scene.debug.Arrow;
 import com.jme3.scene.shape.Sphere;
 import java.util.Iterator;
-import org.hexgridapi.events.MouseInputEvent;
-import org.hexgridapi.core.coordinate.HexCoordinate;
 import org.hexgridapi.core.AbstractHexGridAppState;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 import org.hexgridapi.core.geometry.buffer.HexGridBuffer;
+import org.hexgridapi.events.MouseInputEvent;
 import org.slf4j.LoggerFactory;
 
 /**
- * Slit in two class as Position debud & raycast
+ * Split in two class as Position debug & raycast (???)
  * @author roah
  */
 public class GridRayCastControl {
@@ -33,13 +33,12 @@ public class GridRayCastControl {
 
     /**
      * Handle the mouse picking.
-     * Add a debug if {
-     *
-     * @param debugColor} != null (/!\ require {@link AbstractHexGridAppState})
      *
      * @param application currently running app.
-     * @param collisionObj reference used by the ray to interact with.
-     * @param debugColor used to show where the ray collide, if null no debug.
+     * @param collisionNode reference used by the ray to interact with.
+     * @param debugColor used to show where the ray collide,<br>
+     * if == null no debug. <br>
+     * if != null debug is enabled but require {@link AbstractHexGridAppState}
      */
     public GridRayCastControl(Application application, Node collisionNode, ColorRGBA debugColor) {
         init(application, debugColor);

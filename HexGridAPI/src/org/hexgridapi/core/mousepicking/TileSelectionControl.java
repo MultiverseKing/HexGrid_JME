@@ -1,6 +1,7 @@
 package org.hexgridapi.core.mousepicking;
 
 import com.jme3.app.Application;
+import com.jme3.app.state.AppState;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
@@ -11,18 +12,16 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import java.util.ArrayList;
-import java.util.HashMap;
-import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.AbstractHexGridAppState;
-import org.hexgridapi.core.geometry.mesh.MeshGenerator;
-import org.hexgridapi.events.MouseInputEvent;
-import org.hexgridapi.events.TileInputListener;
-import org.hexgridapi.events.TileChangeEvent;
-import org.hexgridapi.events.MapDataListener;
-import org.hexgridapi.events.TileSelectionListener;
+import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.coordinate.HexCoordinate;
-import org.hexgridapi.core.data.procedural.Generator;
+import org.hexgridapi.core.geometry.mesh.MeshGenerator;
+import org.hexgridapi.events.MapDataListener;
+import org.hexgridapi.events.MouseInputEvent;
 import org.hexgridapi.events.Register;
+import org.hexgridapi.events.TileChangeEvent;
+import org.hexgridapi.events.TileInputListener;
+import org.hexgridapi.events.TileSelectionListener;
 
 /**
  * Generate tile on the field to be used as selection control. <br>
@@ -42,8 +41,14 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
     private HexCoordinate selectedTile = new HexCoordinate();
     private CursorControl cursorControl;
     private boolean isSelectionGroup = false;
+    private Application app;
 
+    public TileSelectionControl() {
+        selectionRootNode.attachChild(groupNode);
+    }
+    
     public void initialise(Application app) {
+        this.app = app;
         if (mat == null) {
             mat = app.getAssetManager().loadMaterial("org/hexgridapi/assets/Materials/hexMat.j3m");
         }
@@ -52,18 +57,17 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
          */
         app.getInputManager().addMapping("selectionGrp", new KeyTrigger(KeyInput.KEY_LSHIFT), new KeyTrigger(KeyInput.KEY_RSHIFT));
         app.getInputManager().addListener(keyListener, new String[]{"selectionGrp"});
-        app.getInputManager().addListener(mouseListener, new String[]{"Cancel"});
+        app.getInputManager().addListener(mouseListener, MouseInputEvent.MouseInputEventType.RMB.toString());
+//        app.getInputManager().addListener(mouseListener, new String[]{"Cancel"});
         /**
          * Register listener.
          */
         app.getStateManager().getState(GridMouseControlAppState.class).register(tileInputListener);
         HexGrid hexGrid = app.getStateManager().getState(AbstractHexGridAppState.class);
         hexGrid.getMapData().register(dataListener);
-        cursorControl = new CursorControl(app, selectionRootNode);
-        /**
-         * @todo attach to hexGridNode and not to rootNode
-         */
-        selectionRootNode.attachChild(groupNode);
+        if(cursorControl == null) {
+            cursorControl = new CursorControl(app, selectionRootNode);
+        }
         hexGrid.getGridNode().attachChild(selectionRootNode);
     }
     //-----------
@@ -94,7 +98,7 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
     private final ActionListener mouseListener = new ActionListener() {
         @Override
         public void onAction(String name, boolean isPressed, float tpf) {
-            if (name.equals("Cancel") && !isPressed) {
+            if (name.equals(MouseInputEvent.MouseInputEventType.RMB.toString()) && !isPressed) {
                 clearSelectionGroup();
             }
         }
@@ -128,10 +132,12 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
     // </editor-fold>
 
     // <editor-fold defaultstate="collapsed" desc=" Registers">
+    @Override
     public void register(TileSelectionListener listener) {
         this.listeners.add(listener);
     }
 
+    @Override
     public void unregister(TileSelectionListener listener) {
         listeners.remove(listener);
     }
@@ -199,5 +205,23 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
 
     TileInputListener getInputListener() {
         return tileInputListener;
+    }
+
+    void cleanup() {
+        app.getInputManager().deleteMapping("selectionGrp");
+        app.getInputManager().removeListener(keyListener);
+        app.getInputManager().removeListener(mouseListener);
+        /**
+         * Unregister listener.
+         */
+        AppState state =  app.getStateManager().getState(GridMouseControlAppState.class);
+        if(state != null) {
+            app.getStateManager().getState(GridMouseControlAppState.class).unregister(tileInputListener);
+        }
+        HexGrid hexGrid = app.getStateManager().getState(AbstractHexGridAppState.class);
+        if(hexGrid != null) {
+            hexGrid.getMapData().unregister(dataListener);
+            hexGrid.getGridNode().detachChild(selectionRootNode);
+        }
     }
 }

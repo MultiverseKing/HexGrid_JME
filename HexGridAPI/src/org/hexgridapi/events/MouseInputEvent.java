@@ -56,7 +56,7 @@ public class MouseInputEvent {
         return collisionResult;
     }
 
-    public enum MouseInputEventType {
+    public static enum MouseInputEventType {
 
         PULSE,
         RMB,

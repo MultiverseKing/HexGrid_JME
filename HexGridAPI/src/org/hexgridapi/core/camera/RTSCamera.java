@@ -129,7 +129,7 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
     private RTSCamera.KeyMapping keyMapping;
     private int camRotOrigin = 120;
     private int camDistanceOrigin = 25;
-
+    
     public RTSCamera(KeyMapping keyMapping) {
         this.up = RTSCamera.UpVector.Y_UP;
         this.keyMapping = keyMapping;
@@ -223,6 +223,7 @@ public final class RTSCamera extends AbstractAppState implements BufferPositionP
     /**
      * Enables/disabled wheel-zoom behaviour
      * Default is enabled
+     * @param wheelEnabled
      */
     public void setWheelEnabled(boolean wheelEnabled) {
         this.wheelEnabled = wheelEnabled;
