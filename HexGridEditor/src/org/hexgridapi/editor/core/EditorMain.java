@@ -1,22 +1,22 @@
 package org.hexgridapi.editor.core;
 
+import com.jme3.app.SimpleApplication;
 import com.jme3.renderer.RenderManager;
 import com.jme3.system.AppSettings;
 import com.jme3.system.JmeCanvasContext;
-import org.hexgridapi.editor.hexmap.HexGridModule;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.logging.Level;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
-import org.hexgridapi.core.AbstractHexGridApplication;
+import org.hexgridapi.editor.hexgrid.HexGridModule;
 
 /**
  *
  * @author normenhansen, roah
  */
-public class HexGridEditorMain extends AbstractHexGridApplication {
+public class EditorMain extends SimpleApplication {
 
     public static void main(String[] args) {
         java.util.logging.Logger.getLogger("com.jme3").setLevel(Level.WARNING);
@@ -29,15 +29,16 @@ public class HexGridEditorMain extends AbstractHexGridApplication {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                HexGridEditorMain editorMain = new HexGridEditorMain("Hex Grid Editor");
+                EditorMain editorMain = new EditorMain("Hex Grid Editor");
             }
         });
     }
-    protected final ModuleControlTab moduleControl;
     private static JFrame rootFrame;
-    private HexGridModule hexMapModule;
+    private DefaultSetting defaultSetting;
+    private HexGridModule hexGridModule;
+    protected final ModuleControl moduleControl;
 
-    public HexGridEditorMain(String windowName) {
+    public EditorMain(String windowName) {
         AppSettings initSettings = new AppSettings(true);
         Dimension dim = new Dimension(1024, 768);
         initSettings.setWidth(dim.width);
@@ -60,7 +61,7 @@ public class HexGridEditorMain extends AbstractHexGridApplication {
         //-------------
         rootFrame.setJMenuBar(new JMenuBar());
 
-        moduleControl = new ModuleControlTab(this);
+        moduleControl = new ModuleControl(this);
         rootFrame.getContentPane().add(moduleControl.getContent());
 
         //-------------
@@ -78,18 +79,22 @@ public class HexGridEditorMain extends AbstractHexGridApplication {
         return rootFrame;
     }
 
-    public ModuleControlTab getModuleControl() {
+    public ModuleControl getModuleControl() {
         return moduleControl;
     }
 
     public HexGridModule getHexGridModule() {
-        return hexMapModule;
+        return hexGridModule;
     }
-
+    
     @Override
-    public final void initApp() {
-        hexMapModule = new HexGridModule(this, rootFrame.getJMenuBar());
-        moduleControl.addRootTab(hexMapModule);
+    public final void simpleInitApp() {
+        super.inputManager.clearMappings();
+        setPauseOnLostFocus(false);
+        flyCam.setEnabled(false);
+        
+        hexGridModule = new HexGridModule(this, rootFrame.getJMenuBar());
+        moduleControl.addRootTab(hexGridModule);
         initApplication();
     }
 

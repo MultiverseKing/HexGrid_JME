@@ -1,6 +1,6 @@
 package org.hexgridapi.editor.packagemanager;
 
-import org.hexgridapi.editor.core.HexGridEditorMain;
+import org.hexgridapi.editor.core.EditorMain;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
@@ -15,7 +15,7 @@ import javax.swing.JTabbedPane;
 public final class JDataBaseMenu extends JMenu {
     private final JDataBaseHolder holder;
 
-    public JDataBaseMenu(HexGridEditorMain main) {
+    public JDataBaseMenu(EditorMain main) {
         super("Database");
         holder = new JDataBaseHolder(main);
         addMenu("HexGrid Data", null);

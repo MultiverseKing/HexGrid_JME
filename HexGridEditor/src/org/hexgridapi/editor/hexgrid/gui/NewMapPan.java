@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.hexmap.gui;
+package org.hexgridapi.editor.hexgrid.gui;
 
 import java.awt.event.ItemEvent;
 import org.hexgridapi.utility.Vector2Int;

@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.hexmap.gui;
+package org.hexgridapi.editor.hexgrid.gui;
 
 import java.awt.Dimension;
 import java.util.ArrayList;

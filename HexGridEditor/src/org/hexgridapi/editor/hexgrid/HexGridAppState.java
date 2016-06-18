@@ -1,15 +1,15 @@
-package org.hexgridapi.editor.hexmap;
+package org.hexgridapi.editor.hexgrid;
 
 import com.jme3.app.Application;
 import com.jme3.app.state.AppStateManager;
 import java.util.List;
 import org.hexgridapi.core.AbstractHexGridAppState;
-import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
-import org.hexgridapi.core.mousepicking.TileSelectionControl;
+import org.hexgridapi.core.coordinate.HexCoordinate;
 import org.hexgridapi.core.data.HexTile;
 import org.hexgridapi.core.data.MapData;
-import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.geometry.buffer.BufferPositionProvider;
 import org.hexgridapi.core.mousepicking.GridMouseControlAppState;
+import org.hexgridapi.core.mousepicking.TileSelectionControl;
 
 /**
  *
@@ -125,7 +125,7 @@ public class HexGridAppState extends AbstractHexGridAppState {
     }
 
     public boolean useProceduralGen() {
-        return mapData.getGenerator() != null ? true : false;
+        return mapData.getGenerator() != null;
     }
 
     /**
@@ -253,7 +253,7 @@ public class HexGridAppState extends AbstractHexGridAppState {
     public boolean tileExist() {
         HexTile t = getTile();
         if (t != null) {
-            return mapData.getTextureValue(t.getTextureKey()).equals(MapData.DefaultTextureValue.NO_TILE.toString()) ? false : true;
+            return !mapData.getTextureValue(t.getTextureKey()).equals(MapData.DefaultTextureValue.NO_TILE.toString());
         } else {
             return false;
         }

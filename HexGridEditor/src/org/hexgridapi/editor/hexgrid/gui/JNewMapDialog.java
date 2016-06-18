@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.hexmap.gui;
+package org.hexgridapi.editor.hexgrid.gui;
 
 import org.hexgridapi.editor.utility.gui.ExtendedJDialog;
 import java.awt.Frame;

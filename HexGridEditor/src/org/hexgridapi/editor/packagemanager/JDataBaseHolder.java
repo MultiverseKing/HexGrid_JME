@@ -1,6 +1,6 @@
 package org.hexgridapi.editor.packagemanager;
 
-import org.hexgridapi.editor.core.HexGridEditorMain;
+import org.hexgridapi.editor.core.EditorMain;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -21,13 +21,13 @@ import javax.swing.JToggleButton;
  */
 public class JDataBaseHolder {
 
-    private final HexGridEditorMain main;
+    private final EditorMain main;
     private final HashMap<String, JPanel> docks = new HashMap<>();
     private final JDialog rootPanel;
     private final JPanel dockTabs;
     private final ButtonGroup dockBtnGroup;
 
-    public JDataBaseHolder(HexGridEditorMain main) {
+    public JDataBaseHolder(EditorMain main) {
         this.main = main;
         /**
          * Panel who hold everything.

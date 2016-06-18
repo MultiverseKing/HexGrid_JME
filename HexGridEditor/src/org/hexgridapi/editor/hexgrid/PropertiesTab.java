@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.hexmap;
+package org.hexgridapi.editor.hexgrid;
 
 import org.hexgridapi.editor.utility.gui.ComboBoxRenderer;
 import java.awt.BorderLayout;
@@ -26,9 +26,9 @@ import javax.swing.SwingConstants;
 import javax.swing.plaf.basic.BasicArrowButton;
 import org.hexgridapi.core.mousepicking.GridMouseControlAppState;
 import org.hexgridapi.core.coordinate.HexCoordinate;
-import org.hexgridapi.editor.core.HexGridEditorMain;
-import org.hexgridapi.editor.hexmap.gui.HexGridPropertiesPan;
-import org.hexgridapi.editor.hexmap.gui.JCursorPositionPanel;
+import org.hexgridapi.editor.core.EditorMain;
+import org.hexgridapi.editor.hexgrid.gui.HexGridPropertiesPan;
+import org.hexgridapi.editor.hexgrid.gui.JCursorPositionPanel;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.events.MapDataListener;
 import org.hexgridapi.events.TileSelectionListener;
@@ -37,9 +37,9 @@ import org.hexgridapi.events.TileSelectionListener;
  * 
  * @author roah
  */
-public final class RootProperties extends HexGridPropertiesPan {
+public final class PropertiesTab extends HexGridPropertiesPan {
 
-    private final HexGridEditorMain editorMain;
+    private final EditorMain editorMain;
     private final HexGridAppState hexSystem;
     private final GridMouseControlAppState mouseSystem;
     private boolean update = true;
@@ -49,7 +49,7 @@ public final class RootProperties extends HexGridPropertiesPan {
     private JPanel tileProperties;
     private HashMap<String, JComponent> comps = new HashMap<>();
 
-    public RootProperties(HexGridEditorMain editorMain, HexGridAppState hexMapSystem, GridMouseControlAppState mouseSystem) {
+    public PropertiesTab(EditorMain editorMain, HexGridAppState hexMapSystem, GridMouseControlAppState mouseSystem) {
         super(editorMain.getAssetManager().loadTexture(
                 "org/hexgridapi/assets/Textures/Icons/Buttons/configKey.png").getImage(), "HexMapConfig");
         this.editorMain = editorMain;

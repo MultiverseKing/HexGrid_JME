@@ -1,4 +1,4 @@
-package org.hexgridapi.editor.hexmap.gui;
+package org.hexgridapi.editor.hexgrid.gui;
 
 import com.jme3.texture.Image;
 import javax.swing.ImageIcon;

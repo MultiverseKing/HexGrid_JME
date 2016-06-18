@@ -1,9 +1,9 @@
-package org.hexgridapi.editor.hexmap.gui;
+package org.hexgridapi.editor.hexgrid.gui;
 
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.JMenu;
-import org.hexgridapi.editor.hexmap.HexGridModule;
+import org.hexgridapi.editor.hexgrid.HexGridModule;
 import java.awt.Frame;
 import org.hexgridapi.core.MapParam;
 
