@@ -16,18 +16,6 @@ public class MouseInputEvent {
     protected final CollisionResult collisionResult;
     protected final MouseInputEventType eventType;
 
-    public MouseInputEvent(MouseInputEvent event, MouseInputEventType eventType, Integer eventHeight) {
-        this(eventType, event.getPosition(), eventHeight, event.getLastUsedRay(), event.getCollisionResult());
-    }
-        
-    public MouseInputEvent(MouseInputEvent event, Integer eventHeight) {
-        this(event.getType(), event.getPosition(), eventHeight, event.getLastUsedRay(), event.getCollisionResult());
-    }
-    
-    public MouseInputEvent(MouseInputEvent event, MouseInputEventType eventType) {
-        this(eventType, event.getPosition(), event.getHeight(), event.getLastUsedRay(), event.getCollisionResult());
-    }
-
     public MouseInputEvent(MouseInputEventType eventType, HexCoordinate eventPosition, Integer eventHeight, Ray usedRay, CollisionResult collisionResult) {
         this.eventPosition = eventPosition;
         this.lastUsedRay = usedRay;
@@ -36,10 +24,10 @@ public class MouseInputEvent {
         this.eventHeight = eventHeight;
     }
 
-    public MouseInputEventType getType(){
+    public MouseInputEventType getType() {
         return eventType;
     }
-    
+
     public HexCoordinate getPosition() {
         return eventPosition;
     }
@@ -55,12 +43,64 @@ public class MouseInputEvent {
     public CollisionResult getCollisionResult() {
         return collisionResult;
     }
+    
+    /**
+     * Clone and replace parameter by the specifiate one.
+     * 
+     * @param eventType {@see MouseInputEventType}
+     * @return 
+     */
+    public MouseInputEvent clone(MouseInputEventType eventType) {
+        return new MouseInputEvent(eventType, eventPosition, eventHeight, lastUsedRay, collisionResult);
+    }
+    
+    /**
+     * Clone and replace parameter by the specifiate one.
+     * 
+     * @param eventHeight height of the tile.
+     * @return 
+     */
+    public MouseInputEvent clone(Integer eventHeight) {
+        return new MouseInputEvent(eventType, eventPosition, eventHeight, lastUsedRay, collisionResult);
+    }
 
+    /**
+     * Clone and replace parameter by the specifiate one.
+     *
+     * @param eventType {@see MouseInputEventType}
+     * @param eventHeight height of the tile.
+     * @return 
+     */
+    public MouseInputEvent clone(MouseInputEventType eventType, Integer eventHeight) {
+        return new MouseInputEvent(eventType, eventPosition, eventHeight, lastUsedRay, collisionResult);
+    }
+
+    /**
+     * Mouse input currently supported. <br>
+     * <p>
+     * To create an event for the left mouse button {@link MouseInputEventType.LMB} <br>
+     * To create an event for the right mouse button {@link MouseInputEventType.RMB} <br>
+     * To create an event for the middle mouse button {@link MouseInputEventType.MMB} <br>
+     * To create an event from the mouse each frame {@link MouseInputEventType.PULSE} <br>
+     * </p>
+     */
     public static enum MouseInputEventType {
 
-        PULSE,
-        RMB,
+        /**
+         * Create an event for the left mouse bouton.
+         */
         LMB,
-        MMB;
+        /**
+         * Create an event for the right mouse bouton.
+         */
+        RMB,
+        /**
+         * Create an event for the middle mouse bouton.
+         */
+        MMB,
+        /**
+         * Create an event from the mouse each frame.
+         */
+        PULSE;
     }
 }

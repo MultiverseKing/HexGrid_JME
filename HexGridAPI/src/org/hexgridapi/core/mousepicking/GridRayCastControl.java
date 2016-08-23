@@ -21,13 +21,13 @@ import org.hexgridapi.events.MouseInputEvent;
 import org.slf4j.LoggerFactory;
 
 /**
- * Split in two class as Position debug & raycast (???)
+ * Handle the mouse picking. Include the picking debug.
  * @author roah
  */
 public class GridRayCastControl {
 
-    private static Application APP;
-    private static Node RAY_DEBUG_NODE = new Node(GridRayCastControl.class.getName() + ":Node");
+    private static final Node RAY_DEBUG_NODE = new Node(GridRayCastControl.class.getSimpleName()+ ":Node");
+    private static Application app;
     private Node collisionNode;
     private Node rayDebug;
 
@@ -49,11 +49,11 @@ public class GridRayCastControl {
     }
 
     private void init(Application application, ColorRGBA debugColor) {
-        if (APP == null) {
-            APP = application;
+        if (app == null) {
+            app = application;
         }
         if (debugColor != null && RAY_DEBUG_NODE.getParent() == null) {
-            APP.getStateManager().getState(AbstractHexGridAppState.class)
+            app.getStateManager().getState(AbstractHexGridAppState.class)
                     .getGridNode().attachChild(RAY_DEBUG_NODE);
         }
     }
@@ -63,7 +63,7 @@ public class GridRayCastControl {
         rayDebug = new Node("DebugRay");
         Geometry geo = new Geometry("SphereDebugRayCast" + debugColor, sphere);
 //        geo.setUserData("org.hexgrid.collide", Boolean.TRUE);
-        Material mark_mat = new Material(APP.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+        Material mark_mat = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         mark_mat.setColor("Color", debugColor);
         geo.setMaterial(mark_mat);
         rayDebug.attachChild(geo);
@@ -87,7 +87,7 @@ public class GridRayCastControl {
 
     private Geometry putShape(Mesh shape, ColorRGBA color) {
         Geometry g = new Geometry("coordinate axis", shape);
-        Material mat = new Material(APP.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
+        Material mat = new Material(app.getAssetManager(), "Common/MatDefs/Misc/Unshaded.j3md");
         mat.getAdditionalRenderState().setWireframe(true);
         mat.setColor("Color", color);
         g.setMaterial(mat);
@@ -98,7 +98,7 @@ public class GridRayCastControl {
     /**
      * Cast the defined ray on the defined collision node then return it
      * converted as Hex event.
-     *
+     * @todo Does not work properly when picking a tile by the side
      * @param ray Can be get from {@link #get3DRay(CastFrom)}
      * @return null if no collision.
      */
@@ -136,16 +136,16 @@ public class GridRayCastControl {
         Vector2f click2d;
         switch (from) {
             case MOUSE:
-                click2d = APP.getInputManager().getCursorPosition();
+                click2d = app.getInputManager().getCursorPosition();
                 break;
             case SCREEN_CENTER:
-                click2d = new Vector2f(APP.getCamera().getWidth() / 2, APP.getCamera().getHeight() / 2);
+                click2d = new Vector2f(app.getCamera().getWidth() / 2, app.getCamera().getHeight() / 2);
                 break;
             default:
-                throw new UnsupportedOperationException(from + "isn't a valid type.");
+                throw new UnsupportedOperationException(from + " isn't a valid type.");
         }
-        Vector3f click3d = APP.getCamera().getWorldCoordinates(new Vector2f(click2d.x, click2d.y), 0f).clone();
-        Vector3f dir = APP.getCamera().getWorldCoordinates(
+        Vector3f click3d = app.getCamera().getWorldCoordinates(new Vector2f(click2d.x, click2d.y), 0f).clone();
+        Vector3f dir = app.getCamera().getWorldCoordinates(
                 new Vector2f(click2d.x, click2d.y), 1f).subtractLocal(click3d).normalizeLocal();
         Ray ray = new Ray(click3d, dir);
         return ray;

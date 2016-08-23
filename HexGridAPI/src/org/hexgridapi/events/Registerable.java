@@ -5,7 +5,7 @@ package org.hexgridapi.events;
  *
  * @author roah
  */
-public interface Register<T> {
+public interface Registerable<T> {
 
     /**
      * Register a listener to respond to event(s).

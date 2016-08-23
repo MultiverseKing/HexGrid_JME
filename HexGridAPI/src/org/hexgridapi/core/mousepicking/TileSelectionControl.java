@@ -15,36 +15,38 @@ import java.util.ArrayList;
 import org.hexgridapi.core.AbstractHexGridAppState;
 import org.hexgridapi.core.HexGrid;
 import org.hexgridapi.core.coordinate.HexCoordinate;
+import org.hexgridapi.core.data.HexTile;
+import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.core.geometry.mesh.MeshGenerator;
 import org.hexgridapi.events.MapDataListener;
 import org.hexgridapi.events.MouseInputEvent;
-import org.hexgridapi.events.Register;
+import org.hexgridapi.events.Registerable;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.events.TileInputListener;
 import org.hexgridapi.events.TileSelectionListener;
 
 /**
- * Generate tile on the field to be used as selection control. <br>
+ * Handle the default selection cursor. <br>
+ * Also store the latest selected tile position and height. <br>
  * Used by {@link GridMouseControlAppState} by default.
  *
  * @author roah
  */
-public class TileSelectionControl implements Register<TileSelectionListener> {
-
-//    private static HashMap<Integer, Mesh> singleTile = new HashMap<Integer, Mesh>();
+public class TileSelectionControl implements Registerable<TileSelectionListener>, TileInputListener {
+    
     private static Material mat;
     private final Node selectionRootNode = new Node(TileSelectionControl.class.getSimpleName() + ":Node");
-    private final Node groupNode = new Node(TileSelectionControl.class.getSimpleName() + ":selectionGroup:Node");
+    private final Node selectionListNode = new Node(TileSelectionControl.class.getSimpleName() + ":selectionGroup:Node");
     private final Mesh mesh = MeshGenerator.getSingleMesh(0);
-    private ArrayList<HexCoordinate> coords = new ArrayList<HexCoordinate>();
-    private ArrayList<TileSelectionListener> listeners = new ArrayList<TileSelectionListener>();
+    private final ArrayList<TileSelectionListener> listeners = new ArrayList<>();
+    private ArrayList<HexCoordinate> selectionList = new ArrayList<>();
     private HexCoordinate selectedTile = new HexCoordinate();
     private CursorControl cursorControl;
     private boolean isSelectionGroup = false;
     private Application app;
 
     public TileSelectionControl() {
-        selectionRootNode.attachChild(groupNode);
+        selectionRootNode.attachChild(selectionListNode);
     }
     
     public void initialise(Application app) {
@@ -58,11 +60,9 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
         app.getInputManager().addMapping("selectionGrp", new KeyTrigger(KeyInput.KEY_LSHIFT), new KeyTrigger(KeyInput.KEY_RSHIFT));
         app.getInputManager().addListener(keyListener, new String[]{"selectionGrp"});
         app.getInputManager().addListener(mouseListener, MouseInputEvent.MouseInputEventType.RMB.toString());
-//        app.getInputManager().addListener(mouseListener, new String[]{"Cancel"});
         /**
          * Register listener.
          */
-        app.getStateManager().getState(GridMouseControlAppState.class).register(tileInputListener);
         HexGrid hexGrid = app.getStateManager().getState(AbstractHexGridAppState.class);
         hexGrid.getMapData().register(dataListener);
         if(cursorControl == null) {
@@ -70,62 +70,49 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
         }
         hexGrid.getGridNode().attachChild(selectionRootNode);
     }
-    //-----------
+    
     // <editor-fold defaultstate="collapsed" desc=" Listeners">
-    private TileInputListener tileInputListener = new TileInputListener() {
-        @Override
-        public void onMouseAction(MouseInputEvent event) {
-            if (event.getType().equals(MouseInputEvent.MouseInputEventType.LMB) && event.getPosition() != null) {
-//                HexTile tile = mapData.getTile(event.getEventPosition());
-                addTile(event.getPosition(), event.getHeight());
-//                editorMainGUI.showCurrentSelectionCount(tileSelectionControl.getTileCount());
-            } else if (event.getPosition() != null) {
-                setSelected(event.getPosition(), event.getHeight());
-//                cursorControl.setPosition(event.getEventPosition(), system.getTileHeight(event.getEventPosition()));
-            }
+    @Override
+    public void onMouseAction(MouseInputEvent event) {
+        if (event.getPosition() != null) {
+            setSelected(event.getPosition(), event.getHeight());
+        }
+    }
+    
+    private final ActionListener keyListener = (String name, boolean isPressed, float tpf) -> {
+        if (name.equals("selectionGrp") && isPressed) {
+            isSelectionGroup = true;
+        } else if (name.equals("selectionGrp") && !isPressed) {
+            isSelectionGroup = false;
         }
     };
-    private final ActionListener keyListener = new ActionListener() {
-        @Override
-        public void onAction(String name, boolean isPressed, float tpf) {
-            if (name.equals("selectionGrp") && isPressed) {
-                isSelectionGroup = true;
-            } else if (name.equals("selectionGrp") && !isPressed) {
-                isSelectionGroup = false;
-            }
+    
+    private final ActionListener mouseListener = (String name, boolean isPressed, float tpf) -> {
+        if (name.equals(MouseInputEvent.MouseInputEventType.RMB.toString()) && !isPressed) {
+            clearSelectionGroup();
         }
     };
-    private final ActionListener mouseListener = new ActionListener() {
-        @Override
-        public void onAction(String name, boolean isPressed, float tpf) {
-            if (name.equals(MouseInputEvent.MouseInputEventType.RMB.toString()) && !isPressed) {
-                clearSelectionGroup();
-            }
-        }
-    };
-    //@todo require a look, it change the mesh of a tile by a new generated on
-    private final MapDataListener dataListener = new MapDataListener() {
-        @Override
-        public void onTileChange(TileChangeEvent... events) {
-            for (int i = 0; i < events.length; i++) {
-                if (coords.contains(events[i].getTilePos())) {
-                    Geometry tile = (Geometry) selectionRootNode.getChild(events[i].getTilePos().toOffset().toString());
-                    if (events[i].getNewTile() != null) {
+    
+    //@todo require a look, it change the mesh of a tile by a newly generated one
+    private final MapDataListener dataListener = (TileChangeEvent... events) -> {
+        for (TileChangeEvent event : events) {
+            if (selectionList.contains(event.getTilePos())) {
+                Geometry tile = (Geometry) selectionRootNode.getChild(event.getTilePos().toOffset().toString());
+                if (event.getNewTile() != null) {
 //                        ((Geometry) tile).setMesh(getMesh(events[i].getNewTile().getHeight()));
-                        setPosition(tile, events[i].getTilePos().toWorldPosition(events[i].getNewTile().getHeight()));
-                        cursorControl.setHeight(events[i].getNewTile().getHeight());
-                        //                    tile.setLocalTranslation(event.getTilePos().toWorldPosition());
-                        //                    coord.put(event.getTilePos(), event.getNewTile().getHeight());
-                    } else {
-                        //                    coord.put(event.getTilePos(), 0);
+                    setPosition(tile, event.getTilePos().toWorldPosition(event.getNewTile().getHeight()));
+                    cursorControl.setHeight(event.getNewTile().getHeight());
+                    //                    tile.setLocalTranslation(event.getTilePos().toWorldPosition());
+                    //                    coord.put(event.getTilePos(), event.getNewTile().getHeight());
+                } else {
+                    //                    coord.put(event.getTilePos(), 0);
 //                        ((Geometry) tile).setMesh(getMesh(0));
-                        setPosition(tile, events[i].getTilePos().toWorldPosition());
-                        cursorControl.setHeight(0);
-                        //                    tile.setLocalTranslation(event.getTilePos().toWorldPosition());
-                    }
-                } else if (selectedTile.equals(events[i].getTilePos()) && events[i].getNewTile() != null) {
-                    cursorControl.setHeight(events[i].getNewTile().getHeight());
+                    setPosition(tile, event.getTilePos().toWorldPosition());
+                    cursorControl.setHeight(0);
+                    //                    tile.setLocalTranslation(event.getTilePos().toWorldPosition());
                 }
+            } else if (selectedTile.equals(event.getTilePos()) && event.getNewTile() != null) {
+                cursorControl.setHeight(event.getNewTile().getHeight());
             }
         }
     };
@@ -143,37 +130,53 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
     }
 
     private void updateListeners() {
-        for (int i = 0; i < listeners.size(); i++) {
-            listeners.get(i).onTileSelectionUpdate(selectedTile, coords);
-        }
+        listeners.stream().forEach((listener) -> {
+            listener.onTileSelectionUpdate(selectedTile, selectionList);
+        });
     }
     // </editor-fold>
-
-    private void addTile(HexCoordinate pos, int height) {
-        if (isSelectionGroup) {
-            if (!coords.contains(pos)) {
-                addGeo(pos, height);
-                coords.add(pos);
-            } else {
-                groupNode.getChild(pos.toOffset().toString()).removeFromParent();
-                coords.remove(pos);
-            }
+    
+    /**
+     * Force the cursor position to a specifiate position.
+     * 
+     * @param pos where to put the cursor on the grid
+     * @return false if the position does not exist in mapData
+     */
+    public boolean setSelected(HexCoordinate pos) {
+        HexTile t = app.getStateManager().getState(AbstractHexGridAppState.class)
+                .getMapData().getTile(pos);
+        if(t != null){
+            setSelected(pos, t.getHeight());
+            return true;
+        } else {
+            return false;
         }
-        setSelected(pos, height);
     }
-
+    
     private void setSelected(HexCoordinate pos, int height) {
+        addToGroup(pos, height);
         selectedTile = pos;
         cursorControl.setPosition(pos, height);
         updateListeners();
     }
 
-    // @todo require opti
+    private void addToGroup(HexCoordinate pos, int height) {
+        if (isSelectionGroup) {
+            if (!selectionList.contains(pos)) {
+                addGeo(pos, height);
+                selectionList.add(pos);
+            } else {
+                selectionListNode.getChild(pos.toOffset().toString()).removeFromParent();
+                selectionList.remove(pos);
+            }
+        }
+    }
+    
     private void addGeo(HexCoordinate pos, int height) {
         Geometry geo = new Geometry(pos.toOffset().toString(), mesh);
         geo.setMaterial(mat);
         setPosition(geo, pos.toWorldPosition(height));
-        groupNode.attachChild(geo);
+        selectionListNode.attachChild(geo);
     }
 
     private void setPosition(Geometry geo, Vector3f worldPos) {
@@ -189,9 +192,11 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
 //    }
     
     private void clearSelectionGroup() {
-        coords.clear();
-        for (Spatial s : groupNode.getChildren()) {
-            s.removeFromParent();
+        if(!selectionList.isEmpty()) {
+            selectionList.clear();
+            selectionListNode.getChildren().stream().forEach((s) -> {
+                s.removeFromParent();
+            });
         }
     }
 
@@ -200,11 +205,7 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
     }
 
     public ArrayList<HexCoordinate> getSelectedList() {
-        return coords;
-    }
-
-    TileInputListener getInputListener() {
-        return tileInputListener;
+        return selectionList;
     }
 
     void cleanup() {
@@ -216,7 +217,7 @@ public class TileSelectionControl implements Register<TileSelectionListener> {
          */
         AppState state =  app.getStateManager().getState(GridMouseControlAppState.class);
         if(state != null) {
-            app.getStateManager().getState(GridMouseControlAppState.class).unregister(tileInputListener);
+            app.getStateManager().getState(GridMouseControlAppState.class).unregister(this);
         }
         HexGrid hexGrid = app.getStateManager().getState(AbstractHexGridAppState.class);
         if(hexGrid != null) {

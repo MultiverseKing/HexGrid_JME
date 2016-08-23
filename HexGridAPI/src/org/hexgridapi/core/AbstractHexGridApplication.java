@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * @todo fix shadow duplication
  * @author roah
  */
 public abstract class AbstractHexGridApplication extends SimpleApplication {

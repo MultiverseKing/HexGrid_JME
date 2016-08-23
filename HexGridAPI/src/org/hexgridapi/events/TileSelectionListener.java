@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import org.hexgridapi.core.coordinate.HexCoordinate;
 
 /**
- *
+ * Allow Class to get the cursor position update from hexgrid.
  * @author roah
  */
 public interface TileSelectionListener {
 
-    void onTileSelectionUpdate(HexCoordinate currentSelection, ArrayList<HexCoordinate> selectedList);
+    public void onTileSelectionUpdate(HexCoordinate currentSelection, ArrayList<HexCoordinate> selectedList);
 }

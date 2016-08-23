@@ -67,8 +67,9 @@ public class HexCoordinate implements Cloneable {
     }
 
     /**
-     * World Position to Hex grid position. Vector3f to Odd-R Offset
-     * grid position.
+     * World Position to Hex grid position. <br>
+     * Vector3f to Odd-R Offset grid position.
+     * @param pos
      */
     public HexCoordinate(Vector3f pos) {
         float x = pos.x / HexSetting.HEX_WIDTH;

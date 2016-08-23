@@ -20,13 +20,13 @@ import org.hexgridapi.core.coordinate.HexCoordinate;
 import org.hexgridapi.core.AbstractHexGridAppState;
 import org.hexgridapi.core.geometry.ChunkBuilder;
 import org.hexgridapi.events.BufferListener;
-import org.hexgridapi.events.Register;
+import org.hexgridapi.events.Registerable;
 
 /**
  *
  * @author roah
  */
-public class HexGridBuffer implements Register<BufferListener> {
+public class HexGridBuffer implements Registerable<BufferListener> {
 
     private final Node bufferNode = new Node(HexGridBuffer.class.getName() + ":Control:Node");
 //    private final Node collisionNode = new Node(HexGridBuffer.class.getName() + ":Collision:Node");

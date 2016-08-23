@@ -14,7 +14,7 @@ import org.hexgridapi.core.data.MapData;
 import org.hexgridapi.events.MouseInputEvent;
 import org.hexgridapi.events.MouseInputEvent.MouseInputEventType;
 import org.hexgridapi.events.MouseRayListener;
-import org.hexgridapi.events.Register;
+import org.hexgridapi.events.Registerable;
 import org.hexgridapi.events.TileInputListener;
 import org.slf4j.LoggerFactory;
 
@@ -23,17 +23,16 @@ import org.slf4j.LoggerFactory;
  *
  * @author Eike Foede, roah
  */
-public class GridMouseControlAppState extends AbstractAppState implements Register<MouseRayListener> {
+public class GridMouseControlAppState extends AbstractAppState implements Registerable<MouseRayListener> {
 
     private Application app;
     private GridRayCastControl rayCastControl;
-    private ArrayList<TileInputListener> inputListeners = new ArrayList<TileInputListener>();
-    private ArrayList<MouseRayListener> rayListeners = new ArrayList<MouseRayListener>(3);
-    private TileSelectionControl tileSelectionControl = new TileSelectionControl();
-    private int listenerPulseIndex = -1;
+    private final ArrayList<TileInputListener> inputListeners = new ArrayList<>();
+    private final ArrayList<MouseRayListener> rayListeners = new ArrayList<>(3);
+    private final TileSelectionControl tileSelectionControl = new TileSelectionControl();
+    private MouseRayListener listenerLockPulse = null;
     private Vector2f lastScreenMousePos = new Vector2f(0, 0);
     private MapData mapData;
-    private boolean isLock = false;
 
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
@@ -43,14 +42,15 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
         /**
          * Activate the input to interact with the grid.
          */
-        app.getInputManager().addListener(tileActionListener, 
+        app.getInputManager().addListener(tileActionListener,
                 new String[]{MouseInputEventType.LMB.toString(), MouseInputEventType.RMB.toString()});
 //        app.getInputManager().addListener(tileActionListener, new String[]{"Confirm", "Cancel"});
         /**
-         * Activate the RaycastDebug.
+         * Activate the RaycastDebug and the selection system (cursor).
          */
         rayCastControl = new GridRayCastControl(app, hexGrid.getBuilder().getBuilderNode(), ColorRGBA.Red);
         tileSelectionControl.initialise(app);
+        register(tileSelectionControl);
     }
 
     // <editor-fold defaultstate="collapsed" desc=" Registers">
@@ -77,9 +77,9 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
      * @param event event to pass
      */
     private void callMouseInputActionListeners(MouseInputEvent event) {
-        for (TileInputListener l : inputListeners) {
+        inputListeners.stream().forEach((l) -> {
             l.onMouseAction(event);
-        }
+        });
     }
 
     /**
@@ -94,7 +94,8 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
     }
 
     /**
-     * Remove a listener from responding Raycasting event.
+     * Remove a listener from responding Raycasting event. <br>
+     * Disable pulseMode if the listeners is the one who activated it.
      *
      * @param listener
      */
@@ -102,6 +103,9 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
     public void unregister(MouseRayListener listener) {
         rayListeners.remove(listener);
         inputListeners.remove(listener);
+        if(listenerLockPulse != null) {
+            setCursorPulseMode(listener);
+        }
     }
 
     /**
@@ -123,27 +127,24 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
         return event;
     }
     // </editor-fold>
-    private final ActionListener tileActionListener = new ActionListener() {
-        @Override
-        public void onAction(String name, boolean isPressed, float tpf) {
-            if (listenerPulseIndex == -1) {
-                if (name.equals(MouseInputEventType.LMB.toString()) && !isPressed) {
-                    castRay(MouseInputEventType.LMB);
-                } else if (name.equals(MouseInputEventType.RMB.toString()) && !isPressed) {
-                    castRay(MouseInputEventType.RMB);
-                }
-            } else {
-                inputListeners.get(listenerPulseIndex).onMouseAction(
-                        new MouseInputEvent(MouseInputEventType.PULSE, tileSelectionControl.getSelectedPos(),
-                        mapData.getTile(tileSelectionControl.getSelectedPos()).getHeight(),
-                        rayCastControl.get3DRay(GridRayCastControl.CastFrom.MOUSE), null));
+    private final ActionListener tileActionListener = (String name, boolean isPressed, float tpf) -> {
+        if (listenerLockPulse == null) {
+            if (name.equals(MouseInputEventType.LMB.toString()) && !isPressed) {
+                castRay(MouseInputEventType.LMB);
+            } else if (name.equals(MouseInputEventType.RMB.toString()) && !isPressed) {
+                castRay(MouseInputEventType.RMB);
             }
+        } else {
+//            listenerLockPulse.onMouseAction(
+//                    new MouseInputEvent(MouseInputEventType.PULSE, tileSelectionControl.getSelectedPos(),
+//                            mapData.getTile(tileSelectionControl.getSelectedPos()).getHeight(),
+//                            rayCastControl.get3DRay(GridRayCastControl.CastFrom.MOUSE), null));
         }
     };
 
     @Override
     public void update(float tpf) {
-        if (listenerPulseIndex != -1) {
+        if (listenerLockPulse != null) {
             Vector2f newMousePos = app.getInputManager().getCursorPosition().normalize();
             if (!newMousePos.equals(lastScreenMousePos)) {
                 castRay(MouseInputEventType.PULSE);
@@ -153,45 +154,49 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
     }
 
     /**
-     * Activate the cursor on pulse mode, Raycast will follow the mouse, Have to
-     * be called by the the same listener to disable. The pulse mode lock other
+     * Only use to disable pulse mode. <br>
+     * Not required to be call if also using <br>
+     * {@link #unregister(MouseRayListener listener)}
+     * 
+     * @param listener listeners locking the pulse currently
+     * @return false if the pulse is not currently activated or activated by another listeners.
+     */
+    public boolean setCursorPulseModeOff(MouseRayListener listener) {
+        if(listenerLockPulse != null) {
+            return setCursorPulseMode(listener);
+        }
+        return false;
+    }
+    
+    /**
+     * Activate / desactivate pulse mode, Raycast will follow the mouse, Have to
+     * be called by the the same listener to be disabled. The pulse mode lock other
      * update.
      *
      * @todo Ray listener support
      * @param listener calling for it.
      * @return false if an error happen or if already on pulseMode.
      */
-    public boolean setCursorPulseMode(TileInputListener listener) {
-        if (listenerPulseIndex == -1) {
+    public boolean setCursorPulseMode(MouseRayListener listener) {
+        if (listenerLockPulse == null) {
             //We keep track of the listener locking the input.
-            if (!inputListeners.contains(listener)) {
-                inputListeners.add(listener);
-            }
-            listenerPulseIndex = inputListeners.indexOf(listener);
+            listenerLockPulse = listener;
             if (initialized) {
                 lastScreenMousePos = app.getInputManager().getCursorPosition();
-                return true;
-            } else {
-                return true;
             }
-        } else {
+            return true;
+        } else if (listenerLockPulse.equals(listener)) {
             /**
              * We check if the listener calling the pulseMode is the same than
              * the one who activated it. if it is the same we desable the pulse
              * mode.
              */
-            if (inputListeners.contains(listener) && inputListeners.indexOf(listener) == listenerPulseIndex) {
-                listenerPulseIndex = -1;
-                return true;
-            } else if (inputListeners.contains(listener) && inputListeners.indexOf(listener) != listenerPulseIndex) {
-                LoggerFactory.getLogger(GridMouseControlAppState.class).warn("Pulse already locked by : {} , Lock requested by : {}",
-                        inputListeners.get(listenerPulseIndex).getClass().toString(), listener.toString());
-                return false;
-            } else {
-                LoggerFactory.getLogger(GridMouseControlAppState.class).warn("Listener not registered :  {}.",
-                        listener.toString());
-                return false;
-            }
+            listenerLockPulse = null;
+            return true;
+        } else {
+            LoggerFactory.getLogger(GridMouseControlAppState.class).warn("Pulse already locked by : {} , Lock requested by : {}",
+                    listenerLockPulse.getClass().toString(), listener.toString());
+            return false;
         }
     }
 
@@ -202,17 +207,22 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
             event = callRayActionListeners(mouseInput, ray);
             if (event == null) {
                 event = rayCastControl.castRay(ray);
-                if (event != null && event.getPosition() != null) { // && !event.getEventPosition().equals(lastHexPos)) {
+                if (event != null) { // && !event.getEventPosition().equals(lastHexPos)) {
                     HexTile tile = mapData.getTile(event.getPosition());
-                    callMouseInputActionListeners(new MouseInputEvent(event, mouseInput,
-                            tile != null ? tile.getHeight() : 0));
+                    callMouseInputActionListeners(event.clone(mouseInput, tile != null ? tile.getHeight() : 0));
                 }
             } else {// if (!event.getEventPosition().equals(lastHexPos)) {
                 rayCastControl.setDebugPosition(event.getCollisionResult().getContactPoint());
                 callMouseInputActionListeners(event);
             }
         } else {
-            tileSelectionControl.getInputListener().onMouseAction(rayCastControl.castRay(ray));
+            event = rayCastControl.castRay(ray);
+            if (event != null) {
+                HexTile tile = mapData.getTile(event.getPosition());
+                event = event.clone(mouseInput, tile != null ? tile.getHeight() : 0);
+                tileSelectionControl.onMouseAction(event);
+                listenerLockPulse.onMouseAction(event);
+            }
         }
     }
 
@@ -224,7 +234,7 @@ public class GridMouseControlAppState extends AbstractAppState implements Regist
     public void cleanup() {
         super.cleanup();
         rayCastControl.removeDebug();
-        listenerPulseIndex = -1;
+        listenerLockPulse = null;
         app.getInputManager().removeListener(tileActionListener);
         tileSelectionControl.cleanup();
     }

@@ -12,7 +12,7 @@ public interface MapDataListener {
      * Called on one or multiple tile change.
      * @param events 
      */
-    void onTileChange(TileChangeEvent[] events);
+    void onTileChange(TileChangeEvent... events);
 
     /**
      * Called when all data get clean.

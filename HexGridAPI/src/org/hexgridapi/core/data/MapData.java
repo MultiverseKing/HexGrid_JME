@@ -10,7 +10,7 @@ import org.hexgridapi.core.data.procedural.ProceduralHexGrid;
 import org.hexgridapi.events.TileChangeEvent;
 import org.hexgridapi.loader.HexGridMapLoader;
 import org.hexgridapi.core.coordinate.HexCoordinate;
-import org.hexgridapi.events.Register;
+import org.hexgridapi.events.Registerable;
 
 /**
  * <h3>This class holds the hex data of the map. </h3>
@@ -29,7 +29,7 @@ import org.hexgridapi.events.Register;
  *
  * @author Eike Foede, Roah
  */
-public final class MapData implements Register<MapDataListener> {
+public final class MapData implements Registerable<MapDataListener> {
 
     private final ChunkData chunkData = new ChunkData();
     private final ArrayList<MapDataListener> tileListeners = new ArrayList<MapDataListener>();
